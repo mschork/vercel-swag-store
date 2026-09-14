@@ -4,6 +4,18 @@ A storefront over the Vercel Swag Store API, with editorial content from Sanity 
 
 ## Language
 
+**Catalogue data**:
+Products, categories and store configuration as the API reports them. Cached and revalidated by tag; shared by every visitor.
+_Avoid_: Static data, master data
+
+**Live data**:
+Stock, promotion and cart. Fetched on every request and never cached, because the API changes them per request or per visitor.
+_Avoid_: Dynamic data, realtime data
+
+**Cart token**:
+The credential that identifies one anonymous cart. Lives only in an httpOnly cookie and on the server; the browser never reads it.
+_Avoid_: Cart id, session, session token
+
 **Category**:
 The API's flat taxonomy of products. Owned by the API, never edited in Sanity.
 _Avoid_: Collection, tag, group
