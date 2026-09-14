@@ -1,4 +1,5 @@
 import { cacheLife } from 'next/cache'
+import { unstable_rethrow } from 'next/navigation'
 import { getStoreConfig } from '@/lib/api/store'
 import { socialLinks } from '@/lib/social-links'
 
@@ -22,6 +23,7 @@ async function SocialLinks() {
   try {
     links = socialLinks((await getStoreConfig()).socialLinks)
   } catch (error) {
+    unstable_rethrow(error)
     console.error('Footer: store config unavailable, rendering without social links', error)
     return null
   }
