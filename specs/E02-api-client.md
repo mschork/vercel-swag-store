@@ -99,12 +99,12 @@ Plain async functions, no `"use cache"`, and a comment stating why (values chang
 
 ## Acceptance criteria
 
-- [ ] Every endpoint in `api-reference.md`, including `/health`, has a typed function.
-- [ ] `import 'server-only'` present in every `lib/api` module; a deliberate client import fails the build.
-- [ ] `pnpm test` passes; coverage on `lib/api` above 80 percent.
-- [ ] No `token` field on the `Cart` type; `grep -n token apps/store/lib/api/types.ts` shows only `createCart`'s return.
-- [ ] `grep -r NEXT_PUBLIC_API` returns nothing.
-- [ ] Cache policy table in `AGENTS.md` matches the code.
+- [x] Every endpoint in `api-reference.md`, including `/health`, has a typed function.
+- [x] `import 'server-only'` present in every `lib/api` module; a deliberate client import fails the build.
+- [x] `pnpm test` passes; coverage on `lib/api` above 80 percent.
+- [x] No `token` field on the `Cart` type; `grep -n token apps/store/lib/api/types.ts` shows only `createCart`'s return.
+- [x] `grep -r NEXT_PUBLIC_API` returns nothing.
+- [x] Cache policy table in `AGENTS.md` matches the code.
 
 ## Out of scope
 
