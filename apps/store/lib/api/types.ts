@@ -1,3 +1,4 @@
+import 'server-only'
 import type { z } from 'zod'
 import type {
   CartItemSchema,
@@ -12,8 +13,9 @@ import type {
 } from './schemas'
 
 /**
- * Types inferred from the zod schemas in `schemas.ts`. Type-only, so client
- * components may `import type` from here without pulling in server code.
+ * Types inferred from the zod schemas in `schemas.ts`. Client components may
+ * `import type` from here: type imports are erased at compile time, so the
+ * `server-only` guard above never runs for them and only blocks value imports.
  * Prices (`price`, `lineTotal`, `subtotal`) are integers in cents.
  */
 export type Product = z.infer<typeof ProductSchema>

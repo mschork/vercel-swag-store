@@ -3,5 +3,5 @@ import next from '@repo/config/eslint/next.mjs'
 
 export default defineConfig([
   ...next,
-  globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts']),
+  globalIgnores(['.next/**', 'out/**', 'build/**', 'coverage/**', 'next-env.d.ts']),
 ])
