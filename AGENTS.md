@@ -46,6 +46,7 @@ working/              local-only documents (unredacted API reference, notes); gi
 1. Read `specs/decisions.md`, then the epic spec, then the previous epic's PR if it exists.
 2. Create a branch `epic/E0N-short-name`. Keep the PR to that epic's scope; note anything out of scope in the PR description under "Deferred".
 3. Do not change `specs/` files in an epic branch except to tick acceptance criteria; propose spec changes in the PR description.
+   Spec changes land on `main`. When a decision is made, rewrite the sentence in the spec to state it as fact: no `[assumption]` markers, no "Open questions" sections, no dated "Settled" trail. Rationale lives elsewhere: `docs/adr/` for hard-to-reverse trade-offs, `specs/callout.md` for points to present, `specs/improvements.md` for ideas deliberately left out.
 4. Before opening the PR run `pnpm verify` (see E12; until it exists, run `pnpm turbo lint typecheck build test`).
 5. In the PR description, state what was decided by a human, what you generated, and which assumptions from the spec you relied on.
 6. Never commit `.env*` files other than `.env.example`, and never commit anything under `working/`. Secrets in reference material go in `working/`; the committed copy under `specs/` carries placeholders such as `<API_BYPASS_TOKEN>`.
