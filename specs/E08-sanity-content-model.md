@@ -13,6 +13,8 @@ A Sanity Studio that lets an editor manage marketing content and product enrichm
 All product references are the API `id` string (e.g. `tshirt_001`), never a Sanity reference, since products are not Sanity documents.
 
 - `siteSettings` (singleton): `storeName`, `seoTitle`, `seoDescription`, `ogImage` (image with alt), `socialLinks[]` `{ label, url }`, `footerText`.
+- `catalogProduct`: read-only mirror of one API product for picking and referencing: `apiId` (string, `_id` is `catalogProduct.<apiId>`), `slug`, `name`, `category`, `featured`, `price` (cents), `syncedAt`. Written by the seed script; E15 replaces the seed with a scheduled Sanity Function. Hidden from the desk's create menu.
+- `checkoutPage` (singleton): `title`, `body` (Portable Text, no images), `backToCartLabel`, `continueShoppingLabel`.
 - `homePage` (singleton): `hero { headline, description, ctaLabel, ctaHref, image (image with alt, hotspot) }`, `sections[]` of `collectionSection { collection ref, title }` and `lookbookSection { title, entries[] refs }` [stretch].
 - `productEnrichment`: `apiId` (string, required, unique via validation against existing docs), `apiSlug` (string, denormalised for display), `title` (string, editor-facing only), `extendedDescription` (Portable Text with images), `gallery[]` (image with alt, hotspot), `badges[]` (string from a list: New, Limited, Staff pick), `care` (Portable Text, "How to use / care"), `collections[]` refs, `lookbook[]` refs, `guides[]` refs.
 - `lookbookEntry`: `person`, `role`, `photo` (image, alt, hotspot, required), `quote`, `productIds[]` (strings via the API picker), `consent` (boolean, must be true to publish, enforced by validation), `publishedAt`.
@@ -24,7 +26,7 @@ Portable Text config: headings h2 and h3, bold, italic, links. No custom marks. 
 
 ### API product picker `packages/sanity/src/components/ProductPicker.tsx`
 
-Custom input for string fields marked with `options.productPicker: true`. Fetches `/products?limit=100` from the API using `SANITY_STUDIO_API_BASE_URL` and `SANITY_STUDIO_API_BYPASS_TOKEN` (Studio is behind Sanity auth; the token is still exposed to editors in the bundle, acceptable for a demo and stated in the README). Shows name, id, thumbnail; stores the `id`. For array fields, the same component in multi-select mode.
+Custom input for string fields marked with `options.productPicker: true`. Reads `catalogProduct` documents from the dataset (GROQ, no network call outside Sanity) and offers a searchable list of name, category and slug; stores the API `id`. The Studio never talks to the Swag Store API, so it holds no API secret: remove `SANITY_STUDIO_API_BASE_URL` and `SANITY_STUDIO_API_BYPASS_TOKEN` from `apps/studio/.env.example` and from the Vercel studio project in this epic.
 
 ### Studio `apps/studio`
 

@@ -51,6 +51,10 @@ Tags: every query tags `sanity` and `sanity:<type>`; single-document queries als
 
 Below the description, in order and only when present: badges on the gallery image, "About this item" (extendedDescription), "How to use and care" (care), "Seen on" (lookbook entries with photo, person, quote), "Part of" (collection links), "Guides" (guide links). Gallery thumbnails appear when `gallery.length > 1`.
 
+### Thank-you page (E06 revisit)
+
+- `app/checkout/page.tsx` reads the `checkoutPage` singleton through `lib/sanity/fetch.ts` (`"use cache"`, `cacheTag('sanity', 'sanity:checkoutPage')`), falling back to the E06 copy when the document is missing. Body rendered with the Portable Text serializer.
+
 ### Optional routes (stretch)
 
 - `app/collections/[slug]/page.tsx` and `app/guides/[slug]/page.tsx`, static via `generateStaticParams` from Sanity slugs, `"use cache"` throughout, `notFound()` on missing. Guides render Portable Text with `@portabletext/react` and a custom `productEmbed` component that renders a `ProductCard` from the cached API product.

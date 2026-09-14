@@ -8,6 +8,14 @@ A storefront over the Vercel Swag Store API, with editorial content from Sanity 
 The API's flat taxonomy of products. Owned by the API, never edited in Sanity.
 _Avoid_: Collection, tag, group
 
+**Featured product**:
+A product the API flags as featured; a human choice, not a popularity measure.
+_Avoid_: Popular, trending, bestseller
+
+**Catalog product**:
+A read-only copy in Sanity of one API product, kept so editors can pick and reference products without the Studio calling the API.
+_Avoid_: Product (when the API record is meant), enrichment
+
 **Collection**:
 An editorial grouping of products curated in Sanity, referencing products by API id. May span categories and never mirrors one.
 _Avoid_: Category, set

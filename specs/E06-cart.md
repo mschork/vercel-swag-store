@@ -44,7 +44,12 @@ A session-persistent cart backed by the API, driven entirely by Server Actions, 
 - Page shell static; `<Suspense fallback={<CartSkeleton />}><CartContents /></Suspense>`.
 - `CartContents` (server): `getCartFromCookie()`; empty state with a link to `/search` when null or no items; otherwise `<CartList items />` and `<CartSummary subtotal currency />`.
 - `CartList` (client): renders rows with `next/image` thumbnail, name linking to the PDP, unit price, `<QuantityStepper />` bound to `updateQuantity`, line total, remove button bound to `removeItem`. Uses `useOptimistic` over the items array so quantity and removal feel instant; on `{ ok: false }` it reverts and shows the error inline. `useTransition` for pending state on each row.
-- `CartSummary`: subtotal via `formatPrice`, item count, a disabled "Checkout" button with "Checkout is not part of this demo" helper text.
+- `CartSummary`: subtotal via `formatPrice`, item count, and an enabled "Checkout" button that links to `/checkout`.
+
+### Thank-you page `app/checkout/page.tsx`
+
+- Static page (no cookies, no params): heading "Thank you", one paragraph explaining that checkout is outside this demo and what it would involve (payment, shipping, order confirmation), a link back to `/cart` and one to `/`. Copy hard-coded here; E09 reads it from the Sanity `checkoutPage` singleton with this copy as fallback.
+- `metadata`: `robots: { index: false }`.
 
 ### Add to Cart wiring
 
