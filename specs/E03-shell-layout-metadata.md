@@ -41,6 +41,10 @@ The shared frame every page renders inside: header with logo, nav and cart badge
 - Header height 56px mobile, 64px desktop. Nav stays visible on mobile (two links fit); no hamburger.
 - Test at 375, 768, 1280.
 
+### Security headers `next.config.ts`
+
+`headers()` returning for all routes: `Content-Security-Policy` (default-src 'self'; img-src 'self' data: blob: https://i8qy5y6gxkdgdcv9.public.blob.vercel-storage.com https://cdn.sanity.io; script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com; font-src 'self'; frame-ancestors 'none') [assumption: 'unsafe-inline' for scripts is accepted for the demo rather than a nonce-based CSP, which needs a proxy.ts and makes the shell dynamic; note the trade-off in the README], `Referrer-Policy: strict-origin-when-cross-origin`, `X-Content-Type-Options: nosniff`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`. Verify on the preview URL that Speed Insights and Analytics still report.
+
 ### Error and not-found
 
 - `app/not-found.tsx` with a link home and to search.

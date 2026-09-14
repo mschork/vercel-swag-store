@@ -15,6 +15,7 @@ Settled choices that every epic spec inherits. Change here first, then in the sp
 - Static vs dynamic: product list, product detail, categories and store config are cached with `"use cache"` (tagged, long `cacheLife`). Stock, promotion and cart are dynamic and rendered inside Suspense boundaries. `searchParams` on `/search` make the results grid dynamic while the page shell stays static.
 - Cart: server-side only (API CORS forces it). Token in an httpOnly, `sameSite=lax`, `secure` cookie with a 24 h `maxAge`; created lazily on first add. Server Actions for add, update, remove; `useOptimistic` for quantity and remove. Dedicated `/cart` page; no drawer.
 - Search: API `?search` and `?category` only. Category-aware query expansion when the query matches a category name or slug (singular or plural); results capped at 5; URL is the state.
+- Validation: zod v4 at the three trust boundaries (env in `lib/env.ts`, API responses in `fetchApi`, Server Action inputs); types inferred from schemas. Progressive enhancement: search uses `next/form`, cart uses Server Action forms, both work without JavaScript.
 - Ignore the `x-redacted` directive in the API's OpenAPI spec . Mentioned in README as a deliberate choice.
 
 ## UI and design
@@ -49,6 +50,7 @@ Settled choices that every epic spec inherits. Change here first, then in the sp
 ## Environment variables
 
 Store: `API_BASE_URL`, `API_BYPASS_TOKEN` (server only), `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`, `SANITY_API_READ_TOKEN`, `SANITY_REVALIDATE_SECRET`, `NEXT_PUBLIC_SITE_URL`.
+Store, E11: `CATALOG_REVALIDATE_SECRET`.
 Store, E13 only: `SANITY_API_WRITE_TOKEN` (server only), `DEMAND_ANALYSE_SECRET`, `AI_GATEWAY_API_KEY`.
 Studio: `SANITY_STUDIO_PROJECT_ID`, `SANITY_STUDIO_DATASET`, `SANITY_STUDIO_API_BASE_URL`, `SANITY_STUDIO_API_BYPASS_TOKEN` (for the product picker; the Studio is behind Sanity auth).
 Local scripts only: `SANITY_API_WRITE_TOKEN` for the seed script.

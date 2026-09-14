@@ -15,6 +15,7 @@ A demonstration storefront: a "Vercel Swag Store" storefront in Next.js 16 with 
 5. Every fetch of API or Sanity data lives in `apps/store/lib/` behind a typed function with an explicit cache policy. No ad hoc `fetch` in components.
 6. Do not hard-code counts (28 products, 6 featured, 13 categories). Page with `hasNextPage`; render what the API returns.
 7. Keep the dependency list short. No search libraries, no state-management libraries, no UI kits beyond the shadcn/ui components listed in the specs.
+8. zod is used only at trust boundaries (env, API responses, Server Action inputs). Never import it in a component.
 
 ## Cache policy
 

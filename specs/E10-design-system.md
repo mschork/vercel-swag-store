@@ -37,6 +37,10 @@ Install only: `button`, `input`, `select`, `badge`, `skeleton`, `separator`. Add
 - `skeletons.tsx`: card, banner, stock, cart row.
 - `empty-state.tsx`: heading, text, actions row.
 
+### Navigation feedback
+
+Product cards and nav links render a `LinkStatus` child using `useLinkStatus()` that shows a subtle progress cue (a 2px top bar or reduced opacity) while the navigation is pending, so moving between static pages with dynamic holes never feels unresponsive. Respect `prefers-reduced-motion`.
+
 ### Layout rhythm
 
 Section gaps 48px mobile, 64px desktop; within-section 16 to 24px; container `max-w-6xl`. Product grids 2 / 3 / 4 (5 on search at lg).

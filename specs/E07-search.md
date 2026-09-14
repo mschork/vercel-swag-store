@@ -22,7 +22,7 @@ Branch: `epic/E07-search`. Depends on: E02, E03, E04 (ProductCard). Blocks: E13.
 
 ### Search form `components/search/search-form.tsx`
 
-Client component. Reads initial values from `useSearchParams`.
+Built on `Form` from `next/form` with `action="/search"` so it works without JavaScript: Enter and the button submit a GET with `q` and `category`, and Next prefetches the results route. A small client component wraps the input to add the debounced auto-search and the pending state; it reads initial values from `useSearchParams`.
 
 - Text input with label (visually hidden) and placeholder "Search products"; a submit button "Search"; a native `<select>` for category with an "All categories" option; categories passed in as props from the server (`getCategories()`, cached).
 - Triggers: submit (Enter or button) always navigates; typing triggers after `value.trim().length >= 3` with a 300 ms debounce; clearing the input to empty navigates to the default state; changing the select navigates immediately.
