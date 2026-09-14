@@ -41,7 +41,7 @@ Sections, in this order, each short:
 ### Repository hygiene
 
 - Make the repo public; confirm no secrets in history (`gitleaks` or a manual `git log -p | grep -i token` pass).
-- `LICENSE` MIT [assumption]; `.env.example`; `CODEOWNERS` not needed.
+- No `LICENSE` file (settled 2026-09-14: the code is not licensed for reuse; README states this in one line). `.env.example`; `CODEOWNERS` not needed.
 - PR history preserved (no squash to a single commit) so the epic trail is visible.
 - Tag `v1.0.0` at the submitted commit.
 
@@ -69,5 +69,5 @@ Short draft to the reviewer: repo link, deployment link, studio link (optional),
 
 ## Open questions
 
-1. Licence: MIT or none? [assumption: MIT]
+1. Licence: MIT or none? Settled 2026-09-14: none; README states the code is not licensed for reuse.
 2. Do you want the studio URL in the email, or keep the submission to the two required links and mention Sanity in the README only? [assumption: include, labelled optional]
