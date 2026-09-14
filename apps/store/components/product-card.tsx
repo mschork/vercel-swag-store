@@ -1,5 +1,5 @@
-import Image from 'next/image'
 import Link from 'next/link'
+import { ProductImage } from '@/components/product-image'
 import type { Product } from '@/lib/api/types'
 import { formatPrice } from '@/lib/format'
 
@@ -21,16 +21,12 @@ export function ProductCard({
       className="group relative block overflow-hidden rounded-lg border border-border bg-bg-secondary"
     >
       <div className="relative aspect-square">
-        {product.images[0] ? (
-          <Image
-            src={product.images[0]}
-            alt=""
-            fill
-            priority={priority}
-            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-            className="object-cover"
-          />
-        ) : null}
+        <ProductImage
+          product={product}
+          alt=""
+          priority={priority}
+          sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+        />
       </div>
       <div className="absolute bottom-3 left-3 flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-full border border-border bg-bg py-1 pr-1 pl-3 text-sm">
         <span className="line-clamp-2 font-medium">{product.name}</span>
