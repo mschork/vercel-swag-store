@@ -1,26 +1,39 @@
 import 'server-only'
-
-const REQUIRED = ['API_BASE_URL', 'API_BYPASS_TOKEN'] as const
-
-type RequiredKey = (typeof REQUIRED)[number]
-
-export type ServerEnv = Record<RequiredKey, string>
+import { z } from 'zod'
 
 /**
- * Throws with a clear message if a required server variable is missing.
- * Called from `instrumentation.ts` so the server fails at startup rather than
- * on the first request that needs the API.
+ * Server-side environment, validated once at module load. `instrumentation.ts`
+ * imports this module at startup so a missing or malformed variable stops the
+ * server before the first request instead of failing inside a render.
+ *
+ * Sanity variables are added here by E09; E02 validates only what it uses.
+ * `API_BYPASS_TOKEN` stays required even while the API is not enforcing
+ * Deployment Protection: the documented contract is that it is.
  */
-export function assertServerEnv(): ServerEnv {
-  const missing = REQUIRED.filter((key) => !process.env[key])
-  if (missing.length > 0) {
+const ServerEnvSchema = z.object({
+  API_BASE_URL: z.url(),
+  API_BYPASS_TOKEN: z.string().min(1),
+  NEXT_PUBLIC_SITE_URL: z.url().default('http://localhost:3000'),
+})
+
+export type ServerEnv = z.infer<typeof ServerEnvSchema>
+
+function parseServerEnv(): ServerEnv {
+  const result = ServerEnvSchema.safeParse({
+    API_BASE_URL: process.env.API_BASE_URL,
+    API_BYPASS_TOKEN: process.env.API_BYPASS_TOKEN,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || undefined,
+  })
+  if (!result.success) {
+    const problems = result.error.issues
+      .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+      .join('; ')
     throw new Error(
-      `Missing required environment variable(s): ${missing.join(', ')}. ` +
-        'Copy apps/store/.env.example to apps/store/.env.local and fill them in.',
+      `Invalid server environment: ${problems}. ` +
+        'Copy apps/store/.env.example to apps/store/.env.local and fill it in.',
     )
   }
-  return {
-    API_BASE_URL: process.env.API_BASE_URL as string,
-    API_BYPASS_TOKEN: process.env.API_BYPASS_TOKEN as string,
-  }
+  return result.data
 }
+
+export const serverEnv: ServerEnv = parseServerEnv()
