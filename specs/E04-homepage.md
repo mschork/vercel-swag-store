@@ -66,13 +66,13 @@ Featured section heading "Featured" with a text link "View all" to `/search`.
 
 ## Acceptance criteria
 
-- [ ] `/` is listed as static in the build output; the promo banner is the only dynamic segment (visible as a Suspense boundary in the RSC payload).
-- [ ] At least 6 products with image, name, price, linking to their PDP.
-- [ ] Promo banner shows live API data; disabling network to the API leaves the page rendering without the banner.
-- [ ] Hero image is LCP and loads with `priority`; no CLS from the banner for any of the four current promos.
-- [ ] Lighthouse mobile performance 90+ (record numbers in E11).
-- [ ] Layout holds at 375, 768, 1280.
-- [ ] Only `button` and `skeleton` exist under `components/ui`; no `.dark` variant in `globals.css`.
+- [x] `/` is listed as static in the build output; the promo banner is the only dynamic segment (visible as a Suspense boundary in the RSC payload).
+- [x] At least 6 products with image, name, price, linking to their PDP.
+- [x] Promo banner shows live API data; disabling network to the API leaves the page rendering without the banner.
+- [x] Hero image is LCP and loads with `priority`; no CLS from the banner for any of the four current promos.
+- [x] Lighthouse mobile performance 90+ (record numbers in E11).
+- [x] Layout holds at 375, 768, 1280.
+- [x] Only `button` and `skeleton` exist under `components/ui`; no `.dark` variant in `globals.css`.
 
 ## Out of scope
 
