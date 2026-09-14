@@ -24,7 +24,7 @@ Evidence, not claims: prove which parts of each route are static, that the dynam
 ### Client bundle audit
 
 - `grep -r "OykROcuULI6Y" .next/static` returns nothing (token never in the client bundle).
-- `pnpm dlx @next/bundle-analyzer` or `next build --profile` to check that client components are leaves: search form, quantity stepper, cart list, theme select, nav link. Anything else marked `"use client"` needs a reason in the PR.
+- `pnpm dlx @next/bundle-analyzer` or `next build --profile` to check that client components are leaves: search form, quantity stepper, cart list, nav link, error boundary. Anything else marked `"use client"` needs a reason in the PR.
 
 ### Images
 

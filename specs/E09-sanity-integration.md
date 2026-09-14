@@ -39,7 +39,7 @@ Tags: every query tags `sanity` and `sanity:<type>`; single-document queries als
 
 ### Site settings and metadata (E03 revisit)
 
-- Root `generateMetadata` reads `siteSettings` via `sanityFetch` and falls back to the E03 constants when the document is missing. Because it is cached, the root stays static.
+- Root `generateMetadata` reads `siteSettings` via `sanityFetch` and falls back to the API's `/store/config` `seo` block (E03) when the document is missing. Because both are cached, the root stays static.
 - Footer social links prefer `siteSettings.socialLinks`, then `/store/config`.
 
 ### Homepage (E04 revisit)
