@@ -1,3 +1,10 @@
 packages:
   - apps/*
   - packages/*
+
+# pnpm 12 refuses to run undeclared install scripts; declare them explicitly.
+# esbuild verifies its platform binary; unrs-resolver only installs a fallback
+# when the platform package is missing, so it is not needed.
+allowBuilds:
+  esbuild: true
+  unrs-resolver: false

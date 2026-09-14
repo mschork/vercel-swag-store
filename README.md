@@ -14,7 +14,7 @@ _To be written in E12._
 
 ## Running locally
 
-Requirements: Node 24 (see `.nvmrc`) and pnpm 10 (the `packageManager` field pins the exact version; Corepack or pnpm itself will pick it up).
+Requirements: Node 24 (see `.nvmrc`) and pnpm 12 (the `packageManager` field pins the exact version; Corepack or pnpm itself will pick it up).
 
 ```sh
 pnpm install
