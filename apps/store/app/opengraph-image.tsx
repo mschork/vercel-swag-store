@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { ImageResponse } from 'next/og'
+import { TRIANGLE_PATH, TRIANGLE_VIEWBOX } from '@/components/logo'
 
 export const alt = 'Vercel Swag Store'
 export const size = { width: 1200, height: 630 }
@@ -26,11 +27,10 @@ export default async function Image() {
           fontFamily: 'Geist',
         }}
       >
-        <svg viewBox="0 0 76 65" width="120" height="103" fill="#fff">
-          <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
+        <svg viewBox={TRIANGLE_VIEWBOX} width="120" height="103" fill="#fff">
+          <path d={TRIANGLE_PATH} />
         </svg>
         <div style={{ fontSize: 64, letterSpacing: -1 }}>Vercel Swag Store</div>
-        <div style={{ fontSize: 28, color: '#a1a1a1' }}>Official Vercel merchandise</div>
       </div>
     ),
     { ...size, fonts: [{ name: 'Geist', data: geist, style: 'normal', weight: 400 }] },

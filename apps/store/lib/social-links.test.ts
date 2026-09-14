@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { socialLabel, socialLinks } from './social-links'
+import { socialLinks } from './social-links'
 
-describe('socialLabel', () => {
+describe('socialLinks', () => {
   it('maps known networks to their display names', () => {
-    expect(socialLabel('twitter')).toBe('X')
-    expect(socialLabel('github')).toBe('GitHub')
-    expect(socialLabel('discord')).toBe('Discord')
+    expect(
+      socialLinks({ twitter: 'https://x.com/v', github: 'https://github.com/v', discord: 'https://discord.gg/v' }).map(
+        (l) => l.label,
+      ),
+    ).toEqual(['X', 'GitHub', 'Discord'])
   })
 
   it('capitalises unknown keys instead of dropping them', () => {
-    expect(socialLabel('mastodon')).toBe('Mastodon')
+    expect(socialLinks({ mastodon: 'https://m.social/v' })[0]?.label).toBe('Mastodon')
   })
-})
 
-describe('socialLinks', () => {
   it('keeps API order and renders every key', () => {
     expect(
       socialLinks({ github: 'https://github.com/vercel', twitter: 'https://twitter.com/vercel', bluesky: 'https://bsky.app/v' }),

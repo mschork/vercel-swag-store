@@ -11,7 +11,7 @@ import './globals.css'
 
 /**
  * Root metadata comes from the API's `/store/config` `seo` block. The call is
- * cached, so the metadata is resolved at build and the layout stays static.
+ * cached, so the metadata is resolved at build and the shell stays prerendered.
  */
 export async function generateMetadata(): Promise<Metadata> {
   const { storeName, seo } = await getStoreConfig()
@@ -19,13 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(publicEnv.NEXT_PUBLIC_SITE_URL),
     title: { default: seo.defaultTitle, template: seo.titleTemplate },
     description: seo.defaultDescription,
-    openGraph: {
-      type: 'website',
-      siteName: storeName,
-      locale: 'en_US',
-      title: seo.defaultTitle,
-      description: seo.defaultDescription,
-    },
+    openGraph: { type: 'website', siteName: storeName, locale: 'en_US' },
     twitter: { card: 'summary_large_image' },
   }
 }
