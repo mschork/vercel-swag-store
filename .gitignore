@@ -1,0 +1,26 @@
+# dependencies
+node_modules
+
+# build output
+.next
+.turbo
+dist
+out
+
+# env files: only the examples are committed
+.env*
+!.env.example
+
+# tests
+playwright-report
+test-results
+coverage
+
+# tooling
+.vercel
+.sanity
+*.tsbuildinfo
+next-env.d.ts
+
+# os
+.DS_Store
