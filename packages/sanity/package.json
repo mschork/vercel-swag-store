@@ -1,0 +1,26 @@
+{
+  "name": "@repo/sanity",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./env": "./src/env.ts",
+    "./schemas": "./src/schemas/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sanity/client": "^8.6.1"
+  },
+  "devDependencies": {
+    "@repo/config": "workspace:*",
+    "sanity": "^6.13.2",
+    "typescript": "^5"
+  },
+  "peerDependencies": {
+    "sanity": "^6"
+  }
+}
