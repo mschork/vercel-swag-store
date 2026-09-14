@@ -15,16 +15,16 @@ A pnpm + Turborepo workspace with a Next.js 16 store app (Cache Components on) a
 - `turbo.json` tasks: `build` (dependsOn `^build`, outputs `.next/**` excluding cache, `dist/**`), `dev` (persistent, no cache), `lint`, `typecheck`, `test`. Declare env vars per task with `env` and `globalEnv` so Turbo's hashing is correct (`API_BASE_URL`, `API_BYPASS_TOKEN`, `NEXT_PUBLIC_SANITY_*`, `SANITY_*`, `NEXT_PUBLIC_SITE_URL`).
 - `.nvmrc` pinned to the current Node LTS; `packageManager` field pinned to a pnpm 10 version.
 - `.gitignore` covering `.next`, `node_modules`, `.turbo`, `.env*` except `.env.example`, `dist`, `playwright-report`.
-- `.editorconfig`, `.prettierrc` (default plus `singleQuote: true`, `semi: false` [assumption]).
+- `.editorconfig`, `.prettierrc` (default plus `singleQuote: true`, `semi: false`).
 
 ### apps/store
 
-- `create-next-app@latest` with TypeScript, App Router, Tailwind v4, ESLint, `src/` directory off [assumption: keep `app/`, `components/`, `lib/` at app root for shorter imports], import alias `@/*`.
-- `next.config.ts`: `cacheComponents: true`; `images.remotePatterns` for `i8qy5y6gxkdgdcv9.public.blob.vercel-storage.com` and `cdn.sanity.io`; `typedRoutes: true` [assumption].
+- `create-next-app@latest` with TypeScript, App Router, Tailwind v4, ESLint, `src/` directory off, import alias `@/*`.
+- `next.config.ts`: `cacheComponents: true`; `images.remotePatterns` for `i8qy5y6gxkdgdcv9.public.blob.vercel-storage.com` and `cdn.sanity.io`; `typedRoutes: true`.
 - `app/layout.tsx` placeholder with Geist Sans and Geist Mono via `next/font/google` exposing `--font-geist-sans` and `--font-geist-mono`.
 - `app/globals.css` with Tailwind v4 `@import "tailwindcss"` and an empty `@theme` block ready for E10.
 - `.env.example` listing every variable from `specs/decisions.md` with a one-line comment each.
-- `lib/env.ts`: a tiny runtime guard that throws at startup in server code if `API_BASE_URL` or `API_BYPASS_TOKEN` is missing. No zod [assumption: avoid a dependency for six variables].
+- `lib/env.ts`: a tiny runtime guard that throws at startup in server code if `API_BASE_URL` or `API_BYPASS_TOKEN` is missing. No zod.
 
 ### apps/studio
 
@@ -36,7 +36,7 @@ A pnpm + Turborepo workspace with a Next.js 16 store app (Cache Components on) a
 ### packages
 
 - `packages/config`: `tsconfig/base.json`, `tsconfig/nextjs.json`, `tsconfig/react-library.json`, `eslint` config exporting the Next core-web-vitals set. Name `@repo/config`.
-- `packages/sanity`: name `@repo/sanity`; exports `schemaTypes` (empty for now), `client.ts` (factory taking projectId, dataset, token, `useCdn`), `env.ts`. Built with `tsc` to `dist` or consumed as source via `exports` pointing at `src` [assumption: consume source, transpile in consumers, avoid a build step].
+- `packages/sanity`: name `@repo/sanity`; exports `schemaTypes` (empty for now), `client.ts` (factory taking projectId, dataset, token, `useCdn`), `env.ts`. Built with `tsc` to `dist` or consumed as source via `exports` pointing at `src`.
 
 ### Repo docs
 
@@ -61,9 +61,3 @@ A pnpm + Turborepo workspace with a Next.js 16 store app (Cache Components on) a
 ## Out of scope
 
 Any page content, API client, Sanity schemas, design tokens.
-
-## Open questions
-
-1. GitHub repo name and visibility timing: create public from the start or flip to public at submission? [assumption: private until E12, then public]
-2. Vercel team: personal account or a dedicated team? [assumption: personal]
-3. Prettier settings: semicolons or not? [assumption: none, single quotes]

@@ -63,7 +63,3 @@ Write `docs/static-vs-dynamic.md`: one table with route, static parts, dynamic p
 ## Out of scope
 
 Load testing, CDN tuning, image CDN alternatives.
-
-## Open questions
-
-1. Is Lighthouse CI in GitHub Actions wanted, or manual runs recorded in docs enough? [assumption: manual, recorded]

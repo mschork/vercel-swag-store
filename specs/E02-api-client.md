@@ -34,6 +34,7 @@ Mark every file in `lib/api` with `import 'server-only'` so a client import fail
 ### client.ts
 
 - `fetchApi<T>(path, init?)`: builds the URL from `API_BASE_URL`, merges the bypass header, sets `accept: application/json`, parses JSON, and returns `data` (and `meta` when present) from the envelope. On `success: false` or non-2xx, throws `ApiError { status, code, message, details }`.
+- Build-time failures: `fetchApi` throws on network errors and non-2xx responses during prerender exactly as at runtime, and nothing catches it there, so `next build` fails if the API is unreachable or the bypass token is wrong (see `callout.md`). A deploy with an empty store is worse than a failed build.
 - Never sets Next `fetch` cache options itself; caching is done with `"use cache"` at the function level so the policy is visible in one place. Pass `cache: 'no-store'` is not needed under Cache Components; leave fetch defaults.
 - Accepts an optional `headers` map for `x-cart-token`.
 - Timeout: `signal: AbortSignal.timeout(5000)` on every request. Retry once on network error or 5xx for idempotent GETs only (never for cart mutations), with a 250 ms backoff. Timeouts surface as `ApiError` code `TIMEOUT`.
@@ -57,7 +58,7 @@ Types are inferred from the zod schemas (`export type Product = z.infer<typeof P
 export const TAGS = { products: 'products', categories: 'categories', store: 'store', cart: 'cart', sanity: 'sanity' } as const
 ```
 
-Cache profiles: define custom `cacheLife` profiles in `next.config.ts` under `cacheLife`: `catalog` (stale 300, revalidate 3600, expire 86400) [assumption: numbers can be tuned in E11]. Use the built-in `'hours'` if custom profiles complicate the build.
+Cache profiles: define custom `cacheLife` profiles in `next.config.ts` under `cacheLife`: `catalog` (stale 300, revalidate 3600, expire 86400). Use the built-in `'hours'` if custom profiles complicate the build.
 
 ### products.ts
 
@@ -96,7 +97,7 @@ Plain async functions, no `"use cache"`, and a comment stating why (values chang
 
 - [ ] Every endpoint in `api-reference.md` has a typed function.
 - [ ] `import 'server-only'` present in every `lib/api` module; a deliberate client import fails the build.
-- [ ] `pnpm test` passes; coverage on `lib/api` above 80 percent [assumption on threshold].
+- [ ] `pnpm test` passes; coverage on `lib/api` above 80 percent.
 - [ ] `grep -r NEXT_PUBLIC_API` returns nothing.
 - [ ] Cache policy table in `AGENTS.md` matches the code.
 
@@ -106,9 +107,4 @@ Sanity fetches (E09), cookies and Server Actions (E06), UI.
 
 ## Note on E01
 
-E01 shipped `lib/env.ts` as a manual guard on purpose; this epic replaces it with the zod schema. That supersedes the E01 [assumption] about avoiding zod.
-
-## Open questions
-
-1. Generate types with `openapi-typescript` instead of hand-writing zod schemas? [assumption: hand-write; 12 endpoints is small and the zod schemas double as documentation]
-2. Cache durations for catalogue data: minutes or hours? [assumption: 1 h revalidate, 24 h expire; product data has been static since February]
+E01 shipped `lib/env.ts` as a manual guard on purpose; this epic replaces it with the zod schema. E01's spec records the no-zod choice as what was built at the time.
