@@ -12,6 +12,18 @@ _Avoid_: Static data, master data
 Stock, promotion and cart. Fetched on every request and never cached, because the API changes them per request or per visitor.
 _Avoid_: Dynamic data, realtime data
 
+**Shell**:
+The part of a route that is prerendered at build and identical for every visitor: header, footer, page frame and cached catalogue content.
+_Avoid_: Static page, layout
+
+**Dynamic hole**:
+A Suspense boundary inside the shell whose content is rendered per request from live data.
+_Avoid_: Dynamic section, island, client part
+
+**Theme**:
+Light or dark, taken from the visitor's operating-system preference. The store offers no control of its own and never learns the choice.
+_Avoid_: Mode, dark mode, colour scheme, theme selector
+
 **Cart token**:
 The credential that identifies one anonymous cart. Lives only in an httpOnly cookie and on the server; the browser never reads it.
 _Avoid_: Cart id, session, session token
