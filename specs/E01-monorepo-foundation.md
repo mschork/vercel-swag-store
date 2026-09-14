@@ -56,7 +56,7 @@ A pnpm + Turborepo workspace with a Next.js 16 store app (Cache Components on) a
 - [x] `pnpm lint` and `pnpm typecheck` pass with zero warnings treated as errors in CI.
 - [ ] Both Vercel projects deploy from `main`; preview deployments appear on a test PR.
 - [x] `.env.example` is complete; `lib/env.ts` throws a clear message when a variable is missing.
-- [ ] No secret in git history.
+- [x] No secret in git history.
 
 ## Out of scope
 
