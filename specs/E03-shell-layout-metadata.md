@@ -82,7 +82,7 @@ Vitest: `lib/security-headers.test.ts` (required directives present, no `hhhhhh`
 - [x] Header and footer on all routes; keyboard navigation reaches every control; skip link works.
 - [x] Lighthouse accessibility 100 on `/` at this stage.
 - [x] `grep -r hhhhhh apps/` returns nothing.
-- [ ] `NEXT_PUBLIC_SITE_URL` set to the production URL for Production and Preview in the Vercel project.
+- [x] `NEXT_PUBLIC_SITE_URL` set to the production URL for Production and Preview in the Vercel project.
 
 ## Out of scope
 
