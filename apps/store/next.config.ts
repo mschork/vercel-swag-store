@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import { securityHeaders } from './lib/security-headers'
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
@@ -8,6 +9,9 @@ const nextConfig: NextConfig = {
     catalog: { stale: 300, revalidate: 3600, expire: 86400 },
   },
   typedRoutes: true,
+  async headers() {
+    return [{ source: '/:path*', headers: securityHeaders({ allowEval: process.env.NODE_ENV === 'development' }) }]
+  },
   images: {
     remotePatterns: [
       {
