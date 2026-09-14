@@ -24,8 +24,8 @@ Settled choices that every epic spec inherits. Change here first, then in the sp
 - Components: shadcn/ui using Base UI primitives, minimal set (Button, Input, Select, Badge, Skeleton, Sheet or Dialog only if needed, Toast). Tokens overridden so the result does not look like stock shadcn.
 - Typography: Geist Sans and Geist Mono via `next/font`.
 - Colour: monochrome. Dark canvas `#000` with `#0a0a0a` secondary; light canvas `#fff` with `#fafafa` secondary; one accent (blue, Vercel family) reserved for price pills, focus and primary action. No gradients, glows or shadows.
-- Theme: light, dark and system; selector lives in the footer; default follows system. Implement with `next-themes` and a `class` strategy so Tailwind `dark:` works.
-- Branding: page title "Vercel Swag Store"; header shows an original triangle-inspired glyph, not Vercel's logo SVG or wordmark.
+- Theme: light and dark follow the visitor's operating-system preference through `prefers-color-scheme`. No selector, no `next-themes`, no theme script; Tailwind's default media-query `dark:` variant.
+- Branding: page title "Vercel Swag Store"; header shows the Vercel triangle as an inline SVG in `currentColor` with the store name as Geist text, not the wordmark SVG. Root metadata (title, template, description, site name) comes from the API's `/store/config` `seo` block.
 - Layout: mobile-first; breakpoints 375, 768, 1280; product grid 2 / 3 / 4 columns.
 
 ## Sanity

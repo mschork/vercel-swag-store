@@ -16,12 +16,12 @@ Monochrome with one accent; hierarchy through type and spacing before borders; n
 
 Tailwind v4 `@theme` block defining:
 
-- Colours as CSS variables that flip by theme class: `--color-bg`, `--color-bg-secondary`, `--color-fg`, `--color-fg-secondary`, `--color-border`, `--color-border-strong`, `--color-accent`, `--color-accent-fg`, `--color-success`, `--color-warning`, `--color-danger`. Light: `#fff`, `#fafafa`, `#171717`, `#666`, `#eaeaea`, `#999`. Dark: `#000`, `#0a0a0a`, `#ededed`, `#a1a1a1`, `#2a2a2a`, `#444`. Accent `#0070f3` light and `#3291ff` dark.
+- Colours as CSS variables that flip on `prefers-color-scheme: dark` (defined in E03): `--color-bg`, `--color-bg-secondary`, `--color-fg`, `--color-fg-secondary`, `--color-border`, `--color-border-strong`, `--color-accent`, `--color-accent-fg`, `--color-success`, `--color-warning`, `--color-danger`. Light: `#fff`, `#fafafa`, `#171717`, `#666`, `#eaeaea`, `#999`. Dark: `#000`, `#0a0a0a`, `#ededed`, `#a1a1a1`, `#2a2a2a`, `#444`. Accent `#0070f3` light and `#3291ff` dark.
 - Radii: `--radius-sm: 4px`, `--radius: 8px`. Spacing uses Tailwind's scale.
 - Fonts: `--font-sans: var(--font-geist-sans)`, `--font-mono: var(--font-geist-mono)`.
 - Type scale: 14 / 16 body, 20 / 24 / 32 / 48 headings with matching line heights; tabular numerals on prices via `font-variant-numeric: tabular-nums`.
 
-`next-themes` toggles `class="dark"`; use `@custom-variant dark (&:where(.dark, .dark *))` so `dark:` utilities follow the class not the media query.
+Tailwind's default `dark:` variant follows the media query; no custom variant.
 
 ### Components `components/ui/` (shadcn, Base UI primitives)
 
@@ -29,7 +29,7 @@ Install only: `button`, `input`, `select`, `badge`, `skeleton`, `separator`. Add
 
 ### Our components `components/`
 
-- `logo.tsx`: original triangle glyph, 24px, `currentColor`; not Vercel's logo SVG.
+- `logo.tsx` (E03): the Vercel triangle, 24px, `currentColor`.
 - `product-card.tsx` (E04) polish: image on `bg-secondary`, 1px border, radius, name and price pill bottom-left, hover raises border to `border-strong` and scales image 1.02 with `motion-safe`.
 - `price.tsx`: tabular numerals; optional `compareAt` unused for now.
 - `quantity-stepper.tsx`: 40px hit targets, keyboard arrows, `aria-label`s.
