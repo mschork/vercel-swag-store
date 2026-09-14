@@ -20,6 +20,12 @@ Branch: `epic/E05-pdp`. Depends on: E02, E03. Blocks: E06 (needs the Add to Cart
   3. Details: name (h1), `formatPrice`, description paragraph, then `<Suspense fallback={<StockSkeleton />}><StockAndCart productId slug /></Suspense>`.
 - Unknown slug: `getProduct` throws `ApiError` 404, page calls `notFound()`; `app/products/[slug]/not-found.tsx` offers a link to search.
 
+### Structured data and crawl files
+
+- PDP renders a `<script type="application/ld+json">` with `Product` (name, image, description, sku = id, brand "Vercel Swag Store") and `Offer` (price in major units, `priceCurrency`, `availability` from the stock result, rendered inside the same Suspense boundary so it reflects live stock) and a `BreadcrumbList`.
+- `app/sitemap.ts`: home, search, and every product slug from `getAllProductSlugs()`; `lastModified` from `createdAt`. Cached like the catalogue.
+- `app/robots.ts`: allow all, disallow `/cart` and `/api/`, point at the sitemap.
+
 ### Gallery `components/product/gallery.tsx`
 
 - Large `next/image` with `priority`, `sizes="(min-width: 768px) 50vw, 100vw"`, aspect square, on the surface-secondary token.

@@ -36,11 +36,20 @@ Mark every file in `lib/api` with `import 'server-only'` so a client import fail
 - `fetchApi<T>(path, init?)`: builds the URL from `API_BASE_URL`, merges the bypass header, sets `accept: application/json`, parses JSON, and returns `data` (and `meta` when present) from the envelope. On `success: false` or non-2xx, throws `ApiError { status, code, message, details }`.
 - Never sets Next `fetch` cache options itself; caching is done with `"use cache"` at the function level so the policy is visible in one place. Pass `cache: 'no-store'` is not needed under Cache Components; leave fetch defaults.
 - Accepts an optional `headers` map for `x-cart-token`.
+- Timeout: `signal: AbortSignal.timeout(5000)` on every request. Retry once on network error or 5xx for idempotent GETs only (never for cart mutations), with a 250 ms backoff. Timeouts surface as `ApiError` code `TIMEOUT`.
 - Return raw `Response` headers to callers that need them (`createCart` reads `x-cart-token`).
+
+### Validation with zod (boundary rule)
+
+Add `zod` (v4). It is used at exactly three trust boundaries and nowhere else: environment variables, API responses, Server Action inputs (E06). Components never import zod.
+
+- `lib/env.ts`: replace the E01 manual guard with a zod schema for the server env (`API_BASE_URL` url, `API_BYPASS_TOKEN` min length, Sanity vars, `NEXT_PUBLIC_SITE_URL` url); parse once at module load and export the typed object. Keep `NEXT_PUBLIC_*` in a separate client-safe schema.
+- `lib/api/schemas.ts`: zod schemas for `Product`, `StockInfo`, `Category`, `Promotion`, `Cart`, `CartItem`, `Pagination`, `StoreConfig`, the success envelope and the error envelope. Use `.passthrough()` on objects so new API fields do not break parsing.
+- `fetchApi` takes the schema as an argument and calls `schema.parse(json)`; a parse failure throws `ApiError` with code `INVALID_RESPONSE` and is logged with the path (never the body of a cart, which may contain the token).
 
 ### types.ts
 
-Hand-written from the spec (not generated, to keep the dependency list short and the types readable). Prices are `number` in cents; document that on the type. Add `ProductListResult = { products: Product[]; pagination: Pagination }`.
+Types are inferred from the zod schemas (`export type Product = z.infer<typeof ProductSchema>`), so there is one source of truth. Prices are `number` in cents; document that on the schema with `.describe()`. Add `ProductListResult = { products: Product[]; pagination: Pagination }`.
 
 ### cache.ts
 
@@ -95,7 +104,11 @@ Plain async functions, no `"use cache"`, and a comment stating why (values chang
 
 Sanity fetches (E09), cookies and Server Actions (E06), UI.
 
+## Note on E01
+
+E01 shipped `lib/env.ts` as a manual guard on purpose; this epic replaces it with the zod schema. That supersedes the E01 [assumption] about avoiding zod.
+
 ## Open questions
 
-1. Generate types with `openapi-typescript` instead of hand-writing? [assumption: hand-write; 12 endpoints is small and the generated names are ugly]
+1. Generate types with `openapi-typescript` instead of hand-writing zod schemas? [assumption: hand-write; 12 endpoints is small and the zod schemas double as documentation]
 2. Cache durations for catalogue data: minutes or hours? [assumption: 1 h revalidate, 24 h expire; product data has been static since February]

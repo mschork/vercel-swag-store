@@ -28,14 +28,15 @@ Sections, in this order, each short:
 1. What this is: one paragraph plus the two URLs.
 2. Architecture: monorepo layout; API as source of truth; Sanity layer; diagram as a Mermaid block.
 3. Static vs dynamic: the table from E11 verbatim.
-4. Caching: `"use cache"` policy table, tags, revalidation paths (time-based, Server Action, webhook).
+4. Caching: `"use cache"` policy table, tags, revalidation paths (time-based, Server Action, Sanity webhook, catalogue revalidation route).
 5. Server Actions and the cart: cookie design, why server-side only, expiry handling.
 6. Search: URL contract, category-aware expansion, why no search service.
 7. Sanity: what it owns, what it never owns, merge rules.
 8. Performance: Lighthouse numbers, Speed Insights note.
 9. Running locally: prerequisites, env vars, commands.
 10. How this was built: specs-driven workflow with Claude Code, one PR per epic, `AGENTS.md` guardrails, the `x-redacted` directive found in the API spec and deliberately not followed, the 31 vs 28 and search-vs-category findings. Factual tone, no editorialising.
-11. Not included: checkout, auth, cross-device carts, Flags.
+11. Trust boundaries: zod at env, API responses and action inputs; security headers and the CSP trade-off; observability via OpenTelemetry.
+12. Not included: checkout, auth, cross-device carts, Flags.
 
 ### Repository hygiene
 

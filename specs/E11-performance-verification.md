@@ -37,6 +37,18 @@ Evidence, not claims: prove which parts of each route are static, that the dynam
 - Speed Insights enabled in the Vercel project; record the first week's LCP, CLS, INP once data exists (or note "insufficient data" honestly).
 - Web Analytics enabled.
 
+### Observability
+
+`apps/store/instrumentation.ts` registering `@vercel/otel` with service name `vercel-swag-store`; add a span attribute on `fetchApi` calls (path, cached or not). Confirm traces appear in the Vercel project's Observability tab and record a screenshot in `docs/`.
+
+### Catalogue revalidation route
+
+`app/api/revalidate/catalog/route.ts`: POST protected by `CATALOG_REVALIDATE_SECRET` header; calls `revalidateTag` for `products`, `categories`, `store`. The API has no webhooks, so this is the operational way to refresh cached catalogue data without a redeploy. Document the curl command in the README and demonstrate it in `docs/static-vs-dynamic.md`.
+
+### Visual regression
+
+Playwright `toHaveScreenshot` for `/`, one PDP, `/search?q=hat`, `/cart` (with an item) in light and dark at 375 and 1280, snapshots committed, run in CI on PRs. Mask the promo banner and stock line (they vary by request).
+
 ### Static versus dynamic map
 
 Write `docs/static-vs-dynamic.md`: one table with route, static parts, dynamic parts, cache tags, revalidation trigger. This table is reused in the README and is the core of the interview explanation.
