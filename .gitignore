@@ -1,0 +1,35 @@
+# dependencies
+node_modules
+
+# build output
+.next
+.turbo
+dist
+out
+
+# env files: only the examples are committed
+.env*
+!.env.example
+
+# tests
+playwright-report
+test-results
+coverage
+
+# tooling
+.vercel
+.sanity
+*.tsbuildinfo
+next-env.d.ts
+
+# os
+.DS_Store
+
+# local-only documents (unredacted references, notes)
+working
+
+# local agent skills (installed via skills.sh, not committed)
+.claude/skills
+
+# local issue tracker for agent skills (see docs/agents/issue-tracker.md)
+.scratch
