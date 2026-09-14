@@ -6,12 +6,14 @@ import { z } from 'zod'
  * boundaries where zod is allowed (see AGENTS.md); `types.ts` infers the
  * TypeScript types from these so there is a single source of truth.
  *
- * Objects are loose so new API fields pass through instead of failing parse.
+ * zod v4 `z.object` strips unknown keys instead of failing, so new API fields
+ * never break parsing. `z.looseObject` was rejected: its index signature makes
+ * every inferred type accept any key and breaks `Omit`, see the PR.
  */
 
 const cents = z.int().nonnegative().describe('Amount in cents; format with formatPrice()')
 
-export const ProductSchema = z.looseObject({
+export const ProductSchema = z.object({
   id: z.string(),
   name: z.string(),
   slug: z.string(),
@@ -25,20 +27,20 @@ export const ProductSchema = z.looseObject({
   createdAt: z.string(),
 })
 
-export const StockInfoSchema = z.looseObject({
+export const StockInfoSchema = z.object({
   productId: z.string(),
   stock: z.int().nonnegative(),
   inStock: z.boolean(),
   lowStock: z.boolean(),
 })
 
-export const CategorySchema = z.looseObject({
+export const CategorySchema = z.object({
   slug: z.string(),
   name: z.string(),
   productCount: z.int().nonnegative(),
 })
 
-export const PromotionSchema = z.looseObject({
+export const PromotionSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string(),
@@ -49,7 +51,7 @@ export const PromotionSchema = z.looseObject({
   active: z.boolean(),
 })
 
-export const CartItemSchema = z.looseObject({
+export const CartItemSchema = z.object({
   productId: z.string(),
   quantity: z.int().nonnegative(),
   addedAt: z.string(),
@@ -62,15 +64,19 @@ export const CartItemSchema = z.looseObject({
  * reads this; everything else uses `CartSchema`, which strips the token so it
  * can never reach a client component (docs/adr/0002-cart-server-side-only.md).
  */
-export const RawCartSchema = z.looseObject({
-  token: z.string(),
+const cartShape = {
   items: z.array(CartItemSchema),
   totalItems: z.int().nonnegative(),
   subtotal: cents,
   currency: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
-})
+}
+
+export const RawCartSchema = z.object({ token: z.string(), ...cartShape })
+
+/** The cart as handed to pages and actions. Parsing drops `token` because the shape has no such key. */
+export const CartSchema = z.object(cartShape)
 
 export function withoutToken<T extends { token: string }>(cart: T): Omit<T, 'token'> {
   const copy: Partial<T> = { ...cart }
@@ -78,9 +84,7 @@ export function withoutToken<T extends { token: string }>(cart: T): Omit<T, 'tok
   return copy as Omit<T, 'token'>
 }
 
-export const CartSchema = RawCartSchema.transform(withoutToken)
-
-export const PaginationSchema = z.looseObject({
+export const PaginationSchema = z.object({
   page: z.int(),
   limit: z.int(),
   total: z.int(),
@@ -89,23 +93,23 @@ export const PaginationSchema = z.looseObject({
   hasPreviousPage: z.boolean(),
 })
 
-export const ProductListMetaSchema = z.looseObject({
+export const ProductListMetaSchema = z.object({
   pagination: PaginationSchema,
 })
 
-export const StoreConfigSchema = z.looseObject({
+export const StoreConfigSchema = z.object({
   storeName: z.string(),
   currency: z.string(),
   features: z.record(z.string(), z.boolean()),
   socialLinks: z.record(z.string(), z.string()),
-  seo: z.looseObject({
+  seo: z.object({
     defaultTitle: z.string(),
     titleTemplate: z.string(),
     defaultDescription: z.string(),
   }),
 })
 
-export const HealthSchema = z.looseObject({
+export const HealthSchema = z.object({
   status: z.string(),
   timestamp: z.string(),
   services: z.record(z.string(), z.string()),
@@ -113,7 +117,7 @@ export const HealthSchema = z.looseObject({
 
 export const ErrorEnvelopeSchema = z.object({
   success: z.literal(false),
-  error: z.looseObject({
+  error: z.object({
     code: z.string(),
     message: z.string(),
     details: z.unknown().optional(),
