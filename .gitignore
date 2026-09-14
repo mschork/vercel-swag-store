@@ -24,3 +24,6 @@ next-env.d.ts
 
 # os
 .DS_Store
+
+# local-only documents (unredacted references, notes)
+working
