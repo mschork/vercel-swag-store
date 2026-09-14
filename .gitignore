@@ -30,3 +30,6 @@ working
 
 # local agent skills (installed via skills.sh, not committed)
 .claude/skills
+
+# local issue tracker for agent skills (see docs/agents/issue-tracker.md)
+.scratch
