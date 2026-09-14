@@ -76,12 +76,12 @@ Vitest: `lib/security-headers.test.ts` (required directives present, no `hhhhhh`
 
 ## Acceptance criteria
 
-- [ ] Build output marks `/` as fully prerendered with no dynamic hole (the cart badge becomes the only one in E06).
+- [x] Build output marks `/` as fully prerendered with no dynamic hole (the cart badge becomes the only one in E06).
 - [ ] Root and per-page metadata visible in a social card debugger; OG image renders.
-- [ ] Light and dark follow the OS preference with no flash on reload.
-- [ ] Header and footer on all routes; keyboard navigation reaches every control; skip link works.
-- [ ] Lighthouse accessibility 100 on `/` at this stage.
-- [ ] `grep -r hhhhhh apps/` returns nothing.
+- [x] Light and dark follow the OS preference with no flash on reload.
+- [x] Header and footer on all routes; keyboard navigation reaches every control; skip link works.
+- [x] Lighthouse accessibility 100 on `/` at this stage.
+- [x] `grep -r hhhhhh apps/` returns nothing.
 - [ ] `NEXT_PUBLIC_SITE_URL` set to the production URL for Production and Preview in the Vercel project.
 
 ## Out of scope
