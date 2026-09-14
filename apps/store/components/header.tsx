@@ -1,8 +1,36 @@
+import Link from 'next/link'
 import { Suspense } from 'react'
 import { CartBadge } from './cart/cart-badge'
 import { CartIcon } from './cart/cart-icon'
 import { Logo } from './logo'
 import { NavLink } from './nav-link'
+
+const NAV = [
+  { href: '/', label: 'Home' },
+  { href: '/search', label: 'Search' },
+] as const
+
+/**
+ * The nav sits in a Suspense boundary because `NavLink` reads `usePathname()`.
+ * On static routes the pathname is known at prerender and the boundary
+ * resolves in the shell. On the fallback shell of a dynamic route (a product
+ * slug not listed at build) it is not, and without the boundary the build
+ * fails; there the plain links below are prerendered and the current-page
+ * marker streams in.
+ */
+function NavFallback() {
+  return (
+    <ul className="flex items-center gap-4 text-sm sm:gap-6">
+      {NAV.map(({ href, label }) => (
+        <li key={href}>
+          <Link href={href} className="text-fg-secondary hover:text-fg">
+            {label}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  )
+}
 
 export function Header() {
   return (
@@ -10,14 +38,15 @@ export function Header() {
       <div className="flex items-center gap-6 sm:gap-8">
         <Logo />
         <nav aria-label="Main">
-          <ul className="flex items-center gap-4 text-sm sm:gap-6">
-            <li>
-              <NavLink href="/">Home</NavLink>
-            </li>
-            <li>
-              <NavLink href="/search">Search</NavLink>
-            </li>
-          </ul>
+          <Suspense fallback={<NavFallback />}>
+            <ul className="flex items-center gap-4 text-sm sm:gap-6">
+              {NAV.map(({ href, label }) => (
+                <li key={href}>
+                  <NavLink href={href}>{label}</NavLink>
+                </li>
+              ))}
+            </ul>
+          </Suspense>
         </nav>
       </div>
       <Suspense fallback={<CartIcon count={null} />}>
