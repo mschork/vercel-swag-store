@@ -1,5 +1,5 @@
 import 'server-only'
-import type { z } from 'zod'
+import { z } from 'zod'
 import { serverEnv } from '@/lib/env'
 import { ErrorEnvelopeSchema, successEnvelope } from './schemas'
 
@@ -89,18 +89,9 @@ export async function fetchApi<TData, TMeta>(
 
   const response = await send(`${serverEnv.API_BASE_URL}${path}`, init, path, method === 'GET')
 
-  const contentType = response.headers.get('content-type') ?? ''
-  if (!contentType.includes('application/json')) {
-    if (!response.ok) throw httpError(response, path)
-    throw invalidResponse(path, response.status, ['body is not JSON'])
-  }
-
-  let json: unknown
-  try {
-    json = await response.json()
-  } catch {
-    if (!response.ok) throw httpError(response, path)
-    throw invalidResponse(path, response.status, ['body is not valid JSON'])
+  const json = await readJson(response)
+  if (json === NOT_JSON) {
+    throw response.ok ? invalidResponse(path, response.status, 'body is not JSON') : httpError(response, path)
   }
 
   const failure = ErrorEnvelopeSchema.safeParse(json)
@@ -112,11 +103,7 @@ export async function fetchApi<TData, TMeta>(
 
   const parsed = successEnvelope(options.schema, options.metaSchema).safeParse(json)
   if (!parsed.success) {
-    throw invalidResponse(
-      path,
-      response.status,
-      parsed.error.issues.map((issue) => `${issue.path.join('.') || '$'}: ${issue.message}`),
-    )
+    throw invalidResponse(path, response.status, z.prettifyError(parsed.error))
   }
   return {
     data: parsed.data.data as TData,
@@ -125,40 +112,59 @@ export async function fetchApi<TData, TMeta>(
   }
 }
 
-/** One attempt, plus one retry after a short backoff when `retryable` and the failure was a network error or a 5xx. */
+/**
+ * One attempt, plus one retry after a short backoff when `retryable` and the
+ * failure was a network error or a 5xx. The failure to surface if the retry
+ * also fails is the last one seen.
+ */
 async function send(url: string, init: RequestInit, path: string, retryable: boolean): Promise<Response> {
   const attempts = retryable ? 2 : 1
-  let last: Response | ApiError | undefined
+  let lastFailure: Response | ApiError = new ApiError(0, 'NETWORK_ERROR', `No response for ${path}`, path)
   for (let attempt = 0; attempt < attempts; attempt++) {
     if (attempt > 0) await sleep(RETRY_BACKOFF_MS)
     try {
       const response = await fetch(url, { ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
       if (response.status < 500) return response
-      last = response
+      lastFailure = response
     } catch (error) {
       if (isTimeout(error)) {
         throw new ApiError(0, 'TIMEOUT', `Request to ${path} timed out after ${REQUEST_TIMEOUT_MS} ms`, path)
       }
-      last = new ApiError(0, 'NETWORK_ERROR', `Could not reach the API for ${path}`, path)
+      lastFailure = new ApiError(0, 'NETWORK_ERROR', `Could not reach the API for ${path}`, path)
     }
   }
-  if (last instanceof ApiError) throw last
-  // Unreachable in practice: `last` is always set after the loop.
-  if (last === undefined) throw new ApiError(0, 'NETWORK_ERROR', `No response for ${path}`, path)
-  return last
+  if (lastFailure instanceof ApiError) throw lastFailure
+  return lastFailure
+}
+
+const NOT_JSON = Symbol('not-json')
+
+/** The parsed body, or `NOT_JSON` when the content type or the body itself is not JSON. */
+async function readJson(response: Response): Promise<unknown | typeof NOT_JSON> {
+  if (!(response.headers.get('content-type') ?? '').includes('application/json')) return NOT_JSON
+  try {
+    return await response.json()
+  } catch {
+    return NOT_JSON
+  }
 }
 
 function httpError(response: Response, path: string): ApiError {
   return new ApiError(
     response.status,
     'HTTP_ERROR',
-    `${response.status} ${response.statusText}`.trim(),
+    response.statusText || `HTTP ${response.status}`,
     path,
   )
 }
 
-function invalidResponse(path: string, status: number, issues: string[]): ApiError {
-  console.error(`[api] invalid response from ${path} (status ${status})`, issues)
+/**
+ * `detail` is a zod pretty-print or a short reason: paths and default zod
+ * messages only, which never echo received values, so no body content and
+ * no token can land in the log.
+ */
+function invalidResponse(path: string, status: number, detail: string): ApiError {
+  console.error(`[api] invalid response from ${path} (status ${status})\n${detail}`)
   return new ApiError(status, 'INVALID_RESPONSE', `Unexpected response shape from ${path}`, path)
 }
 

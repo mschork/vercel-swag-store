@@ -13,7 +13,5 @@ export const TAGS = {
   sanity: 'sanity',
 } as const
 
-export type CacheTag = (typeof TAGS)[keyof typeof TAGS]
-
 /** Name of the custom `cacheLife` profile defined in `next.config.ts`. */
 export const CATALOG_PROFILE = 'catalog'

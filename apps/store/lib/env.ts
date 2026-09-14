@@ -1,5 +1,6 @@
 import 'server-only'
 import { z } from 'zod'
+import { PublicEnvSchema, readPublicEnv } from './env.public'
 
 /**
  * Server-side environment, validated once at module load. `instrumentation.ts`
@@ -10,26 +11,23 @@ import { z } from 'zod'
  * `API_BYPASS_TOKEN` stays required even while the API is not enforcing
  * Deployment Protection: the documented contract is that it is.
  */
-const ServerEnvSchema = z.object({
+const ServerEnvSchema = PublicEnvSchema.extend({
   API_BASE_URL: z.url(),
   API_BYPASS_TOKEN: z.string().min(1),
-  NEXT_PUBLIC_SITE_URL: z.url().default('http://localhost:3000'),
 })
 
 export type ServerEnv = z.infer<typeof ServerEnvSchema>
 
 function parseServerEnv(): ServerEnv {
   const result = ServerEnvSchema.safeParse({
+    ...readPublicEnv(),
     API_BASE_URL: process.env.API_BASE_URL,
     API_BYPASS_TOKEN: process.env.API_BYPASS_TOKEN,
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || undefined,
   })
   if (!result.success) {
-    const problems = result.error.issues
-      .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
-      .join('; ')
+    // prettifyError lists paths and messages only; values are never echoed.
     throw new Error(
-      `Invalid server environment: ${problems}. ` +
+      `Invalid server environment:\n${z.prettifyError(result.error)}\n` +
         'Copy apps/store/.env.example to apps/store/.env.local and fill it in.',
     )
   }
