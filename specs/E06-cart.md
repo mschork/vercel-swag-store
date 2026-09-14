@@ -44,7 +44,7 @@ A session-persistent cart backed by the API, driven entirely by Server Actions, 
 - Page shell static; `<Suspense fallback={<CartSkeleton />}><CartContents /></Suspense>`.
 - `CartContents` (server): `getCartFromCookie()`; empty state with a link to `/search` when null or no items; otherwise `<CartList items />` and `<CartSummary subtotal currency />`.
 - `CartList` (client): renders rows with `next/image` thumbnail, name linking to the PDP, unit price, `<QuantityStepper />` bound to `updateQuantity`, line total, remove button bound to `removeItem`. Uses `useOptimistic` over the items array so quantity and removal feel instant; on `{ ok: false }` it reverts and shows the error inline. `useTransition` for pending state on each row.
-- `CartSummary`: subtotal via `formatPrice`, item count, a disabled "Checkout" button with "Checkout is not part of this demo" helper text [assumption: better than no button; the requirements do not require checkout].
+- `CartSummary`: subtotal via `formatPrice`, item count, a disabled "Checkout" button with "Checkout is not part of this demo" helper text.
 
 ### Add to Cart wiring
 
@@ -71,8 +71,3 @@ If a page render finds a token but the API returns 404, the page shows the empty
 ## Out of scope
 
 Checkout, promo code application, multi-cart, merging carts across devices.
-
-## Open questions
-
-1. Optimistic UI on the PDP button too (increment the badge before the action returns)? [assumption: no; keep the PDP simple and let the badge update on completion]
-2. Show a "Cart expired" notice when the token was rejected, or silently show empty? [assumption: one-line notice]

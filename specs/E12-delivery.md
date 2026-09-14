@@ -19,7 +19,7 @@ Runs in order and fails fast:
 5. `node scripts/check-canary.mjs`: greps `apps/` for `redacted` and `hhhhhh` and fails if found.
 6. `playwright test` against a local `next start` (smoke suite from E05 to E07).
 
-Wire it as a GitHub Actions workflow `ci.yml` on pull requests (steps 1 to 5; Playwright too if runtime allows) [assumption: CI included since it is cheap and shows discipline].
+Wire it as a GitHub Actions workflow `ci.yml` on pull requests (steps 1 to 5; Playwright too if runtime allows).
 
 ### README.md (final)
 
@@ -41,14 +41,14 @@ Sections, in this order, each short:
 ### Repository hygiene
 
 - Make the repo public; confirm no secrets in history (`gitleaks` or a manual `git log -p | grep -i token` pass).
-- No `LICENSE` file (settled 2026-09-14: the code is not licensed for reuse; README states this in one line). `.env.example`; `CODEOWNERS` not needed.
+- No `LICENSE` file; the code is not licensed for reuse and the README states this in one line. `.env.example`; `CODEOWNERS` not needed.
 - PR history preserved (no squash to a single commit) so the epic trail is visible.
 - Tag `v1.0.0` at the released commit.
 
 ### Deployments
 
 - Production URLs for store and studio recorded in README; both load from a private window.
-- Preview comments enabled; leave one resolved comment thread as an example of the review loop [assumption: optional].
+- Preview comments enabled; leave one resolved comment thread as an example of the review loop.
 - Environment variables reviewed: bypass token present in Production and Preview, absent from any `NEXT_PUBLIC_` name.
 
 ### Final checklist (`docs/release-checklist.md`)
@@ -66,8 +66,3 @@ One line per requirement in `the requirements`, ticked with the route or file th
 - [ ] Both URLs public; repo public; tag pushed.
 - [ ] Release checklist fully ticked.
 - [ ] Email draft in `docs/email.md`.
-
-## Open questions
-
-1. Licence: MIT or none? Settled 2026-09-14: none; README states the code is not licensed for reuse.
-2. Do you want the studio URL in the email, or keep the release to the two required links and mention Sanity in the README only? [assumption: include, labelled optional]

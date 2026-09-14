@@ -17,7 +17,7 @@ Uses `after()` (work after the response), keeps the request path fast, writes on
 - Called from `SearchResults` (E07) only when a query was present and the merged result count is 0.
 - Wrapped in `after(async () => { ... })` from `next/server` so it runs after streaming completes.
 - Normalise: lowercase, trim, collapse whitespace, strip punctuation, max 64 chars; drop queries containing `@` or that look like URLs; drop queries under 3 chars.
-- Dedupe: hash of normalised query plus a coarse time bucket (10 minutes) kept in an in-memory LRU per server instance to absorb repeats from one session [assumption: acceptable imprecision; serverless instances do not share memory].
+- Dedupe: hash of normalised query plus a coarse time bucket (10 minutes) kept in an in-memory LRU per server instance to absorb repeats from one session.
 - Write: Sanity mutation with a write token (`SANITY_API_WRITE_TOKEN`, server only) using `createIfNotExists` on `_id: 'searchGap.' + hash(normalised)` then `patch().inc({ count: 1 }).set({ lastSeen })`. Also append `{ category, at }` to a capped `samples[]` (keep last 20) for context.
 - Fail silently with a server log; never throw into the page.
 
@@ -30,9 +30,9 @@ Desk: "Demand signals" group with Search gaps (ordered by count desc, filtered t
 
 ### Analysis `app/api/demand/analyse/route.ts`
 
-- POST, protected by `DEMAND_ANALYSE_SECRET` header; invoked manually or by a Vercel Cron (`vercel.json` `crons`, daily) [assumption: cron daily].
-- Loads `searchGap` docs with `status == 'new'` and `count >= 2` [assumption on threshold].
-- Calls the AI SDK `generateObject` with the Vercel AI Gateway (`AI_GATEWAY_API_KEY`) or a provider key, a Zod schema for `{ ideas: [{ title, rationale, suggestedCategory, gapIds, estimatedDemand }] }`, a system prompt that lists the existing catalogue names and categories (from the cached API client) so it does not propose items that exist, and the gaps as input. Model: a small fast one [assumption: whatever the gateway default is].
+- POST, protected by `DEMAND_ANALYSE_SECRET` header; invoked manually or by a Vercel Cron (`vercel.json` `crons`, daily).
+- Loads `searchGap` docs with `status == 'new'` and `count >= 2`.
+- Calls the AI SDK `generateObject` with the Vercel AI Gateway (`AI_GATEWAY_API_KEY`) or a provider key, a Zod schema for `{ ideas: [{ title, rationale, suggestedCategory, gapIds, estimatedDemand }] }`, a system prompt that lists the existing catalogue names and categories (from the cached API client) so it does not propose items that exist, and the gaps as input. Model: `claude-haiku-4-5-20251001` via the gateway.
 - Writes `productIdea` docs as drafts, marks the source gaps `reviewed`, returns a summary.
 - Never called from the request path of a user page.
 
@@ -61,10 +61,3 @@ Desk: "Demand signals" group with Search gaps (ordered by count desc, filtered t
 ## Out of scope
 
 Real-time dashboards, per-user attribution, auto-creating products, using the loop to change search ranking.
-
-## Open questions
-
-1. Threshold for analysis: count >= 2, or every new gap? [assumption: 2]
-2. Cron daily or manual trigger from Studio only? [assumption: cron daily plus manual]
-3. Which model via the AI Gateway? [assumption: gateway default small model; you may prefer a Claude model]
-4. Earlier you mentioned "Eve"; if that refers to a specific product or tool, tell me and I will fold it in.

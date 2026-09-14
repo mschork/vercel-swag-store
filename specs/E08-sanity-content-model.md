@@ -20,11 +20,11 @@ All product references are the API `id` string (e.g. `tshirt_001`), never a Sani
 - `guide`: `title`, `slug`, `body` (Portable Text with images and a `productEmbed` block holding an `apiId`), `productIds[]`.
 - `searchGap` and `productIdea` are defined in E13.
 
-Portable Text config: headings h2 and h3, bold, italic, links, images with alt. No custom marks.
+Portable Text config: headings h2 and h3, bold, italic, links. No custom marks. Images (with alt) only in `guide.body`; `productEnrichment.extendedDescription` is text only, product imagery lives in the gallery.
 
 ### API product picker `packages/sanity/src/components/ProductPicker.tsx`
 
-Custom input for string fields marked with `options.productPicker: true`. Fetches `/products?limit=100` from the API using `SANITY_STUDIO_API_BASE_URL` and `SANITY_STUDIO_API_BYPASS_TOKEN` (Studio is behind Sanity auth; the token is still exposed to editors in the bundle, acceptable for a demo and stated in the README [assumption]). Shows name, id, thumbnail; stores the `id`. For array fields, the same component in multi-select mode.
+Custom input for string fields marked with `options.productPicker: true`. Fetches `/products?limit=100` from the API using `SANITY_STUDIO_API_BASE_URL` and `SANITY_STUDIO_API_BYPASS_TOKEN` (Studio is behind Sanity auth; the token is still exposed to editors in the bundle, acceptable for a demo and stated in the README). Shows name, id, thumbnail; stores the `id`. For array fields, the same component in multi-select mode.
 
 ### Studio `apps/studio`
 
@@ -53,9 +53,3 @@ Creates `siteSettings` and `homePage` with the E03/E04 fallback values, one `col
 ## Out of scope
 
 Store-side rendering (E09), visual editing, localisation, roles beyond the default.
-
-## Open questions
-
-1. Sanity project: do you want to create it yourself (so it sits in your account) and give me the project id, or should the seed script assume placeholders until then? [assumption: you create it; specs use `<projectId>`]
-2. Portable Text extended description: allow images inline, or keep images to the gallery only? [assumption: allow]
-3. Lookbook consent: a checkbox is enough for a demo, or do you also want a "credit" field for public photos of others? [assumption: add `credit` string]

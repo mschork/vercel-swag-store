@@ -13,7 +13,7 @@ The shared frame every page renders inside: header with logo, nav and cart badge
 - `<html lang="en" suppressHydrationWarning>` with Geist font variables and `className` toggled by `next-themes` (`attribute="class"`, `defaultTheme="system"`, `enableSystem`).
 - Body: `<Header />`, `<main id="main">{children}</main>`, `<Footer />`, `<SpeedInsights />`, `<Analytics />` (packages added here, see E11 for verification).
 - Skip link to `#main`.
-- `export const metadata`: `metadataBase` from `NEXT_PUBLIC_SITE_URL`; `title: { default: 'Vercel Swag Store', template: '%s | Vercel Swag Store' }`; `description: 'Official Vercel merchandise. Premium developer apparel, accessories, and gear.'`; `openGraph: { type: 'website', siteName: 'Vercel Swag Store', locale: 'en_US' }`; `twitter: { card: 'summary_large_image' }`; `robots` default. [assumption: metadata values hard-coded now; E09 swaps them for Sanity `siteSettings` with these as fallback.]
+- `export const metadata`: `metadataBase` from `NEXT_PUBLIC_SITE_URL`; `title: { default: 'Vercel Swag Store', template: '%s | Vercel Swag Store' }`; `description: 'Official Vercel merchandise. Premium developer apparel, accessories, and gear.'`; `openGraph: { type: 'website', siteName: 'Vercel Swag Store', locale: 'en_US' }`; `twitter: { card: 'summary_large_image' }`; `robots` default.
 - `export const viewport`: `themeColor` as an array with `media: '(prefers-color-scheme: light)'` `#ffffff` and dark `#000000`. Not `#hhhhhh`.
 - Root `app/opengraph-image.tsx` via `next/og`: black canvas, triangle glyph, "Vercel Swag Store" in Geist. Static.
 
@@ -26,7 +26,7 @@ The shared frame every page renders inside: header with logo, nav and cart badge
 
 ### Footer `components/footer.tsx`
 
-- Left: copyright with the current year computed on the server (`new Date().getFullYear()` inside a `"use cache"` component with `cacheLife('days')` so it does not make the layout dynamic; [assumption: acceptable that the year flips within a day of new year]).
+- Left: copyright with the current year computed on the server (`new Date().getFullYear()` inside a `"use cache"` component with `cacheLife('days')` so it does not make the layout dynamic; the year may flip up to a day late, which is acceptable).
 - Middle: social links from `getStoreConfig()` (cached) as text links, not icons.
 - Right: `<ThemeSelect />`, a client component using `useTheme` from `next-themes` rendering a native `<select>` with Light, Dark, System. Hidden until mounted to avoid a hydration mismatch.
 
@@ -43,7 +43,7 @@ The shared frame every page renders inside: header with logo, nav and cart badge
 
 ### Security headers `next.config.ts`
 
-`headers()` returning for all routes: `Content-Security-Policy` (default-src 'self'; img-src 'self' data: blob: https://i8qy5y6gxkdgdcv9.public.blob.vercel-storage.com https://cdn.sanity.io; script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com; font-src 'self'; frame-ancestors 'none') (settled 2026-09-14, see `docs/adr/0001-csp-unsafe-inline-scripts.md`: 'unsafe-inline' for scripts, no nonces; the shell stays static), `Referrer-Policy: strict-origin-when-cross-origin`, `X-Content-Type-Options: nosniff`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`. Verify on the preview URL that Speed Insights and Analytics still report.
+`headers()` returning for all routes: `Content-Security-Policy` (default-src 'self'; img-src 'self' data: blob: https://i8qy5y6gxkdgdcv9.public.blob.vercel-storage.com https://cdn.sanity.io; script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com; font-src 'self'; frame-ancestors 'none') (see `docs/adr/0001-csp-unsafe-inline-scripts.md` for why `'unsafe-inline'` rather than nonces), `Referrer-Policy: strict-origin-when-cross-origin`, `X-Content-Type-Options: nosniff`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`. Verify on the preview URL that Speed Insights and Analytics still report.
 
 Hardening that goes with the `'unsafe-inline'` choice, all in the same epic:
 
@@ -69,8 +69,3 @@ Hardening that goes with the `'unsafe-inline'` choice, all in the same epic:
 ## Out of scope
 
 Page content (E04 to E07), Sanity-driven settings (E09), design tokens beyond what is needed to see the shell (E10).
-
-## Open questions
-
-1. Should "Search" in the nav be a link or an inline search box in the header like vercel.store? [assumption: link; a search page is wanted]
-2. Show the store name text next to the glyph, or glyph only? [assumption: both, text hidden on small screens]

@@ -17,7 +17,7 @@ Re-express the E13 demand-analysis step as an agent built with Eve (https://verc
   - `listSearchGaps`: reads `searchGap` docs with `status == 'new'` and `count >= 2` from Sanity (read token).
   - `createProductIdea`: writes a `productIdea` draft and marks the source gaps `reviewed` (write token). Idempotent on `sourceGaps`.
   - `listCatalogue`: calls the cached API client for product names and categories.
-- Human-in-the-loop: ideas remain drafts; Accept and Reject stay in Studio as in E13 [assumption: Studio only, no Slack channel].
+- Human-in-the-loop: ideas remain drafts; Accept and Reject stay in Studio as in E13.
 
 ### Trigger
 
@@ -37,7 +37,3 @@ Re-express the E13 demand-analysis step as an agent built with Eve (https://verc
 ## Out of scope
 
 Slack or Discord channels, replacing the E13 cron, any change to store pages.
-
-## Open questions
-
-1. Which channel for the human-in-the-loop approval: Studio actions only (as E13), or also Slack via Eve's multi-channel support? [assumption: Studio only]

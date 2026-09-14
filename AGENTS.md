@@ -37,7 +37,7 @@ apps/store            Next.js 16 storefront
 apps/studio           Sanity Studio
 packages/sanity       schemas, client factory, GROQ queries, generated types
 packages/config       shared tsconfig and eslint config
-specs/                one spec per epic (E01 to E13), decisions.md, openapi.json (token redacted)
+specs/                one spec per epic (E01 to E14), decisions.md, api-reference.md, improvements.md, callout.md
 working/              local-only documents (unredacted API reference, notes); git-ignored, never committed
 ```
 

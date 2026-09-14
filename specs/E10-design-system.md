@@ -16,7 +16,7 @@ Monochrome with one accent; hierarchy through type and spacing before borders; n
 
 Tailwind v4 `@theme` block defining:
 
-- Colours as CSS variables that flip by theme class: `--color-bg`, `--color-bg-secondary`, `--color-fg`, `--color-fg-secondary`, `--color-border`, `--color-border-strong`, `--color-accent`, `--color-accent-fg`, `--color-success`, `--color-warning`, `--color-danger`. Light: `#fff`, `#fafafa`, `#171717`, `#666`, `#eaeaea`, `#999`. Dark: `#000`, `#0a0a0a`, `#ededed`, `#a1a1a1`, `#2a2a2a`, `#444`. Accent `#0070f3` light and `#3291ff` dark [assumption: Vercel blue family; adjust after contrast check].
+- Colours as CSS variables that flip by theme class: `--color-bg`, `--color-bg-secondary`, `--color-fg`, `--color-fg-secondary`, `--color-border`, `--color-border-strong`, `--color-accent`, `--color-accent-fg`, `--color-success`, `--color-warning`, `--color-danger`. Light: `#fff`, `#fafafa`, `#171717`, `#666`, `#eaeaea`, `#999`. Dark: `#000`, `#0a0a0a`, `#ededed`, `#a1a1a1`, `#2a2a2a`, `#444`. Accent `#0070f3` light and `#3291ff` dark.
 - Radii: `--radius-sm: 4px`, `--radius: 8px`. Spacing uses Tailwind's scale.
 - Fonts: `--font-sans: var(--font-geist-sans)`, `--font-mono: var(--font-geist-mono)`.
 - Type scale: 14 / 16 body, 20 / 24 / 32 / 48 headings with matching line heights; tabular numerals on prices via `font-variant-numeric: tabular-nums`.
@@ -25,7 +25,7 @@ Tailwind v4 `@theme` block defining:
 
 ### Components `components/ui/` (shadcn, Base UI primitives)
 
-Install only: `button`, `input`, `select`, `badge`, `skeleton`, `separator`. Add `sonner` only if a toast is needed by E06 [assumption: not needed; inline messages]. Re-theme through the token variables; remove the default ring colour in favour of `--color-accent` focus rings 2px offset 2px.
+Install only: `button`, `input`, `select`, `badge`, `skeleton`, `separator`. Add `sonner` only if a toast is needed by E06. Re-theme through the token variables; remove the default ring colour in favour of `--color-accent` focus rings 2px offset 2px.
 
 ### Our components `components/`
 
@@ -70,8 +70,3 @@ Squint test on each page in both themes; text-mask test; 375 and 1280 screenshot
 ## Out of scope
 
 Illustrations, custom icons beyond the logo and a cart glyph, animation beyond hover and focus.
-
-## Open questions
-
-1. Accent: Vercel blue or a neutral accent (white on black buttons only)? [assumption: blue, used sparingly]
-2. Card pill style from the reference design, or plain text under the image? [assumption: pill]

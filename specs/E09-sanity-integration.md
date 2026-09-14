@@ -11,7 +11,7 @@ Sanity content rendered through the same `"use cache"` discipline as the API, wi
 ### Fetch layer `apps/store/lib/sanity/`
 
 ```
-client.ts     next-sanity client from @repo/sanity factory; useCdn false [assumption: cache lives in Next, not the CDN]; token from SANITY_API_READ_TOKEN (dataset may stay public; token kept for future private datasets)
+client.ts     next-sanity client from @repo/sanity factory; useCdn false; token from SANITY_API_READ_TOKEN (dataset may stay public; token kept for future private datasets)
 fetch.ts      sanityFetch<T>({ query, params, tags }) wrapped in "use cache", cacheTag('sanity', ...tags), cacheLife('catalog')
 queries.ts    GROQ with defineQuery for: siteSettings, homePage, productEnrichmentByApiId, collectionBySlug, collectionsList, guideBySlug, guidesForProduct, lookbookForProduct
 image.ts      urlFor() via @sanity/image-url, plus a helper returning next/image-friendly src and blurDataURL
@@ -71,8 +71,3 @@ Below the description, in order and only when present: badges on the gallery ima
 ## Out of scope
 
 Visual editing and Presentation, draft previews, Live Content API, localisation.
-
-## Open questions
-
-1. Keep `useCdn: false` and rely on Next's cache, or enable the Sanity CDN too? [assumption: false; one cache is easier to reason about and explain]
-2. Are the collection and guide routes wanted for the first release, or only if time remains? [assumption: only if time remains]
