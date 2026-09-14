@@ -10,6 +10,12 @@ const directive = (csp: string, name: string) =>
 describe('contentSecurityPolicy', () => {
   const csp = contentSecurityPolicy({ allowEval: false })
 
+  it('defaults to self, with inline styles and self-hosted fonts', () => {
+    expect(directive(csp, 'default-src')).toBe("default-src 'self'")
+    expect(directive(csp, 'style-src')).toBe("style-src 'self' 'unsafe-inline'")
+    expect(directive(csp, 'font-src')).toBe("font-src 'self'")
+  })
+
   it('allows the product image hosts and nothing else for images', () => {
     expect(directive(csp, 'img-src')).toBe(
       "img-src 'self' data: blob: https://i8qy5y6gxkdgdcv9.public.blob.vercel-storage.com https://cdn.sanity.io",

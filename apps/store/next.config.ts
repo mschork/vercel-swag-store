@@ -1,5 +1,5 @@
 import type { NextConfig } from 'next'
-import { securityHeaders } from './lib/security-headers'
+import { IMAGE_HOSTS, securityHeaders } from './lib/security-headers'
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
@@ -13,13 +13,8 @@ const nextConfig: NextConfig = {
     return [{ source: '/:path*', headers: securityHeaders({ allowEval: process.env.NODE_ENV === 'development' }) }]
   },
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'i8qy5y6gxkdgdcv9.public.blob.vercel-storage.com',
-      },
-      { protocol: 'https', hostname: 'cdn.sanity.io' },
-    ],
+    // One list for `next/image` and the CSP `img-src`, so a new host is one edit.
+    remotePatterns: IMAGE_HOSTS.map((host) => ({ protocol: 'https', hostname: new URL(host).hostname })),
   },
 }
 

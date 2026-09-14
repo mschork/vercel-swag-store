@@ -5,7 +5,7 @@
  * `docs/adr/0001-csp-unsafe-inline-scripts.md` for why.
  */
 
-/** Hosts that may serve product images (`next/image` `remotePatterns` mirrors this). */
+/** Hosts that may serve product images; `next.config.ts` derives `remotePatterns` from it. */
 export const IMAGE_HOSTS = [
   'https://i8qy5y6gxkdgdcv9.public.blob.vercel-storage.com',
   'https://cdn.sanity.io',

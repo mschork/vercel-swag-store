@@ -3,7 +3,7 @@ import { getStoreConfig } from '@/lib/api/store'
 import { socialLinks } from '@/lib/social-links'
 
 /**
- * The year is computed on the server inside a cached component so the layout
+ * The year is computed on the server inside a cached component so the shell
  * stays prerendered; it may flip up to a day late, which is acceptable.
  */
 async function CopyrightYear() {
