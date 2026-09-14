@@ -2,6 +2,11 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  cacheLife: {
+    // Catalogue data: products, categories, store config. Served stale for
+    // 5 min, refreshed in the background hourly, dropped after a day.
+    catalog: { stale: 300, revalidate: 3600, expire: 86400 },
+  },
   typedRoutes: true,
   images: {
     remotePatterns: [

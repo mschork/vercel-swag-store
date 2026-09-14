@@ -1,6 +1,6 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
-    const { assertServerEnv } = await import('./lib/env')
-    assertServerEnv()
+    // Importing the module runs the zod parse; it throws if the env is invalid.
+    await import('./lib/env')
   }
 }
