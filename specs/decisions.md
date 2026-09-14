@@ -5,6 +5,7 @@ Settled choices that every epic spec inherits. Change here first, then in the sp
 ## Scope and delivery
 
 - Deliverables: public GitHub repo plus two Vercel deployments (store, studio); links shared.
+- Licence: none. The repo is public to be read; the README states the code is not licensed for reuse.
 - No fixed deadline. Plan for about one week for E1 to E7 and E10 to E12; Sanity extras (lookbook, collections, guides, extra routes) are stretch.
 - Build workflow: Claude Code run locally, one spec file per epic under `specs/`, plus `AGENTS.md` at the repo root. One branch and PR per epic; Vercel preview deployment with comments enabled for review before merge. Working documents that must not be committed (unredacted API reference, scratch notes) live under `working/`, which is git-ignored; anything under `specs/` is committed and must contain no secrets.
 
@@ -39,6 +40,7 @@ Settled choices that every epic spec inherits. Change here first, then in the sp
 - `opengraph-image.tsx` routes via `next/og` for home, product and search.
 - Preview deployments with comments enabled on every PR.
 - Not included: Flags SDK, Edge Config, KV.
+- Security headers: CSP with `'unsafe-inline'` for scripts and a strict host list, plus `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'`. No nonces: they need a per-request proxy and make every page dynamic. Inline-script injection is prevented at the source instead (`react/no-danger` as an error, zod at trust boundaries). See `docs/adr/0001-csp-unsafe-inline-scripts.md`.
 
 ## Quality
 
@@ -57,4 +59,4 @@ Local scripts only: `SANITY_API_WRITE_TOKEN` for the seed script.
 
 ## Epic index
 
-E01 foundation, E02 API client, E03 shell and metadata, E04 home, E05 PDP, E06 cart, E07 search, E08 Sanity model, E09 Sanity integration, E10 design, E11 performance, E12 delivery, E13 search-gap loop (stretch). Order: E01 to E07, E10, E11, E08, E09, E12, then E13 if time remains.
+E01 foundation, E02 API client, E03 shell and metadata, E04 home, E05 PDP, E06 cart, E07 search, E08 Sanity model, E09 Sanity integration, E10 design, E11 performance, E12 delivery, E13 search-gap loop (stretch), E14 Eve agent (stretch, after E13). Order: E01 to E07, E10, E11, E08, E09, E12, then E13 and E14 if time remains.

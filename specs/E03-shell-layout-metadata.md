@@ -43,7 +43,13 @@ The shared frame every page renders inside: header with logo, nav and cart badge
 
 ### Security headers `next.config.ts`
 
-`headers()` returning for all routes: `Content-Security-Policy` (default-src 'self'; img-src 'self' data: blob: https://i8qy5y6gxkdgdcv9.public.blob.vercel-storage.com https://cdn.sanity.io; script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com; font-src 'self'; frame-ancestors 'none') [assumption: 'unsafe-inline' for scripts is accepted for the demo rather than a nonce-based CSP, which needs a proxy.ts and makes the shell dynamic; note the trade-off in the README], `Referrer-Policy: strict-origin-when-cross-origin`, `X-Content-Type-Options: nosniff`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`. Verify on the preview URL that Speed Insights and Analytics still report.
+`headers()` returning for all routes: `Content-Security-Policy` (default-src 'self'; img-src 'self' data: blob: https://i8qy5y6gxkdgdcv9.public.blob.vercel-storage.com https://cdn.sanity.io; script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com; font-src 'self'; frame-ancestors 'none') (settled 2026-09-14, see `docs/adr/0001-csp-unsafe-inline-scripts.md`: 'unsafe-inline' for scripts, no nonces; the shell stays static), `Referrer-Policy: strict-origin-when-cross-origin`, `X-Content-Type-Options: nosniff`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`. Verify on the preview URL that Speed Insights and Analytics still report.
+
+Hardening that goes with the `'unsafe-inline'` choice, all in the same epic:
+
+- Add `object-src 'none'`, `base-uri 'self'`, `form-action 'self'` and `upgrade-insecure-requests` to the CSP.
+- ESLint rule `react/no-danger` set to error in `@repo/config`, so `dangerouslySetInnerHTML` cannot reach the HTML. Portable Text (E09) renders through a serializer with allow-listed marks, never raw HTML.
+- README (E12) explains the trade-off: nonce-based CSP requires a proxy on every request and makes every page dynamic, which defeats the static shell.
 
 ### Error and not-found
 
