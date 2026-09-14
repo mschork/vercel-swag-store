@@ -1,3 +1,3 @@
 export default function HomePage() {
-  return <main>Vercel Swag Store</main>
+  return <h1 className="py-12 text-2xl font-medium">Vercel Swag Store</h1>
 }
