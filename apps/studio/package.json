@@ -1,0 +1,28 @@
+{
+  "name": "studio",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "sanity dev --port 3333",
+    "build": "sanity build",
+    "deploy": "sanity deploy",
+    "lint": "eslint --max-warnings 0 .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@repo/sanity": "workspace:*",
+    "@sanity/vision": "^6.13.2",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "sanity": "^6.13.2",
+    "styled-components": "^6.1.15"
+  },
+  "devDependencies": {
+    "@repo/config": "workspace:*",
+    "@sanity/eslint-config-studio": "^6.0.0",
+    "@types/node": "^24.13.4",
+    "@types/react": "^19",
+    "eslint": "^9",
+    "typescript": "^5"
+  }
+}

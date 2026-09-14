@@ -1,0 +1,36 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "globalEnv": ["NODE_ENV"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "API_BASE_URL",
+        "API_BYPASS_TOKEN",
+        "NEXT_PUBLIC_SANITY_*",
+        "SANITY_*",
+        "NEXT_PUBLIC_SITE_URL"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "env": [
+        "API_BASE_URL",
+        "API_BYPASS_TOKEN",
+        "NEXT_PUBLIC_SANITY_*",
+        "SANITY_*",
+        "NEXT_PUBLIC_SITE_URL"
+      ]
+    },
+    "lint": {},
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "env": ["API_BASE_URL", "API_BYPASS_TOKEN"]
+    }
+  }
+}

@@ -62,3 +62,17 @@ working/              local-only documents (unredacted API reference, notes); gi
 ## When unsure
 
 Prefer the simpler option that keeps the static shell static, and write the question into the PR description. Do not invent requirements; the brief is `specs/assignment.md` and it is short.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live as local markdown under `.scratch/<feature-slug>/` (git-ignored). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`, recorded as a `Status:` line in each issue file. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root, created lazily by `/domain-modeling`. `specs/decisions.md` remains the source of settled product and architecture choices; ADRs record engineering decisions made during implementation and link back to it. See `docs/agents/domain.md`.
