@@ -77,7 +77,7 @@ Vitest: `lib/security-headers.test.ts` (required directives present, no nonce, h
 ## Acceptance criteria
 
 - [x] Build output marks `/` as fully prerendered with no dynamic hole (the cart badge becomes the only one in E06).
-- [ ] Root and per-page metadata visible in a social card debugger; OG image renders.
+- [x] Root and per-page metadata visible in a social card debugger; OG image renders.
 - [x] Light and dark follow the OS preference with no flash on reload.
 - [x] Header and footer on all routes; keyboard navigation reaches every control; skip link works.
 - [x] Lighthouse accessibility 100 on `/` at this stage.
