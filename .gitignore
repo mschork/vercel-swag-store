@@ -27,3 +27,6 @@ next-env.d.ts
 
 # local-only documents (unredacted references, notes)
 working
+
+# local agent skills (installed via skills.sh, not committed)
+.claude/skills
