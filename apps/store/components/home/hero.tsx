@@ -1,5 +1,5 @@
-import Image from 'next/image'
 import Link from 'next/link'
+import { ProductImage } from '@/components/product-image'
 import { Button } from '@/components/ui/button'
 import { getProduct } from '@/lib/api/products'
 import { HERO_FALLBACK } from '@/lib/content/fallbacks'
@@ -27,20 +27,17 @@ export async function Hero() {
           </Button>
         </p>
       </div>
+      {/* Square on mobile; at md and up a fixed height fills most of the first viewport and the photo's white margins absorb the crop. */}
       <Link
         href={`/products/${product.slug}`}
-        className="relative block aspect-square overflow-hidden rounded-lg border border-border bg-bg-secondary md:max-h-[560px]"
+        className="relative block aspect-square overflow-hidden rounded-lg border border-border bg-bg-secondary md:aspect-auto md:h-[480px] lg:h-[560px]"
       >
-        {product.images[0] ? (
-          <Image
-            src={product.images[0]}
-            alt={product.name}
-            fill
-            priority
-            sizes="(min-width: 1152px) 576px, (min-width: 768px) 50vw, 100vw"
-            className="object-cover"
-          />
-        ) : null}
+        <ProductImage
+          product={product}
+          alt={product.name}
+          priority
+          sizes="(min-width: 1152px) 576px, (min-width: 768px) 50vw, 100vw"
+        />
       </Link>
     </section>
   )

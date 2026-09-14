@@ -1,37 +1,28 @@
-import { unstable_rethrow } from 'next/navigation'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPromotion } from '@/lib/api/promotions'
+import { loadOptional } from '@/lib/load-optional'
 
 /**
  * The banner and its skeleton share this box so the shell reserves the same
  * space before and after the promotion streams in. Sized for the longest of
- * the four current promos: three lines at 375, two at md, one at lg.
+ * the four current promos at 24px lines plus 8px of padding: three lines at
+ * 375 (80px), two at md (56px), one at lg (32px).
  */
-const BOX = 'min-h-[4.5rem] md:min-h-12 lg:min-h-8'
+const RESERVED_BOX = 'min-h-20 md:min-h-14 lg:min-h-8'
 
 /**
  * The only dynamic hole on the home page: `getPromotion` is never cached and
  * this renders inside `<Suspense>`. Every field is shown as the API returns it
- * (specs/improvements.md). A failed call renders nothing and is logged, so a
- * promo outage never breaks the page.
+ * (specs/improvements.md). No promotion, or a failed call, leaves the reserved
+ * box empty so nothing below it moves.
  */
 export async function PromoBanner() {
-  let promotion
-  try {
-    promotion = await getPromotion()
-  } catch (error) {
-    unstable_rethrow(error)
-    console.error(
-      'PromoBanner: promotion unavailable, rendering without it',
-      error,
-    )
-    return <div className={BOX} />
-  }
-  if (!promotion) return <div className={BOX} />
+  const promotion = await loadOptional('PromoBanner: promotion', getPromotion)
+  if (!promotion) return <div className={RESERVED_BOX} />
   return (
     <aside
       aria-label="Current promotion"
-      className={`${BOX} text-sm leading-6`}
+      className={`${RESERVED_BOX} text-sm leading-6`}
     >
       <p className="rounded-lg bg-fg px-4 py-1 text-bg">
         <strong className="font-medium">{promotion.title}.</strong>{' '}
@@ -45,11 +36,11 @@ export async function PromoBanner() {
 export function PromoBannerSkeleton() {
   return (
     <div
-      className={`${BOX} flex flex-col justify-center gap-2 py-1`}
+      className={`${RESERVED_BOX} flex flex-col justify-center gap-2 py-1`}
       aria-hidden="true"
     >
       <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-4/5 md:hidden" />
+      <Skeleton className="h-4 w-4/5 lg:hidden" />
       <Skeleton className="h-4 w-3/5 md:hidden" />
     </div>
   )
