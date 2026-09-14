@@ -17,7 +17,7 @@ Uses `after()` (work after the response), keeps the request path fast, writes on
 - Called from `SearchResults` (E07) only when a query was present and the merged result count is 0.
 - Wrapped in `after(async () => { ... })` from `next/server` so it runs after streaming completes.
 - Normalise: lowercase, trim, collapse whitespace, strip punctuation, max 64 chars; drop queries containing `@` or that look like URLs; drop queries under 3 chars.
-- Dedupe: hash of normalised query plus a coarse time bucket (10 minutes) kept in an in-memory LRU per server instance to absorb repeats from one session.
+- Dedupe: before writing, read the `searchGap` document's `lastSeen`; if it is under 10 minutes old, skip the count increment (still refresh `samples[]`). Exact across serverless instances; no in-memory state (see `callout.md`).
 - Write: Sanity mutation with a write token (`SANITY_API_WRITE_TOKEN`, server only) using `createIfNotExists` on `_id: 'searchGap.' + hash(normalised)` then `patch().inc({ count: 1 }).set({ lastSeen })`. Also append `{ category, at }` to a capped `samples[]` (keep last 20) for context.
 - Fail silently with a server log; never throw into the page.
 

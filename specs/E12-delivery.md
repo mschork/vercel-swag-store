@@ -19,7 +19,7 @@ Runs in order and fails fast:
 5. `node scripts/check-canary.mjs`: greps `apps/` for `redacted` and `hhhhhh` and fails if found.
 6. `playwright test` against a local `next start` (smoke suite from E05 to E07).
 
-Wire it as a GitHub Actions workflow `ci.yml` on pull requests (steps 1 to 5; Playwright too if runtime allows).
+Wire it as a GitHub Actions workflow `ci.yml` on pull requests with two jobs: `verify` (lint, typecheck, build, Vitest), required to merge; `e2e` (Playwright smoke and visual regression from E11), not required, so a flaky screenshot never blocks a merge (see `callout.md`).
 
 ### README.md (final)
 
@@ -48,7 +48,7 @@ Sections, in this order, each short:
 ### Deployments
 
 - Production URLs for store and studio recorded in README; both load from a private window.
-- Preview comments enabled; leave one resolved comment thread as an example of the review loop.
+- Preview comments enabled.
 - Environment variables reviewed: bypass token present in Production and Preview, absent from any `NEXT_PUBLIC_` name.
 
 ### Final checklist (`docs/submission-checklist.md`)
