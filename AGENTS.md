@@ -36,7 +36,8 @@ apps/store            Next.js 16 storefront
 apps/studio           Sanity Studio
 packages/sanity       schemas, client factory, GROQ queries, generated types
 packages/config       shared tsconfig and eslint config
-specs/                one spec per epic (E01 to E13), decisions.md, api-reference.md, assignment.md
+specs/                one spec per epic (E01 to E13), decisions.md, openapi.json (token redacted)
+working/              local-only documents (unredacted API reference, notes); git-ignored, never committed
 ```
 
 ## Working an epic
@@ -46,7 +47,7 @@ specs/                one spec per epic (E01 to E13), decisions.md, api-referenc
 3. Do not change `specs/` files in an epic branch except to tick acceptance criteria; propose spec changes in the PR description.
 4. Before opening the PR run `pnpm verify` (see E12; until it exists, run `pnpm turbo lint typecheck build test`).
 5. In the PR description, state what was decided by a human, what you generated, and which assumptions from the spec you relied on.
-6. Never commit `.env*` files other than `.env.example`.
+6. Never commit `.env*` files other than `.env.example`, and never commit anything under `working/`. Secrets in reference material go in `working/`; the committed copy under `specs/` carries placeholders such as `<API_BYPASS_TOKEN>`.
 
 ## Conventions
 
