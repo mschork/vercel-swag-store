@@ -54,7 +54,7 @@ A pnpm + Turborepo workspace with a Next.js 16 store app (Cache Components on) a
 - [x] `pnpm install` from a clean clone succeeds with a frozen lockfile.
 - [x] `pnpm build` builds both apps; `pnpm dev` starts both (store on 3000, studio on 3333).
 - [x] `pnpm lint` and `pnpm typecheck` pass with zero warnings treated as errors in CI.
-- [ ] Both Vercel projects deploy from `main`; preview deployments appear on a test PR.
+- [x] Both Vercel projects deploy from `main`; preview deployments appear on a test PR.
 - [x] `.env.example` is complete; `lib/env.ts` throws a clear message when a variable is missing.
 - [x] No secret in git history.
 
