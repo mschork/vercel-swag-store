@@ -15,7 +15,8 @@ export interface ProductListParams {
   featured?: boolean
 }
 
-const PAGE_SIZE_MAX = 100
+/** Page size for slug paging: the largest the API allows. */
+const SLUG_PAGE_SIZE = 100
 
 /**
  * Serialises params into a query string with sorted keys and no `undefined`
@@ -70,7 +71,7 @@ export async function getAllProductSlugs(): Promise<string[]> {
   let page = 1
   let hasNextPage = true
   while (hasNextPage) {
-    const { products, pagination } = await getProducts({ page, limit: PAGE_SIZE_MAX })
+    const { products, pagination } = await getProducts({ page, limit: SLUG_PAGE_SIZE })
     slugs.push(...products.map((product) => product.slug))
     hasNextPage = pagination.hasNextPage
     page += 1

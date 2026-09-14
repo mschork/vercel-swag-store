@@ -131,6 +131,7 @@ export function successEnvelope<TData extends z.ZodType, TMeta extends z.ZodType
   return z.object({
     success: z.literal(true),
     data,
-    meta: meta ?? z.undefined().optional(),
+    // Without a meta schema, whatever the API sends there is ignored, not rejected.
+    meta: meta ?? z.unknown().optional(),
   })
 }

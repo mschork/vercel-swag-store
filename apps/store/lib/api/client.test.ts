@@ -1,16 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
+import { fetchCall, jsonResponse as json, mockFetch } from '@/test/helpers'
 import { ApiError, fetchApi } from './client'
 
 const TOKEN = process.env.API_BYPASS_TOKEN as string
 const BASE = process.env.API_BASE_URL as string
-
-function json(status: number, body: unknown, headers: Record<string, string> = {}) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'content-type': 'application/json', ...headers },
-  })
-}
 
 function html(status: number, statusText = 'Unauthorized') {
   return new Response('<html>Authentication Required</html>', {
@@ -21,24 +15,19 @@ function html(status: number, statusText = 'Unauthorized') {
 }
 
 const Thing = z.object({ id: z.string() })
-const fetchMock = vi.fn<typeof fetch>()
+let fetchMock: ReturnType<typeof mockFetch>
 
 beforeEach(() => {
-  vi.stubGlobal('fetch', fetchMock)
+  fetchMock = mockFetch()
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
 
 afterEach(() => {
-  fetchMock.mockReset()
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
 })
 
-function call(index = 0): [string, RequestInit] {
-  const entry = fetchMock.mock.calls[index]
-  if (!entry) throw new Error(`fetch was not called ${index + 1} time(s)`)
-  return [String(entry[0]), entry[1] ?? {}]
-}
+const call = (index = 0) => fetchCall(fetchMock, index)
 
 async function capture(promise: Promise<unknown>): Promise<ApiError> {
   try {
@@ -62,6 +51,12 @@ describe('fetchApi', () => {
     expect(result.data).toEqual({ id: 'a' })
     expect(result.meta).toEqual({ page: 2 })
     expect(result.headers.get('x-thing')).toBe('yes')
+  })
+
+  it('ignores meta when no meta schema is given', async () => {
+    fetchMock.mockResolvedValueOnce(json(200, { success: true, data: { id: 'a' }, meta: { extra: 1 } }))
+    const result = await fetchApi('/things', { schema: Thing })
+    expect(result.data).toEqual({ id: 'a' })
   })
 
   it('builds the URL from API_BASE_URL and sends the bypass and accept headers', async () => {
@@ -149,7 +144,7 @@ describe('fetchApi', () => {
     const error = await capture(fetchApi('/products', { schema: Thing }))
     expect(error.code).toBe('HTTP_ERROR')
     expect(error.status).toBe(401)
-    expect(error.message).toBe('401 Unauthorized')
+    expect(error.message).toBe('Unauthorized')
     expect(error.message).not.toContain('<html>')
   })
 
@@ -197,7 +192,7 @@ describe('fetchApi', () => {
       () => json(200, { success: true, data: { id: 1 } }),
     ]
     for (const make of responses) {
-      fetchMock.mockReset()
+      fetchMock = mockFetch()
       fetchMock.mockImplementation(async () => make())
       const error = await capture(fetchApi('/things', { schema: Thing }))
       expect(error.message).not.toContain(TOKEN)

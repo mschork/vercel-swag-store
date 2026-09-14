@@ -23,7 +23,7 @@ export type StockInfo = z.infer<typeof StockInfoSchema>
 export type Category = z.infer<typeof CategorySchema>
 export type Promotion = z.infer<typeof PromotionSchema>
 export type CartItem = z.infer<typeof CartItemSchema>
-/** A cart as handed to pages and actions: never carries the cart token. */
+/** A cart as handed to pages and actions; the credential is stripped, only `createCart` returns it. */
 export type Cart = z.output<typeof CartSchema>
 export type Pagination = z.infer<typeof PaginationSchema>
 export type StoreConfig = z.infer<typeof StoreConfigSchema>
