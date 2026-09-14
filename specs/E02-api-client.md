@@ -28,7 +28,7 @@ apps/store/lib/api/
   cache.ts         tag constants and cacheLife profiles
 apps/store/lib/format.ts   formatPrice(cents, currency)
 apps/store/lib/api/*.test.ts
-apps/store/vitest.config.ts   aliases server-only to an empty module; loads test/setup.ts
+apps/store/vitest.config.mts  aliases server-only to an empty module; loads test/setup.ts
 apps/store/test/setup.ts      stubs next/cache (cacheTag, cacheLife, updateTag, revalidateTag)
 ```
 
@@ -48,7 +48,7 @@ Mark every file in `lib/api` with `import 'server-only'` so a client import fail
 Add `zod` (v4). It is used at exactly three trust boundaries and nowhere else: environment variables, API responses, Server Action inputs (E06). Components never import zod.
 
 - `lib/env.ts`: replace the E01 manual guard with a zod schema for the server env: `API_BASE_URL` (url), `API_BYPASS_TOKEN` (min length 1, required even while the API is not enforcing protection), `NEXT_PUBLIC_SITE_URL` (url, default `http://localhost:3000`). Sanity vars are added to this schema by E09, not here. Parse once at module load and export the typed object; `instrumentation.ts` keeps importing the module so a missing variable stops the server at startup. Keep `NEXT_PUBLIC_*` in a separate client-safe schema.
-- `lib/api/schemas.ts`: zod schemas for `Product`, `StockInfo`, `Category`, `Promotion`, `Cart`, `CartItem`, `Pagination`, `StoreConfig`, the success envelope and the error envelope. Use `z.looseObject()` (zod v4; `.passthrough()` is deprecated) so new API fields do not break parsing. `CartSchema` strips `token` in a transform so the `Cart` type has no token field (see `docs/adr/0002-cart-server-side-only.md`). `PromotionSchema` is wrapped as `data: PromotionSchema.nullable()`.
+- `lib/api/schemas.ts`: zod schemas for `Product`, `StockInfo`, `Category`, `Promotion`, `Cart`, `CartItem`, `Pagination`, `StoreConfig`, the success envelope and the error envelope. Use `z.object()` (zod v4 strips unknown keys by default) so new API fields never break parsing; `z.looseObject()` is not used because its index signature makes every inferred type accept any key and collapses `Omit<Cart, 'token'>`. `CartSchema` omits `token` from its shape so parsing drops it and the `Cart` type has no token field (see `docs/adr/0002-cart-server-side-only.md`). `PromotionSchema` is wrapped as `data: PromotionSchema.nullable()`.
 - `fetchApi` takes the schema as an argument and calls `schema.parse(json)`; a parse failure throws `ApiError` with code `INVALID_RESPONSE` and is logged with the path (never the body of a cart, which may contain the token).
 
 ### types.ts
@@ -102,7 +102,7 @@ Plain async functions, no `"use cache"`, and a comment stating why (values chang
 - [x] Every endpoint in `api-reference.md`, including `/health`, has a typed function.
 - [x] `import 'server-only'` present in every `lib/api` module; a deliberate client import fails the build.
 - [x] `pnpm test` passes; coverage on `lib/api` above 80 percent.
-- [x] No `token` field on the `Cart` type; `grep -n token apps/store/lib/api/types.ts` shows only `createCart`'s return.
+- [x] No `token` field on the `Cart` type; `grep -n token apps/store/lib/api/types.ts` returns nothing, and only `createCart` in `cart.ts` returns a token.
 - [x] `grep -r NEXT_PUBLIC_API` returns nothing.
 - [x] Cache policy table in `AGENTS.md` matches the code.
 
