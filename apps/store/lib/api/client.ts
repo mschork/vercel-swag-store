@@ -1,4 +1,5 @@
 import 'server-only'
+import { unstable_rethrow } from 'next/navigation'
 import { z } from 'zod'
 import { serverEnv } from '@/lib/env'
 import { ErrorEnvelopeSchema, successEnvelope } from './schemas'
@@ -127,6 +128,9 @@ async function send(url: string, init: RequestInit, path: string, retryable: boo
       if (response.status < 500) return response
       lastFailure = response
     } catch (error) {
+      // Next's own control-flow errors (a prerender that finished while this
+      // uncached fetch was pending) must reach Next, not become an ApiError.
+      unstable_rethrow(error)
       if (isTimeout(error)) {
         throw new ApiError(0, 'TIMEOUT', `Request to ${path} timed out after ${REQUEST_TIMEOUT_MS} ms`, path)
       }
