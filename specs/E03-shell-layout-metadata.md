@@ -22,7 +22,7 @@ Light and dark follow `prefers-color-scheme`. Tailwind's default `dark:` variant
 
 ### Tokens `app/globals.css`
 
-The E10 colour tokens are defined here, with E10's values, because the shell needs them: `--color-bg`, `--color-bg-secondary`, `--color-fg`, `--color-fg-secondary`, `--color-border`, `--color-border-strong`, `--color-accent`, `--color-accent-fg`, `--color-success`, `--color-warning`, `--color-danger`, plus `--font-sans` and `--font-mono` mapped to the Geist variables. Radii, type scale and components stay in E10.
+The E10 colour tokens are defined here, with E10's values, because the shell needs them: `--color-bg`, `--color-bg-secondary`, `--color-fg`, `--color-fg-secondary`, `--color-border`, `--color-border-strong`, `--color-accent`, `--color-accent-fg`, plus `--font-sans` and `--font-mono` mapped to the Geist variables. Radii, type scale, the status colours (`--color-success`, `--color-warning`, `--color-danger`) and components stay in E10.
 
 ### Header `components/header.tsx`
 
@@ -34,7 +34,7 @@ The E10 colour tokens are defined here, with E10's values, because the shell nee
 ### Footer `components/footer.tsx`
 
 - Left: copyright with the current year computed on the server (`new Date().getFullYear()` inside a `"use cache"` component with `cacheLife('days')` so it does not make the layout dynamic; the year may flip up to a day late, which is acceptable).
-- Right: social links from `getStoreConfig().socialLinks` (cached) as text links, not icons. The record key becomes the label through a small map (`twitter` → "X", `github` → "GitHub", `discord` → "Discord"); unknown keys are rendered with the first letter capitalised. Every key the API returns is rendered.
+- Right: social links from `getStoreConfig().socialLinks` (cached) as text links, not icons. The record key becomes the label through a small map (`twitter` → "X", `github` → "GitHub", `discord` → "Discord"); unknown keys are rendered with the first letter capitalised. Every key with a non-empty URL is rendered.
 - If `getStoreConfig()` throws, the footer logs the error server-side and renders without the link row (see `specs/callout.md`).
 
 ### Stub routes
@@ -56,7 +56,7 @@ The E10 colour tokens are defined here, with E10's values, because the shell nee
 
 `headers()` returning for all routes, built by a pure function in `lib/security-headers.ts` so it can be unit-tested: `Content-Security-Policy` (default-src 'self'; img-src 'self' data: blob: https://i8qy5y6gxkdgdcv9.public.blob.vercel-storage.com https://cdn.sanity.io; script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com; font-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests) (see `docs/adr/0001-csp-unsafe-inline-scripts.md` for why `'unsafe-inline'` rather than nonces), `Referrer-Policy: strict-origin-when-cross-origin`, `X-Content-Type-Options: nosniff`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`.
 
-The full set is sent in every environment so a blocked host shows up on `localhost` first. `upgrade-insecure-requests` is sent only in production if it turns out to break the `http://localhost` dev server. Verify on the preview URL that Speed Insights and Analytics still report.
+The full set is sent in every environment so a blocked host shows up on `localhost` first. `'unsafe-eval'` is added to `script-src` in development only, because React's development build reconstructs server stack traces with `eval()`; production React never calls it. `upgrade-insecure-requests` is sent everywhere: Chrome does not upgrade `localhost` requests. Verify on the preview URL that Speed Insights and Analytics still report.
 
 Hardening that goes with the `'unsafe-inline'` choice, all in the same epic:
 
@@ -72,7 +72,7 @@ Hardening that goes with the `'unsafe-inline'` choice, all in the same epic:
 
 ### Tests
 
-Vitest: `lib/security-headers.test.ts` (required directives present, no `hhhhhh`, no nonce, hosts listed) and the social-link label map. Playwright arrives in E12.
+Vitest: `lib/security-headers.test.ts` (required directives present, no nonce, hosts listed; the `hhhhhh` check is the grep criterion, not a test, so the string never enters `apps/`) and the social-link label map. Playwright arrives in E12.
 
 ## Acceptance criteria
 
