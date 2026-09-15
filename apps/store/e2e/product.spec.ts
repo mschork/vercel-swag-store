@@ -50,12 +50,14 @@ test('quantity cannot exceed stock', async ({ page }) => {
 })
 
 test('adding confirms inline with a link to the cart', async ({ page }) => {
+  test.setTimeout(120_000)
   const { inStock } = await openFirstFeaturedProduct(page)
   test.skip(!inStock, 'The product is out of stock on this request')
   await page.getByRole('button', { name: 'Add to Cart', exact: true }).click()
+  // E06 made this a real cart write; the API's cart endpoints take seconds.
   await expect(
     page.getByRole('status').filter({ hasText: 'Added.' }),
-  ).toBeVisible()
+  ).toBeVisible({ timeout: 30_000 })
   await expect(page.getByRole('link', { name: 'View cart' })).toHaveAttribute(
     'href',
     '/cart',
