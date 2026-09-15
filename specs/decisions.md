@@ -39,6 +39,7 @@ Settled choices that every epic spec inherits. Change here first, then in the sp
 - `@vercel/speed-insights` and `@vercel/analytics` in the store.
 - `opengraph-image.tsx` routes via `next/og` for home, product and search.
 - Preview deployments with comments enabled on every PR.
+- Indexing: the deployed store answers `X-Robots-Tag: noindex` on every route, because it sells invented products under the Vercel name. Root metadata, page metadata, Open Graph images, `sitemap.xml` and `robots.txt` are all built as the brief asks; `robots.txt` allows crawling so the header is read.
 - Not included: Flags SDK, Edge Config, KV.
 - Security headers: CSP with `'unsafe-inline'` for scripts and a strict host list, plus `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'`. No nonces: they need a per-request proxy and make every page dynamic. Inline-script injection is prevented at the source instead (`react/no-danger` as an error, zod at trust boundaries). See `docs/adr/0001-csp-unsafe-inline-scripts.md`.
 

@@ -53,15 +53,20 @@ describe('securityHeaders', () => {
   const headers = securityHeaders({ allowEval: false })
   const value = (key: string) => headers.find((h) => h.key === key)?.value
 
-  it('sends the four headers', () => {
+  it('sends the five headers', () => {
     expect(headers.map((h) => h.key)).toEqual([
       'Content-Security-Policy',
       'Referrer-Policy',
       'X-Content-Type-Options',
       'Permissions-Policy',
+      'X-Robots-Tag',
     ])
     expect(value('Referrer-Policy')).toBe('strict-origin-when-cross-origin')
     expect(value('X-Content-Type-Options')).toBe('nosniff')
     expect(value('Permissions-Policy')).toBe('camera=(), microphone=(), geolocation=()')
+  })
+
+  it('keeps every route out of the search index', () => {
+    expect(value('X-Robots-Tag')).toBe('noindex')
   })
 })

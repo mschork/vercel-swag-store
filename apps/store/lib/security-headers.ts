@@ -3,6 +3,11 @@
  * `next.config.ts` so the exact directive set is unit-tested. The CSP allows
  * inline scripts instead of using nonces; see
  * `docs/adr/0001-csp-unsafe-inline-scripts.md` for why.
+ *
+ * `X-Robots-Tag` rides along because it applies to exactly the same route set:
+ * the store is a demo of invented products, so nothing it serves belongs in a
+ * search index. A header, unlike a meta tag, also covers `sitemap.xml` and the
+ * Open Graph image routes (specs/callout.md).
  */
 
 /** Hosts that may serve product images; `next.config.ts` derives `remotePatterns` from it. */
@@ -47,5 +52,6 @@ export function securityHeaders(options: SecurityHeaderOptions): { key: string; 
     { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
     { key: 'X-Content-Type-Options', value: 'nosniff' },
     { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+    { key: 'X-Robots-Tag', value: 'noindex' },
   ]
 }
