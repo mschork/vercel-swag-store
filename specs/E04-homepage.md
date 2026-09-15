@@ -31,7 +31,7 @@ The banner sits between hero and grid, never above the hero: a banner that strea
 
 - Async server component calling `getPromotion()` (never cached).
 - Renders every field the API returns: title, description, discount percent and the code in a `<code>` element. No display rules: one of the four promos has `discountPercent: 0` and `code: "AUTO"` and renders as such (`improvements.md`). Static text only, no copy button (`improvements.md`).
-- Handles `active: false` by rendering nothing; handles fetch failure by rendering nothing and logging server-side, so a promo outage never breaks the page.
+- Handles `active: false` and a failed call the same way: renders the reserved box empty (see below) and, for a failure, logs server-side through `loadOptional`, so a promo outage never breaks the page and nothing below the banner moves.
 - Layout shift: the skeleton and the banner share one wrapper with the same `min-height` per breakpoint, sized for the longest of the four current promos (119 characters: three lines at 375, two at md, one at lg). The skeleton renders that many lines. A future promo longer than that causes a small shift, not a break. Streaming makes the skeleton a slow-path safety net (`callout.md`).
 
 ### Featured products `components/home/featured-products.tsx`
@@ -62,7 +62,7 @@ Featured section heading "Featured" with a text link "View all" to `/search`.
 ### Tests
 
 - Vitest: `getFeaturedProducts` with a mocked `fetchApi`: featured first, de-duplicated by id, stops at `min`, copes with a catalogue smaller than `min`, makes no second call when `min` is met.
-- Playwright (E12 runs it; write the test here): home renders at least 6 cards with image, name, price and a PDP link; the page renders without the banner when the API is unreachable.
+- Playwright (E12 runs it; write the test here): home renders at least 6 cards with image, name, price and a PDP link. The outage case (page renders without the banner when the API is unreachable) is a server-side condition Playwright cannot create; it is verified by starting `next start` with an unreachable `API_BASE_URL`.
 
 ## Acceptance criteria
 
