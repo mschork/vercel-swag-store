@@ -1,8 +1,9 @@
 import 'server-only'
 import { cacheLife, cacheTag } from 'next/cache'
+import { unstable_rethrow } from 'next/navigation'
 import { z } from 'zod'
 import { CATALOG_PROFILE, TAGS } from './cache'
-import { fetchApi } from './client'
+import { ApiError, fetchApi } from './client'
 import { ProductListMetaSchema, ProductSchema } from './schemas'
 import type { Product, ProductListResult } from './types'
 
@@ -15,7 +16,7 @@ export interface ProductListParams {
   featured?: boolean
 }
 
-/** Page size for slug paging: the largest the API allows. */
+/** Page size for paging through the whole catalogue: the largest the API allows. */
 const SLUG_PAGE_SIZE = 100
 
 /**
@@ -76,40 +77,80 @@ export async function getFeaturedProducts({
 }
 
 /**
- * One product by id or slug (the API accepts either). Throws `ApiError` with
- * status 404 for an unknown product; pages turn that into `notFound()`.
- * Errors are not cached, so a bad slug is re-checked on the next request.
+ * One product by id or slug (the API accepts either), or `null` when the API
+ * does not know it. Pages turn `null` into `notFound()`.
+ *
+ * The 404 is mapped inside the cached scope on purpose: an error thrown out of
+ * a `"use cache"` function reaches the caller in a production build as a
+ * generic error carrying only a digest, so the caller cannot tell a missing
+ * product from an outage. The consequence is that an unknown slug is cached as
+ * `null` like any other catalogue answer, until the entry revalidates or the
+ * `products` tag is revalidated; that also spares the API repeated lookups of
+ * mistyped URLs. Any other failure is thrown and never cached.
  */
-export async function getProduct(idOrSlug: string): Promise<Product> {
+export async function findProduct(idOrSlug: string): Promise<Product | null> {
   'use cache'
   cacheTag(TAGS.products)
   cacheLife(CATALOG_PROFILE)
-  const { data } = await fetchApi(`/products/${encodeURIComponent(idOrSlug)}`, {
-    schema: ProductSchema,
-  })
-  return data
+  try {
+    const { data } = await fetchApi(productPath(idOrSlug), {
+      schema: ProductSchema,
+    })
+    return data
+  } catch (error) {
+    unstable_rethrow(error)
+    if (error instanceof ApiError && error.status === 404) return null
+    throw error
+  }
 }
 
 /**
- * Every product slug, for `generateStaticParams` and the sitemap. Pages
- * through the API with the largest page size until `hasNextPage` is false;
- * cached itself so both callers share one entry.
+ * A product that must exist, such as the hero product: an unknown id or slug
+ * throws `ApiError` 404, which fails a build that prerenders it. Served from
+ * `findProduct`'s cache entry.
  */
+export async function getProduct(idOrSlug: string): Promise<Product> {
+  const product = await findProduct(idOrSlug)
+  if (!product) {
+    throw new ApiError(
+      404,
+      'NOT_FOUND',
+      `No product with id or slug '${idOrSlug}'`,
+      productPath(idOrSlug),
+    )
+  }
+  return product
+}
+
+const productPath = (idOrSlug: string) =>
+  `/products/${encodeURIComponent(idOrSlug)}`
+
+/**
+ * The whole catalogue, for the sitemap and `getAllProductSlugs`. Pages through
+ * the API with the largest page size until `hasNextPage` is false (rule 6: no
+ * assumed product count); cached so every caller shares one entry.
+ */
+export async function getAllProducts(): Promise<Product[]> {
+  'use cache'
+  cacheTag(TAGS.products)
+  cacheLife(CATALOG_PROFILE)
+  const products: Product[] = []
+  let page = 1
+  let hasNextPage = true
+  while (hasNextPage) {
+    const result = await getProducts({ page, limit: SLUG_PAGE_SIZE })
+    products.push(...result.products)
+    hasNextPage = result.pagination.hasNextPage
+    page += 1
+  }
+  return products
+}
+
+/** Every product slug, for `generateStaticParams`. */
 export async function getAllProductSlugs(): Promise<string[]> {
   'use cache'
   cacheTag(TAGS.products)
   cacheLife(CATALOG_PROFILE)
-  const slugs: string[] = []
-  let page = 1
-  let hasNextPage = true
-  while (hasNextPage) {
-    const { products, pagination } = await getProducts({
-      page,
-      limit: SLUG_PAGE_SIZE,
-    })
-    slugs.push(...products.map((product) => product.slug))
-    hasNextPage = pagination.hasNextPage
-    page += 1
-  }
-  return slugs
+  const products = await getAllProducts()
+  return products.map((product) => product.slug)
 }
