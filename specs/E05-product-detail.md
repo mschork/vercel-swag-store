@@ -51,10 +51,10 @@ Branch: `epic/E05-pdp`. Depends on: E02, E03. Blocks: E06 (needs the Add to Cart
 
 ## Acceptance criteria
 
-- [ ] All product slugs prerendered at build; build output shows `/products/[slug]` as static with one dynamic Suspense boundary.
-- [ ] Stock line reflects the live API on every request (verify by reloading twice and seeing values change).
-- [ ] Button text "Add to Cart", disabled when out of stock, quantity cannot exceed stock.
-- [ ] Unknown slug returns a 404 page with the shell intact.
+- [x] All product slugs prerendered at build; build output shows `/products/[slug]` as static with one dynamic Suspense boundary.
+- [x] Stock line reflects the live API on every request (verify by reloading twice and seeing values change).
+- [x] Button text "Add to Cart", disabled when out of stock, quantity cannot exceed stock.
+- [x] Unknown slug returns a 404 page with the shell intact.
 - [ ] OG image for a product renders in a social debugger.
 
 ## Out of scope
