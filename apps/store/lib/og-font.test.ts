@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { loadGeist } from './og-font'
+import { loadOgFonts, OG_FONT_FAMILY } from './og-font'
 
-describe('loadGeist', () => {
-  it('reads the font once per process', async () => {
-    const first = loadGeist()
-    expect(loadGeist()).toBe(first)
-    expect((await first).byteLength).toBeGreaterThan(0)
+describe('loadOgFonts', () => {
+  it('registers Geist, read once per process', async () => {
+    const [first] = await loadOgFonts()
+    const [second] = await loadOgFonts()
+    expect(first?.name).toBe(OG_FONT_FAMILY)
+    expect(first?.data.byteLength).toBeGreaterThan(0)
+    expect(second?.data).toBe(first?.data)
   })
 })

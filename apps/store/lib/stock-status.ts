@@ -11,35 +11,44 @@ export interface StockStatus {
   tone: StockTone
   /** schema.org availability for the product's Offer; `null` when stock is unknown. */
   availability: StockAvailability | null
+  /** Add to Cart is enabled only when the product is known to be in stock. */
+  canAddToCart: boolean
+  /** The largest quantity the stepper allows: the live count, 0 when unknown. */
+  maxQuantity: number
 }
 
 /**
- * What the product page says about live stock, and the matching schema.org
- * availability. The label always carries the meaning, so colour is never the
- * only cue. `null` stock means the stock call failed: the page says so rather
- * than guessing, and Add to Cart stays disabled. Low stock is still in stock.
+ * Everything the product page derives from live stock: the stock line, the
+ * matching schema.org availability and what Add to Cart may do. The label
+ * always carries the meaning, so colour is never the only cue. `null` stock
+ * means the stock call failed: the page says so rather than guessing, and
+ * Add to Cart stays disabled. Low stock is still in stock.
  */
 export function stockStatus(stock: StockInfo | null): StockStatus {
   if (!stock) {
-    return { label: 'Stock unavailable', tone: 'muted', availability: null }
+    return {
+      label: 'Stock unavailable',
+      tone: 'muted',
+      availability: null,
+      canAddToCart: false,
+      maxQuantity: 0,
+    }
   }
+  const maxQuantity = stock.stock
   if (!stock.inStock) {
     return {
       label: 'Out of stock',
       tone: 'danger',
       availability: 'https://schema.org/OutOfStock',
-    }
-  }
-  if (stock.lowStock) {
-    return {
-      label: `Only ${stock.stock} left`,
-      tone: 'warning',
-      availability: 'https://schema.org/InStock',
+      canAddToCart: false,
+      maxQuantity,
     }
   }
   return {
-    label: 'In stock',
-    tone: 'success',
+    label: stock.lowStock ? `Only ${stock.stock} left` : 'In stock',
+    tone: stock.lowStock ? 'warning' : 'success',
     availability: 'https://schema.org/InStock',
+    canAddToCart: true,
+    maxQuantity,
   }
 }

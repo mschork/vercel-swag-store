@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { ImageResponse } from 'next/og'
 import { findProduct } from '@/lib/api/products'
 import { formatPrice } from '@/lib/format'
-import { loadGeist } from '@/lib/og-font'
+import { loadOgFonts, OG_FONT_FAMILY } from '@/lib/og-font'
 
 export const alt = 'Product photo with its name and price'
 export const size = { width: 1200, height: 630 }
@@ -10,7 +10,9 @@ export const contentType = 'image/png'
 
 /**
  * The product's social card: its photo on black, with name and price. The
- * product comes from the cached `getProduct`; an unknown slug gets a 404.
+ * product comes from `findProduct`, the same cache entry the page reads; an
+ * unknown slug gets a 404. Colours are literal because the image renderer
+ * cannot read the CSS tokens; they match the dark theme's.
  */
 export default async function Image({
   params,
@@ -33,7 +35,7 @@ export default async function Image({
           padding: 64,
           background: '#000',
           color: '#fff',
-          fontFamily: 'Geist',
+          fontFamily: OG_FONT_FAMILY,
         }}
       >
         {photo ? (
@@ -57,16 +59,6 @@ export default async function Image({
         </div>
       </div>
     ),
-    {
-      ...size,
-      fonts: [
-        {
-          name: 'Geist',
-          data: await loadGeist(),
-          style: 'normal',
-          weight: 400,
-        },
-      ],
-    },
+    { ...size, fonts: await loadOgFonts() },
   )
 }

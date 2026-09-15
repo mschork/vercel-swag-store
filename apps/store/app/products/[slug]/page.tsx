@@ -11,7 +11,7 @@ import {
   StockAndCart,
   StockSkeleton,
 } from '@/components/product/stock-and-cart'
-import { getCategories } from '@/lib/api/categories'
+import { findCategory } from '@/lib/api/categories'
 import { findProduct, getAllProductSlugs } from '@/lib/api/products'
 import { getStoreConfig } from '@/lib/api/store'
 import { publicEnv } from '@/lib/env.public'
@@ -71,10 +71,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  */
 export default async function ProductPage({ params }: Props) {
   const product = await productFor(params)
-  const categories = await getCategories()
-  const categoryName =
-    categories.find((category) => category.slug === product.category)?.name ??
-    product.category
+  const category = await findCategory(product.category)
+  const categoryName = category?.name ?? product.category
   const trail: BreadcrumbLink[] = [
     { name: 'Home', href: '/' },
     {
