@@ -1,5 +1,6 @@
 import { cacheLife } from 'next/cache'
 import { getStoreConfig } from '@/lib/api/store'
+import { loadOptional } from '@/lib/load-optional'
 import { socialLinks } from '@/lib/social-links'
 
 /**
@@ -18,13 +19,9 @@ async function CopyrightYear() {
  * the link row rather than replacing the store with an error screen.
  */
 async function SocialLinks() {
-  let links
-  try {
-    links = socialLinks((await getStoreConfig()).socialLinks)
-  } catch (error) {
-    console.error('Footer: store config unavailable, rendering without social links', error)
-    return null
-  }
+  const config = await loadOptional('Footer: store config', getStoreConfig)
+  if (!config) return null
+  const links = socialLinks(config.socialLinks)
   if (links.length === 0) return null
   return (
     <ul className="flex flex-wrap gap-x-6 gap-y-2" aria-label="Social links">

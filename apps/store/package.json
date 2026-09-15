@@ -12,8 +12,11 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@base-ui/react": "^1.8.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
+    "class-variance-authority": "^0.7.1",
+    "cn": "^0.3.0",
     "geist": "^1.7.2",
     "next": "16.3.5",
     "react": "19.2.8",
@@ -22,6 +25,7 @@
     "zod": "^4.6.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@repo/config": "workspace:*",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24",

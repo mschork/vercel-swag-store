@@ -21,7 +21,7 @@ A take-home assignment for Vercel: a "Vercel Swag Store" storefront in Next.js 1
 
 | Data | Function | Policy |
 |---|---|---|
-| Product list, product by slug, categories, store config | `lib/api/products.ts`, `lib/api/categories.ts`, `lib/api/store.ts` | `"use cache"`, `cacheLife('catalog')` (custom profile in `next.config.ts`), `cacheTag('products')` etc. |
+| Product list, product by slug, featured grid with top-up, categories, store config | `lib/api/products.ts`, `lib/api/categories.ts`, `lib/api/store.ts` | `"use cache"`, `cacheLife('catalog')` (custom profile in `next.config.ts`), `cacheTag('products')` etc. |
 | Stock for a product | `lib/api/stock.ts` | never cached; rendered inside `<Suspense>` |
 | Promotion | `lib/api/promotions.ts` | never cached; rendered inside `<Suspense>` |
 | Cart (all operations) | `lib/api/cart.ts`, `app/cart/actions.ts` | never cached; reads `cookies()`; Server Actions call `updateTag` / `revalidateTag` for the cart tag |

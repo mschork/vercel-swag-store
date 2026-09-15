@@ -34,7 +34,7 @@ Built on `Form` from `next/form` with `action="/search"` so it works without Jav
 Async server component receiving `searchParams`.
 
 - Normalise: `q = (q ?? '').trim().slice(0, 64)`, `category` validated against the cached category slugs (unknown slug treated as none).
-- Default state (no q, no category): `getProducts({ featured: true, limit: 8 })` topped up like E04, heading "Featured".
+- Default state (no q, no category): `getFeaturedProducts({ limit: 8, min: 8 })` from E04, heading "Featured".
 - Category only: `getProducts({ category, limit: 5 })`.
 - Query present: category-aware expansion. `norm = q.toLowerCase().replace(/s$/, '')`; find a category whose `slug` or lowercased `name` equals `norm` or `norm + 's'` or contains `norm` as a whole word. If found and no explicit `category` param, run `getProducts({ search: q, limit: 5 })` and `getProducts({ category: matched.slug, limit: 5 })` with `Promise.all`; merge search hits first, then category items not already present; cap at 5; show hint "Includes everything in {Category}". If a `category` param is present, run `getProducts({ search: q, category, limit: 5 })` only.
 - Empty state: "No products match "{q}"" with category chips (links to `/search?category=<slug>`) and a "Clear search" link. Also the hook point for E13 (record the miss).

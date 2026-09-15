@@ -36,6 +36,18 @@ _Avoid_: Collection, tag, group
 A product the API flags as featured; a human choice, not a popularity measure.
 _Avoid_: Popular, trending, bestseller
 
+**Hero product**:
+The featured product whose photo, name and page the home hero uses when no editorial hero image exists. Chosen by slug, resolved from the API.
+_Avoid_: Hero image, featured item
+
+**Promotion**:
+The one offer the API returns for a request. It changes between requests and is shown as returned, never filtered by date or amount.
+_Avoid_: Sale, banner, deal
+
+**Top-up**:
+Catalogue products appended after the featured products so a grid reaches its minimum size. Never labelled as featured.
+_Avoid_: Filler, fallback products
+
 **Catalog product**:
 A read-only copy in Sanity of one API product, kept so editors can pick and reference products without the Studio calling the API.
 _Avoid_: Product (when the API record is meant), enrichment
