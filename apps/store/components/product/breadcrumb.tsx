@@ -1,8 +1,9 @@
 import type { Route } from 'next'
 import Link from 'next/link'
+import type { Crumb } from '@/lib/structured-data'
 
-export interface BreadcrumbLink {
-  name: string
+/** A breadcrumb step that links within the store; typed routes check `href`. */
+export interface BreadcrumbLink extends Crumb {
   href: Route
 }
 

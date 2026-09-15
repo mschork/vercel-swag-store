@@ -20,19 +20,19 @@ export async function StockAndCart({ product }: { product: Product }) {
   const stock = await loadOptional(`Stock for ${product.id}`, () =>
     getStock(product.id),
   )
-  const { availability } = stockStatus(stock)
+  const status = stockStatus(stock)
   return (
     <div className="flex flex-col gap-4">
-      <StockIndicator stock={stock} />
+      <StockIndicator status={status} />
       <AddToCartForm
         productId={product.id}
-        max={stock?.stock ?? 0}
-        disabled={!stock?.inStock}
+        max={status.maxQuantity}
+        disabled={!status.canAddToCart}
       />
       <JsonLd
         data={productJsonLd({
           product,
-          availability,
+          availability: status.availability,
           siteUrl: publicEnv.NEXT_PUBLIC_SITE_URL,
         })}
       />

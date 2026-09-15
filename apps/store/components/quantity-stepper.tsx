@@ -21,14 +21,13 @@ export function QuantityStepper({
   max,
   defaultValue = min,
   disabled = false,
-  label = 'Quantity',
 }: {
   name: string
   min: number
   max: number
+  /** The starting quantity; the cart rows (E06) pass the line's quantity. */
   defaultValue?: number
   disabled?: boolean
-  label?: string
 }) {
   const id = useId()
   const [draft, setDraft] = useState(() => String(defaultValue))
@@ -37,12 +36,11 @@ export function QuantityStepper({
   const { canDecrement, canIncrement } = stepperState(value, min, max)
   const step = (delta: number) =>
     setDraft(String(clampQuantity(value + delta, min, max)))
-  const noun = label.toLowerCase()
 
   return (
     <div className="flex flex-col gap-1">
       <label htmlFor={id} className="text-sm leading-6 text-fg-secondary">
-        {label}
+        Quantity
       </label>
       <div className="inline-flex h-10 items-stretch overflow-hidden rounded-lg border border-border">
         <button
@@ -50,7 +48,7 @@ export function QuantityStepper({
           className={STEP_BUTTON}
           onClick={() => step(-1)}
           disabled={disabled || !canDecrement}
-          aria-label={`Decrease ${noun}`}
+          aria-label="Decrease quantity"
           aria-controls={id}
         >
           <span aria-hidden="true">−</span>
@@ -75,14 +73,14 @@ export function QuantityStepper({
           className={STEP_BUTTON}
           onClick={() => step(1)}
           disabled={disabled || !canIncrement}
-          aria-label={`Increase ${noun}`}
+          aria-label="Increase quantity"
           aria-controls={id}
         >
           <span aria-hidden="true">+</span>
         </button>
       </div>
       <output htmlFor={id} aria-live="polite" className="sr-only">
-        {`${label} ${value}`}
+        {`Quantity ${value}`}
       </output>
     </div>
   )

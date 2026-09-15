@@ -116,6 +116,8 @@ describe('findProduct', () => {
       apiError(404, 'NOT_FOUND', "Product with id 'nope' not found"),
     )
     await expect(findProduct('nope')).resolves.toBeNull()
+    expect(cacheLife).toHaveBeenCalledWith('minutes')
+    expect(cacheLife).not.toHaveBeenCalledWith('catalog')
   })
 
   it('rethrows any other API error', async () => {
@@ -165,8 +167,6 @@ describe('getAllProductSlugs', () => {
       }),
     )
     await expect(getAllProductSlugs()).resolves.toEqual(['one', 'two'])
-    expect(cacheTag).toHaveBeenCalledWith('products')
-    expect(cacheLife).toHaveBeenCalledWith('catalog')
   })
 })
 

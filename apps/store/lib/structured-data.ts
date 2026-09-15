@@ -1,4 +1,5 @@
 import type { Product } from './api/types'
+import { decimalAmount } from './format'
 import type { StockAvailability } from './stock-status'
 
 /** A JSON-LD document; plain data, typed loosely on purpose (no schema-dts dependency). */
@@ -37,7 +38,7 @@ export function productJsonLd({
     offers: {
       '@type': 'Offer',
       url: new URL(`/products/${product.slug}`, siteUrl).href,
-      price: (product.price / 100).toFixed(2),
+      price: decimalAmount(product.price),
       priceCurrency: product.currency,
       ...(availability ? { availability } : {}),
     },
