@@ -50,6 +50,7 @@ Sections, in this order, each short:
 - Production URLs for store and studio recorded in README; both load from a private window.
 - Preview comments enabled.
 - Environment variables reviewed: bypass token present in Production and Preview, absent from any `NEXT_PUBLIC_` name.
+- The store answers `X-Robots-Tag: noindex` on every route, so a demo of invented products never enters a search index, while the metadata, Open Graph and sitemap work stays in place (`specs/callout.md`). Verify against production with `curl -sI` on the home page, a product page and `sitemap.xml`.
 
 ### Final checklist (`docs/release-checklist.md`)
 
@@ -66,3 +67,4 @@ One line per requirement in `the requirements`, ticked with the route or file th
 - [ ] Both URLs public; repo public; tag pushed.
 - [ ] Release checklist fully ticked.
 - [ ] Email draft in `docs/email.md`.
+- [x] The deployed store is `noindex` on every route, checked against production.
