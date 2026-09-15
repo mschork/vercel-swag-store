@@ -49,6 +49,20 @@ describe('QuantityStepper', () => {
     expect(has(tag, 'required')).toBe(true)
   })
 
+  it('shows the default value it is given', () => {
+    expect(input({ defaultValue: 3 })).toContain('value="3"')
+  })
+
+  it('marks controls aria-disabled while pending but keeps them focusable', () => {
+    const props = { defaultValue: 3, pending: true }
+    expect(plus(props)).toContain('aria-disabled="true"')
+    expect(has(plus(props), 'disabled')).toBe(false)
+    expect(minus(props)).toContain('aria-disabled="true"')
+    expect(has(input(props), 'readOnly')).toBe(true)
+    expect(has(input(props), 'disabled')).toBe(false)
+    expect(plus({ defaultValue: 3 })).not.toContain('aria-disabled')
+  })
+
   it('disables every control when disabled, and keeps a valid range when stock is zero', () => {
     const props = { max: 0, disabled: true }
     expect(has(input(props), 'disabled')).toBe(true)

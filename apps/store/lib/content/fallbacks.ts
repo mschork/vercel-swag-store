@@ -1,7 +1,7 @@
 /**
  * Editorial content the store needs before Sanity exists. Field names match
- * the `homePage.hero` document (E08) so E09 can swap in Sanity data without
- * touching the components. The copy is placeholder marketing text (see
+ * the Sanity documents (E08) so E09 can swap in Sanity data without touching
+ * the components. The copy is placeholder marketing text (see
  * specs/improvements.md).
  */
 export interface HeroContent {
@@ -20,4 +20,20 @@ export const HERO_FALLBACK: HeroContent = {
   ctaLabel: 'Shop the collection',
   ctaHref: '/search',
   productSlug: 'minimal-black-backpack',
+}
+
+/**
+ * The checkout page (CONTEXT.md), matching the `checkoutPage` singleton (E08).
+ * `body` is plain text here; E09 renders the document's Portable Text.
+ */
+export interface CheckoutContent {
+  title: string
+  body: string
+  continueShoppingLabel: string
+}
+
+export const CHECKOUT_FALLBACK: CheckoutContent = {
+  title: 'Thank you for your order!',
+  body: 'This is a demo store, so nothing has been charged, shipped or sent.',
+  continueShoppingLabel: 'Continue shopping',
 }

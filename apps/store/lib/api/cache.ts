@@ -1,15 +1,15 @@
 import 'server-only'
 
 /**
- * Cache tags for `cacheTag()` in the data layer and `updateTag()` /
- * `revalidateTag()` in Server Actions and the revalidate route. One place, so
- * a tag can never be misspelt on one side of the pair.
+ * Cache tags for `cacheTag()` in the data layer and `revalidateTag()` in the
+ * revalidate routes. One place, so a tag can never be misspelt on one side of
+ * the pair. The cart has no tag: it is never cached, and cart actions call
+ * `refresh()` instead.
  */
 export const TAGS = {
   products: 'products',
   categories: 'categories',
   store: 'store',
-  cart: 'cart',
   sanity: 'sanity',
 } as const
 
