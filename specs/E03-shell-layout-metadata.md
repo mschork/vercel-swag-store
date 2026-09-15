@@ -14,7 +14,7 @@ The shared frame every page renders inside: header with logo, nav and cart badge
 - Body: skip link to `#main`, `<Header />`, `<main id="main">{children}</main>`, `<Footer />`, `<SpeedInsights />`, `<Analytics />` (packages added here, see E11 for verification).
 - `export async function generateMetadata()`: awaits the cached `getStoreConfig()` and maps `seo.defaultTitle` to `title.default`, `seo.titleTemplate` to `title.template`, `seo.defaultDescription` to `description` and `storeName` to `openGraph.siteName`. `metadataBase` from `NEXT_PUBLIC_SITE_URL`; `openGraph: { type: 'website', locale: 'en_US' }`; `twitter: { card: 'summary_large_image' }`; `robots` default. Because the only await is a `"use cache"` function, the root stays static and the metadata is prerendered. There is no constants fallback: a build that cannot reach the API fails, as `specs/callout.md` states.
 - `export const viewport`: `themeColor` as an array with `media: '(prefers-color-scheme: light)'` `#ffffff` and dark `#000000`. Not `#hhhhhh`.
-- Root `app/opengraph-image.tsx` via `next/og`: black canvas, the triangle, "Vercel Swag Store" in Geist. Font loaded with `readFile` from the `geist` package's `Geist-Regular.ttf`. Static.
+- Root `app/opengraph-image.tsx` via `next/og`: black canvas, the triangle, "Vercel Swag Store" in Geist. Font loaded with `readFile` from the `geist` package's `Geist-Regular.ttf`, inside the image handler and never at module scope: this module sits in every route's graph through the root metadata, and a route that resumes at request time loads it on the server, where a module-scope read outside the function bundle throws. The font is listed in `outputFileTracingIncludes` for the `/opengraph-image` route. Static.
 
 ### Theme
 
@@ -27,7 +27,7 @@ The E10 colour tokens are defined here, with E10's values, because the shell nee
 ### Header `components/header.tsx`
 
 - Left: `<Logo />` linking to `/`: the Vercel triangle as an inline SVG in `currentColor`, 24px, plus "Vercel Swag Store" as text; the text collapses to the triangle below 640px.
-- Nav: links to `/` ("Home") and `/search` ("Search"), `aria-current="page"` set by a small client `NavLink` using `usePathname`.
+- Nav: links to `/` ("Home") and `/search` ("Search"), `aria-current="page"` set by a small client `NavLink` using `usePathname`. The list sits in a Suspense boundary with plain links as fallback: on static routes the pathname is known at prerender and the boundary resolves in the shell; on the fallback shell of a dynamic route (a product slug not listed at build) it is not, and the build fails without the boundary.
 - Right: `<CartBadge />` wrapped in `<Suspense fallback={<CartIcon count={null} />}>`. In this epic `CartBadge` is a static server component rendering `<CartIcon count={null} />` linking to `/cart`; E06 replaces it with the cookie-reading version. `CartIcon` is an inline SVG cart glyph in `currentColor`.
 - Not sticky, no border: the header separates from the page by spacing (`specs/design.md`). Height 56px mobile, 64px desktop.
 
