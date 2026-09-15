@@ -1,7 +1,7 @@
 import { cacheLife, cacheTag } from 'next/cache'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchCall, mockFetch, ok } from '@/test/helpers'
-import { getCategories } from './categories'
+import { findCategory, getCategories } from './categories'
 
 let fetchMock: ReturnType<typeof mockFetch>
 
@@ -23,5 +23,15 @@ describe('getCategories', () => {
     expect(fetchCall(fetchMock)[0]).toMatch(/\/categories$/)
     expect(cacheTag).toHaveBeenCalledWith('categories')
     expect(cacheLife).toHaveBeenCalledWith('catalog')
+  })
+})
+
+describe('findCategory', () => {
+  it('finds a category by slug, or returns null', async () => {
+    fetchMock.mockImplementation(async () =>
+      ok([{ slug: 't-shirts', name: 'T Shirts', productCount: 6 }]),
+    )
+    await expect(findCategory('t-shirts')).resolves.toMatchObject({ name: 'T Shirts' })
+    await expect(findCategory('umbrellas')).resolves.toBeNull()
   })
 })

@@ -10,3 +10,11 @@ export function formatPrice(cents: number, currency = 'USD', locale = 'en-US'): 
     maximumFractionDigits: 2,
   }).format(cents / 100)
 }
+
+/**
+ * A price in major units as a plain decimal string ("35.00"), for machine
+ * readers such as schema.org's `price`. People see `formatPrice`.
+ */
+export function decimalAmount(cents: number): string {
+  return (cents / 100).toFixed(2)
+}

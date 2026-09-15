@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next'
 import { IMAGE_HOSTS, securityHeaders } from './lib/security-headers'
 
+const GEIST_TTF = './node_modules/geist/dist/fonts/geist-sans/Geist-Regular.ttf'
+
 const nextConfig: NextConfig = {
   cacheComponents: true,
   cacheLife: {
@@ -9,10 +11,11 @@ const nextConfig: NextConfig = {
     catalog: { stale: 300, revalidate: 3600, expire: 86400 },
   },
   typedRoutes: true,
-  // The OG image reads this font with a runtime path, which the file trace
-  // cannot see; list it so the function bundle carries it.
+  // The OG images read this font with a runtime path (lib/og-font.ts), which
+  // the file trace cannot see; list it so each image function carries it.
   outputFileTracingIncludes: {
-    '/opengraph-image': ['./node_modules/geist/dist/fonts/geist-sans/Geist-Regular.ttf'],
+    '/opengraph-image': [GEIST_TTF],
+    '/products/[slug]/opengraph-image': [GEIST_TTF],
   },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders({ allowEval: process.env.NODE_ENV === 'development' }) }]
