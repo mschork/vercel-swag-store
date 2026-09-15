@@ -1,6 +1,12 @@
 /**
- * Quantity rules for the stepper on the product page (and, from E06, the cart
- * rows). Pure and safe for client components. A quantity is a whole number in
+ * Most of one product a cart line holds, shared by the cart stepper and the
+ * `updateQuantity` action. The API checks no stock on cart writes; stock is
+ * enforced only when adding on the product page (specs/improvements.md).
+ */
+export const CART_MAX_QUANTITY = 99
+
+/**
+ * Quantity rules for the stepper on the product page and the cart rows. Pure and safe for client components. A quantity is a whole number in
  * `[min, max]`. When `max` is below `min` (a product out of stock) the range
  * collapses to `min`, so the value stays valid while the control is disabled.
  */
