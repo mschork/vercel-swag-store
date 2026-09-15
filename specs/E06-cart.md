@@ -81,13 +81,13 @@ If a render finds a token but the API says 404, the page shows the empty state a
 
 ## Acceptance criteria
 
-- [ ] Add, update, remove and subtotal work against the live API.
-- [ ] Refresh and navigate-away-and-back keep the cart; a new private window has an empty cart.
-- [ ] Badge count matches `totalItems` after every action without a full reload.
-- [ ] No cart request originates from the browser (check the network tab; only Server Action POSTs to our own origin).
+- [x] Add, update, remove and subtotal work against the live API.
+- [x] Refresh and navigate-away-and-back keep the cart; a new private window has an empty cart.
+- [x] Badge count matches `totalItems` after every action without a full reload.
+- [x] No cart request originates from the browser (check the network tab; only Server Action POSTs to our own origin).
 - [ ] `cart_token` cookie is httpOnly and secure on the deployed site.
-- [ ] Build output: `/cart` and `/checkout` shells static, cart contents dynamic; the badge is the only dynamic hole in the shell.
-- [ ] Ordering empties the cart and lands on `/checkout`.
+- [x] Build output: `/cart` and `/checkout` shells static, cart contents dynamic; the badge is the only dynamic hole in the shell.
+- [x] Ordering empties the cart and lands on `/checkout`.
 
 ## Out of scope
 
