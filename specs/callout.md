@@ -18,4 +18,36 @@ Things worth saying out loud in the presentation or README because they are deli
 - **The OG image reads its font inside the handler** (E04 review). E03 read the Geist TTF at module scope, which was harmless while every route was fully static. E04 made the home page resume at request time for the promo hole; that resume loads the OG image module through the root metadata, and the module-scope read ran inside the Vercel function, where the font was not bundled, so the first preview showed the error boundary. The read now happens inside the handler and `outputFileTracingIncludes` ships the font with the function.
 - **Content in streamed holes needs JavaScript** (E06). The search form sits in the static shell and works without JavaScript. Stock with Add to Cart, the promo banner, the cart contents and the header badge stream inside Suspense boundaries, and React reveals a streamed boundary with a small inline script, so with JavaScript disabled those holes keep their skeletons. That is accepted because the alternative, resolving every live value before the first byte, makes every page dynamic and gives up the static shell the assignment is about. The cart forms are still native `<form action>` Server Actions, so a submit made while hydration is slow or has failed posts to the server instead of being lost.
 - **A failed cart call is not an empty cart** (E06). When the API cannot return the cart, the header badge shows the cart icon without a count, the same as while it loads, and `/cart` says "Your cart could not be loaded" with a way to try again. A zero or "Your cart is empty" would state something false about a cart that may well hold products; only a 404 for the cart itself means there is nothing in it.
-- **The cart API is ten times slower than the rest of the API, and the UI is built for it** (E06). Measured five times per endpoint on 15 Sep 2026: products, a single product, categories, promotions, store config and health all answer in 0.14 to 0.20 s and stock in 0.25 to 0.46 s, while `GET /cart` takes 1.4 to 2.0 s, `PATCH /cart/{productId}` 2.2 to 2.8 s and `POST /cart/create` 2.5 to 2.8 s. Only the cart namespace is slow, and consistently so, which reads as deliberate rather than incidental: a storefront that hides a slow cart behind optimistic UI looks very different from one that does not. One add is three cart calls (read the cart, write, then the badge's own read after `refresh()`), so the product page's confirmation takes six to eight seconds, and the end-to-end tests allow 30 s per cart assertion for the same reason. The store puts that cost in as few places as it can: the cart page's shell is static, its rows change through `useOptimistic` so a quantity change or a removal is instant, the badge never blocks a page, and a cart the API cannot return degrades to a message rather than a wrong empty cart. What stays visible is Add to Cart on the product page, which waits for the round trip; the ways to shorten or hide that wait are in `specs/improvements.md`.
+- **The cart API is ten times slower than the rest of the API, and the UI is built for it** (E06). Every endpoint outside the cart answers in about 0.15 s; every cart call takes 1.4 to 2.8 s, reads included. Only that namespace is slow, and consistently so, which reads as deliberate rather than incidental: a storefront that hides a slow cart behind optimistic UI looks very different from one that does not. The measurements are in the section below.
+
+## Cart latency measurements (E06)
+
+Numbers for the presentation. Measured with `curl` against the live API on 15 and 16 Sep 2026, five runs per endpoint, three for the two calls that create or change a cart. The figure is `time_total`, the whole request.
+
+| Endpoint | Runs (s) | Median (s) |
+|---|---|---|
+| `GET /health` | 0.16, 0.20, 0.17, 0.16, 0.16 | 0.16 |
+| `GET /products?limit=12` | 0.15, 0.16, 0.18, 0.16, 0.15 | 0.16 |
+| `GET /products/{id}` | 0.15, 0.15, 0.17, 0.16, 0.15 | 0.15 |
+| `GET /products/{id}/stock` | 0.34, 0.35, 0.33, 0.46, 0.25 | 0.34 |
+| `GET /categories` | 0.15, 0.15, 0.14, 0.29, 0.15 | 0.15 |
+| `GET /promotions` | 0.17, 0.15, 0.14, 0.15, 0.16 | 0.15 |
+| `GET /store/config` | 0.15, 0.15, 0.16, 0.14, 0.14 | 0.15 |
+| `GET /cart` | 1.37, 1.70, 2.04, 1.43, 1.52 | 1.52 |
+| `POST /cart/create` | 2.68, 2.54, 2.81 | 2.68 |
+| `POST /cart (add a line)` | 2.95, 2.47, 3.05 | 2.95 |
+| `PATCH /cart/{productId}` | 2.21, 2.79, 2.42, 2.82, 2.67 | 2.67 |
+
+Catalogue, config and health sit between 0.14 and 0.20 s. Stock, the other live call, sits at 0.25 to 0.46 s. Everything under `/cart` is an order of magnitude slower, and `GET /cart` is slow too, so it is not write contention.
+
+What that costs in the browser, measured with Playwright against `next start` on the same build:
+
+| Flow | Time |
+|---|---|
+| First Add to Cart (create a cart, write, badge re-read) | 6.3 s to the confirmation |
+| Second Add to Cart (read the cart, write, badge re-read) | 8.3 s to the confirmation |
+| Quantity change on `/cart`, including the page load | 6.5 s to the confirmed badge |
+
+One add is three cart calls: read the cart (or create one), write the line, then the header badge's own read when `refresh()` re-renders the route. The end-to-end tests allow 30 s per cart assertion for the same reason, and a slow add is not a defect.
+
+What the store does about it. The cart page's shell is prerendered, so the slow part never blocks first paint. Its rows change through `useOptimistic`, so a quantity change or a removal is instant and the round trip happens behind the visitor. The badge streams in its own boundary and never holds up a page. A cart the API cannot return degrades to "Your cart could not be loaded" instead of a wrong empty cart. What stays visible is Add to Cart on the product page, which waits for the round trip; four ways to shorten or hide that wait are grouped in `specs/improvements.md`.
