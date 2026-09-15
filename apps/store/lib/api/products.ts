@@ -24,7 +24,10 @@ const SLUG_PAGE_SIZE = 100
  */
 export function buildQuery(params: ProductListParams): string {
   const entries = Object.entries(params)
-    .filter((entry): entry is [string, string | number | boolean] => entry[1] !== undefined)
+    .filter(
+      (entry): entry is [string, string | number | boolean] =>
+        entry[1] !== undefined,
+    )
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([key, value]) => [key, String(value)])
   const query = new URLSearchParams(entries).toString()
@@ -32,7 +35,9 @@ export function buildQuery(params: ProductListParams): string {
 }
 
 /** Catalogue data: cached per argument set, tagged `products`, `catalog` lifetime. */
-export async function getProducts(params: ProductListParams = {}): Promise<ProductListResult> {
+export async function getProducts(
+  params: ProductListParams = {},
+): Promise<ProductListResult> {
   'use cache'
   cacheTag(TAGS.products)
   cacheLife(CATALOG_PROFILE)
@@ -41,6 +46,33 @@ export async function getProducts(params: ProductListParams = {}): Promise<Produ
     metaSchema: ProductListMetaSchema,
   })
   return { products: data, pagination: meta.pagination }
+}
+
+/**
+ * The featured grid: every featured product the API returns (up to `limit`),
+ * topped up with ordinary catalogue products when fewer than `min` are
+ * flagged, so the grid never falls below the required minimum if someone
+ * unflags a product. Featured products always come first; a top-up product is
+ * never labelled as featured (CONTEXT.md). Cached as one entry per argument set.
+ */
+export async function getFeaturedProducts({
+  limit,
+  min,
+}: {
+  limit: number
+  min: number
+}): Promise<Product[]> {
+  'use cache'
+  cacheTag(TAGS.products)
+  cacheLife(CATALOG_PROFILE)
+  const { products: featured } = await getProducts({ featured: true, limit })
+  if (featured.length >= min) return featured
+  const { products: catalogue } = await getProducts({ limit })
+  const seen = new Set(featured.map((product) => product.id))
+  const topUp = catalogue
+    .filter((product) => !seen.has(product.id))
+    .slice(0, min - featured.length)
+  return [...featured, ...topUp]
 }
 
 /**
@@ -71,7 +103,10 @@ export async function getAllProductSlugs(): Promise<string[]> {
   let page = 1
   let hasNextPage = true
   while (hasNextPage) {
-    const { products, pagination } = await getProducts({ page, limit: SLUG_PAGE_SIZE })
+    const { products, pagination } = await getProducts({
+      page,
+      limit: SLUG_PAGE_SIZE,
+    })
     slugs.push(...products.map((product) => product.slug))
     hasNextPage = pagination.hasNextPage
     page += 1
