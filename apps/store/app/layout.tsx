@@ -7,6 +7,7 @@ import { Footer } from '@/components/footer'
 import { Header } from '@/components/header'
 import { getStoreConfig } from '@/lib/api/store'
 import { publicEnv } from '@/lib/env.public'
+import { openGraphDefaults } from '@/lib/metadata'
 import './globals.css'
 
 /**
@@ -19,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(publicEnv.NEXT_PUBLIC_SITE_URL),
     title: { default: seo.defaultTitle, template: seo.titleTemplate },
     description: seo.defaultDescription,
-    openGraph: { type: 'website', siteName: storeName, locale: 'en_US' },
+    openGraph: openGraphDefaults(storeName),
     twitter: { card: 'summary_large_image' },
   }
 }
