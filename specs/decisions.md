@@ -60,4 +60,4 @@ Local scripts only: `SANITY_API_WRITE_TOKEN` for the seed script.
 
 ## Epic index
 
-E01 foundation, E02 API client, E03 shell and metadata, E04 home, E05 PDP, E06 cart, E07 search, E08 Sanity model, E09 Sanity integration, E10 design, E11 performance, E12 delivery, E13 search-gap loop (stretch), E14 Eve agent (stretch, after E13), E15 catalogue sync (stretch, after E09). Order: E01 to E07, E10, E11, E08, E09, E12, then E13, E14 and E15 if time remains.
+E01 foundation, E02 API client, E03 shell and metadata, E04 home, E05 PDP, E06 cart, E07 search, E08 Sanity model, E09 Sanity integration, E10 design, E11 performance, E12 delivery, E13 search-gap loop (stretch), E14 Eve agent (stretch, after E13), E15 catalogue sync (stretch, after E09), E16 cart API improvements (stretch, after E12). Order: E01 to E07, E10, E11, E08, E09, E12, then E13, E14, E15 and E16 if time remains.
