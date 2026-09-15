@@ -24,7 +24,7 @@ A demonstration storefront: a "Vercel Swag Store" storefront in Next.js 16 with 
 | Product list, product by slug, featured grid with top-up, categories, store config | `lib/api/products.ts`, `lib/api/categories.ts`, `lib/api/store.ts` | `"use cache"`, `cacheLife('catalog')` (custom profile in `next.config.ts`), `cacheTag('products')` etc. |
 | Stock for a product | `lib/api/stock.ts` | never cached; rendered inside `<Suspense>` |
 | Promotion | `lib/api/promotions.ts` | never cached; rendered inside `<Suspense>` |
-| Cart (all operations) | `lib/api/cart.ts`, `app/cart/actions.ts` | never cached; reads `cookies()`; Server Actions call `updateTag` / `revalidateTag` for the cart tag |
+| Cart (all operations) | `lib/api/cart.ts`, `app/cart/actions.ts` | never cached; reads `cookies()`; Server Actions call `refresh()` from `next/cache`; nothing carries a cart tag, so `updateTag` / `revalidateTag` do not apply |
 | Sanity documents | `lib/sanity/fetch.ts` | `"use cache"`, `cacheTag('sanity', 'sanity:<type>', 'sanity:<id>')`; webhook revalidates |
 | Search results | `app/search/page.tsx` | dynamic via `searchParams`; the underlying `getProducts` call is still cached per argument set |
 
