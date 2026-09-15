@@ -24,9 +24,25 @@ _Avoid_: Dynamic section, island, client part
 Light or dark, taken from the visitor's operating-system preference. The store offers no control of its own and never learns the choice.
 _Avoid_: Mode, dark mode, colour scheme, theme selector
 
+**Cart**:
+The anonymous set of lines the API holds for one cart token. One per browser, and none until the first add.
+_Avoid_: Basket, bag, session cart
+
+**Line**:
+One product and its quantity in a cart. The API addresses it by product id, so a product appears at most once and repeated adds merge into it.
+_Avoid_: Item, entry, row, line item
+
+**Expired cart**:
+A cart the API has forgotten after 24 hours without a change. The store treats a 404 for the cart itself as expiry and starts a new cart on the next add.
+_Avoid_: Lost cart, session timeout, stale cart
+
 **Cart token**:
 The credential that identifies one anonymous cart. Lives only in an httpOnly cookie and on the server; the browser never reads it.
 _Avoid_: Cart id, session, session token
+
+**Checkout page**:
+The static page shown after the demo order. Placing the order means the store forgets the cart; nothing is charged, shipped or sent anywhere.
+_Avoid_: Order confirmation, thank-you page, checkout (as a process)
 
 **Category**:
 The API's flat taxonomy of products. Owned by the API, never edited in Sanity.
