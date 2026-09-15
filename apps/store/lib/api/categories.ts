@@ -14,3 +14,12 @@ export async function getCategories(): Promise<Category[]> {
   const { data } = await fetchApi('/categories', { schema: z.array(CategorySchema) })
   return data
 }
+
+/**
+ * One category by slug, or `null` when the API does not list it. Reads the
+ * cached list, so it needs no cache entry of its own.
+ */
+export async function findCategory(slug: string): Promise<Category | null> {
+  const categories = await getCategories()
+  return categories.find((category) => category.slug === slug) ?? null
+}

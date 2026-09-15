@@ -15,7 +15,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['**/*.test.ts'],
+    include: ['**/*.test.ts', '**/*.test.tsx'],
     exclude: ['node_modules/**', '.next/**'],
     setupFiles: ['./test/setup.ts'],
     // Loads .env and .env.local so `API_INTEGRATION=1 pnpm test` can hit the
