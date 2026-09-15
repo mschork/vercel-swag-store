@@ -1,6 +1,6 @@
 # Improvements
 
-Ideas deliberately left out of the release. Each entry names the decision it comes from so the trade-off is traceable. Nothing here is scheduled.
+Ideas deliberately left out of the release. Each entry names the decision it comes from so the trade-off is traceable. Nothing here is scheduled. The four cart-latency entries from E06 (optimistic add, one less call per add, coalesced quantity clicks, one shared cart read) stay out of the epics and are weighed once the whole store is built.
 
 - **Inline header search** (E03 Q4). The nav has a link to `/search` because the requirements ask for a search page. A header search box, as on vercel.store, would shorten the path to results but means a second form and a second debounce; revisit once the search page is stable.
 - **Copy-to-clipboard on the promo code** (E04 Q8). The promo banner is static text inside a Suspense hole so it stays a server component. A copy button needs a small client leaf.
