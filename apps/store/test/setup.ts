@@ -8,6 +8,7 @@ vi.mock('next/cache', () => ({
   cacheLife: vi.fn(),
   updateTag: vi.fn(),
   revalidateTag: vi.fn(),
+  refresh: vi.fn(),
 }))
 
 // `lib/env.ts` parses at module load. Give unit tests a valid environment when
