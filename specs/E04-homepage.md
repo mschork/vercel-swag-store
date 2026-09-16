@@ -41,7 +41,7 @@ The banner sits between hero and grid, never above the hero: a banner that strea
 
 ### Top-up `lib/api/products.ts`
 
-`getFeaturedProducts({ limit, min }): Promise<Product[]>`, `"use cache"` like its siblings, tagged `products`. Fetches `getProducts({ featured: true, limit })`; if fewer than `min` come back, fetches `getProducts({ limit })` and appends products not already present, in API order, until `min`. Featured products always come first; a top-up product is never labelled as featured (`CONTEXT.md`). `min: 6` is the required minimum, not a count read off the API. E07's default state calls the same function with `{ limit: 10, min: 10 }`.
+`getFeaturedProducts({ limit, min }): Promise<Product[]>`, `"use cache"` like its siblings, tagged `products`. Fetches `getProducts({ featured: true, limit })`; if fewer than `min` come back, fetches `getProducts({ limit })` and appends products not already present, in API order, until `min`. Featured products always come first; a top-up product is never labelled as featured (`CONTEXT.md`). `min: 6` is the required minimum, not a count read off the API. E07's default state calls the same function with `{ limit: 5, min: 5 }`, which the API answers without a top-up.
 
 ### Product card `components/product-card.tsx`
 
