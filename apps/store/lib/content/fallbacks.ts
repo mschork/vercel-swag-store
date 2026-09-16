@@ -7,20 +7,22 @@
 export interface HeroContent {
   headline: string
   description: string
-  ctaLabel: string
-  ctaHref: '/search'
-  /** The hero product (CONTEXT.md): its photo, name and page come from the API. */
-  productSlug: string
 }
 
 export const HERO_FALLBACK: HeroContent = {
   headline: 'Ship in black.',
   description:
     'Official Vercel merchandise. Apparel, desk gear and accessories from the team behind Next.js, all in one colour.',
-  ctaLabel: 'Shop the collection',
-  ctaHref: '/search',
-  productSlug: 'minimal-black-backpack',
 }
+
+/**
+ * The hero photo in `public/`. E09 reads `homePage.hero.image` from Sanity and
+ * falls back to this file.
+ */
+export const HERO_IMAGE = {
+  src: '/hero.jpg',
+  alt: 'Someone in a black Vercel hoodie leaning on a rooftop wall, a city skyline behind them',
+} as const
 
 /**
  * The checkout page (CONTEXT.md), matching the `checkoutPage` singleton (E08).
