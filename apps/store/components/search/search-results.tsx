@@ -87,7 +87,7 @@ export async function SearchResults({
  * Four routes through the API, chosen by what the URL holds.
  *
  * The interesting one is a query with no explicit category. The API's `search`
- * matches product names and descriptions only, so "hats" finds nothing at all
+ * matches product names, descriptions and tags, so "hats" finds nothing at all
  * while the Hats category holds three products. When the query names a
  * category, its products are fetched alongside the search hits and merged
  * behind them.

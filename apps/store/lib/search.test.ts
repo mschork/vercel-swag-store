@@ -52,6 +52,11 @@ describe('expandQuery', () => {
     ['cups', 'cups'],
     ['shirt', 't-shirts'],
     ['t-shirt', 't-shirts'],
+    // The API matches punctuation literally, so these three reach the product
+    // only through the category.
+    ['tshirt', 't-shirts'],
+    ['t shirt', 't-shirts'],
+    ['tshirts', 't-shirts'],
     ['mug', 'mugs'],
     ['  BOOKS  ', 'books'],
   ])('matches %s to the %s category', (query, slug) => {
@@ -68,6 +73,13 @@ describe('expandQuery', () => {
   it('does not match a substring that is not a whole word', () => {
     // "at" sits inside "Hats" but is not a word there.
     expect(expandQuery('at', categories)).toBeNull()
+  })
+
+  it('squashing separators does not let a fragment through', () => {
+    // "shirt" reaches t-shirts as a whole word; "hirt" is neither that nor an
+    // equal after squashing.
+    expect(expandQuery('hirt', categories)).toBeNull()
+    expect(expandQuery('tshir', categories)).toBeNull()
   })
 
   it('never matches when there are no categories', () => {
