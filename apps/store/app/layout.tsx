@@ -3,8 +3,10 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
 import type { Metadata, Viewport } from 'next'
+import { Suspense } from 'react'
 import { Footer } from '@/components/footer'
 import { Header } from '@/components/header'
+import { PromoBanner, PromoBannerSkeleton } from '@/components/promo-banner'
 import { getStoreConfig } from '@/lib/api/store'
 import { publicEnv } from '@/lib/env.public'
 import { openGraphDefaults } from '@/lib/metadata'
@@ -32,6 +34,12 @@ export const viewport: Viewport = {
   ],
 }
 
+/**
+ * Header, promo strip, page, footer. The strip is the one dynamic hole every
+ * route has (E10); its box reserves its height so the page never moves when
+ * it streams in. `main` is full width so a page can bleed to the edges;
+ * content sits in `Container`.
+ */
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
@@ -43,7 +51,10 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
           Skip to content
         </a>
         <Header />
-        <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 sm:px-6">
+        <Suspense fallback={<PromoBannerSkeleton />}>
+          <PromoBanner />
+        </Suspense>
+        <main id="main" className="w-full flex-1">
           {children}
         </main>
         <Footer />
