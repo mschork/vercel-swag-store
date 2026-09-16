@@ -63,20 +63,29 @@ export async function addToCart(
     }
   }
   const { productId, quantity } = input.data
-  const failed = 'This item could not be added. Try again.'
-
-  let token: string
-  try {
-    token = await liveCartToken()
-  } catch (error) {
-    unstable_rethrow(error)
-    console.error('[cart] could not open a cart', error)
-    return { ok: false, error: failed }
-  }
-  return write(token, () => addCartItem(token, productId, quantity), {
+  const copy = {
     gone: 'This product is no longer available.',
-    failed,
-  })
+    failed: 'This item could not be added. Try again.',
+  }
+  const add = (token: string) => () => addCartItem(token, productId, quantity)
+
+  // Into a new cart: its 404 can only mean the product, so nothing retries.
+  const addToNewCart = async (): Promise<CartActionResult> => {
+    let token: string
+    try {
+      token = await openCart()
+    } catch (error) {
+      unstable_rethrow(error)
+      console.error('[cart] could not open a cart', error)
+      return { ok: false, error: copy.failed }
+    }
+    return write(token, add(token), copy)
+  }
+
+  // Write first; only a 404 whose re-check finds no cart opens a new one.
+  const token = await getCartToken()
+  if (!token) return addToNewCart()
+  return write(token, add(token), { ...copy, onExpired: addToNewCart })
 }
 
 /** Sets a line's quantity; 0 removes the line, as the API does. */
@@ -129,16 +138,21 @@ export async function placeOrder(): Promise<void> {
   redirect('/checkout')
 }
 
-/**
- * The token of the visitor's live cart. A missing cookie or an expired cart
- * gets a new cart, and the cookie is set before the first write to it.
- */
-async function liveCartToken(): Promise<string> {
-  const token = await getCartToken()
-  if (token && (await getCart(token))) return token
+/** Creates a cart and sets its cookie before the first write to it. */
+async function openCart(): Promise<string> {
   const created = await createCart()
   await setCartToken(created.token)
   return created.token
+}
+
+type WriteCopy = {
+  gone: string
+  failed: string
+  /**
+   * What to do when a 404 turns out to be an expired cart. Defaults to
+   * forgetting it; `addToCart` passes a single add into a new cart instead.
+   */
+  onExpired?: () => Promise<CartActionResult>
 }
 
 /**
@@ -151,7 +165,7 @@ async function liveCartToken(): Promise<string> {
 async function write(
   token: string,
   run: () => Promise<unknown>,
-  copy: { gone: string; failed: string },
+  copy: WriteCopy,
 ): Promise<CartActionResult> {
   try {
     await run()
@@ -170,7 +184,7 @@ async function write(
 
 async function afterNotFound(
   token: string,
-  copy: { gone: string; failed: string },
+  copy: WriteCopy,
 ): Promise<CartActionResult> {
   let cartExists: boolean
   try {
@@ -180,7 +194,7 @@ async function afterNotFound(
     console.error('[cart] could not re-check the cart after a 404', error)
     return { ok: false, error: copy.failed }
   }
-  if (!cartExists) return expired()
+  if (!cartExists) return copy.onExpired ? copy.onExpired() : expired()
   refresh()
   return { ok: false, error: copy.gone }
 }
