@@ -39,7 +39,7 @@ export function CartView({
   const { totalItems, subtotal } = cartTotals(optimisticLines)
 
   return (
-    <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-start">
+    <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-start lg:grid-cols-[minmax(0,1fr)_20rem]">
       <ul className="flex flex-col divide-y divide-border border-y border-border">
         {optimisticLines.map((line) => (
           <CartLine

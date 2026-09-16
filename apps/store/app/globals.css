@@ -2,11 +2,10 @@
 
 /*
  * Colour and font tokens (values from specs/E10-design-system.md). Light is the
- * default; dark follows the operating-system preference. Radii use Tailwind's
- * defaults, which match E10 (`rounded-sm` 4px, `rounded-lg` 8px); the type
- * scale and component styles arrive in E10. The status colours arrive early
- * for the product page's stock line; each passes AA contrast (5.1:1 or more)
- * on both backgrounds of its theme, and the stock text never relies on them.
+ * default; dark follows the operating-system preference. The status colours
+ * are for the product page's stock line; each passes AA contrast (5.1:1 or
+ * more) on both backgrounds of its theme, and the stock text never relies on
+ * them. The accent on white is 4.5:1, AA for the promo strip's 13px text.
  */
 @theme {
   --color-bg: #ffffff;
@@ -20,6 +19,16 @@
   --color-success: #297a3a;
   --color-warning: #aa4d00;
   --color-danger: #cb2a2f;
+  /* Copy over the hero photo, which does not change with the theme. */
+  --color-on-photo: #171717;
+
+  --radius-sm: 4px;
+  --radius-lg: 8px;
+
+  /* E10 type scale: 14 / 16 body, 20 / 24 / 32 / 48 headings. Tailwind's
+   * defaults cover all but the 32, which replaces the default 30. */
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 2.5rem;
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;

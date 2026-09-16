@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
+import { EmptyState } from '@/components/empty-state'
 import { Button } from '@/components/ui/button'
 
 /**
@@ -14,12 +15,12 @@ export function ResultsError({ onReset }: { onReset: () => void }) {
   const router = useRouter()
   const [isPending, start] = useTransition()
   return (
-    <div className="flex flex-col items-start gap-4 py-8">
-      <p className="text-fg-secondary">Search is unavailable right now.</p>
+    <EmptyState title="Search is unavailable right now">
       <Button
         type="button"
         size="lg"
-        className="h-10 px-4"
+        variant="outline"
+        className="h-11 px-4"
         disabled={isPending}
         onClick={() =>
           start(() => {
@@ -30,6 +31,6 @@ export function ResultsError({ onReset }: { onReset: () => void }) {
       >
         Try again
       </Button>
-    </div>
+    </EmptyState>
   )
 }

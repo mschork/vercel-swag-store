@@ -1,22 +1,26 @@
 import Image from 'next/image'
 import type { Product } from '@/lib/api/types'
+import { cn } from '@/lib/utils'
 
 /**
  * A product's first photo, filling its parent (which sets the frame and the
  * aspect). `alt` is empty where the surrounding link already names the
  * product (cards) and the product name where the image is the link's only
- * content (hero). Renders nothing for a product without images.
+ * content. `preload` is Next 16's name for the deprecated `priority`. Renders
+ * nothing for a product without images.
  */
 export function ProductImage({
   product,
   sizes,
   alt,
-  priority = false,
+  preload = false,
+  className,
 }: {
   product: Product
   sizes: string
   alt: string
-  priority?: boolean
+  preload?: boolean
+  className?: string
 }) {
   const src = product.images[0]
   if (!src) return null
@@ -25,9 +29,9 @@ export function ProductImage({
       src={src}
       alt={alt}
       fill
-      priority={priority}
+      preload={preload}
       sizes={sizes}
-      className="object-cover"
+      className={cn('object-cover', className)}
     />
   )
 }

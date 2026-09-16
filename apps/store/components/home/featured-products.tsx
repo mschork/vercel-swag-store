@@ -26,10 +26,10 @@ export async function FeaturedProducts() {
   return (
     <section
       aria-labelledby="featured-heading"
-      className="flex flex-col gap-6 py-8 md:py-12"
+      className="flex flex-col gap-6 py-12 md:py-16"
     >
       <div className="flex items-baseline justify-between">
-        <h2 id="featured-heading" className="text-2xl font-medium">
+        <h2 id="featured-heading" className="text-2xl font-medium tracking-tight">
           Featured
         </h2>
         <Link
