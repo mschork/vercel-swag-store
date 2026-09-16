@@ -91,55 +91,94 @@ describe('expandQuery', () => {
   })
 })
 
-const hit = (id: string) => product({ id, slug: id })
+/** A product in the matched category, and one that only mentions it in prose. */
+const inCat = (id: string) => product({ id, slug: id, category: 'bags' })
+const elsewhere = (id: string) =>
+  product({ id, slug: id, category: 'accessories' })
 
 describe('mergeResults', () => {
-  it('keeps search hits first and appends the category', () => {
-    const merged = mergeResults([hit('a')], [hit('b'), hit('c')])
-    expect(merged.products.map((p) => p.id)).toEqual(['a', 'b', 'c'])
+  const ids = (merged: { products: { id: string }[] }) =>
+    merged.products.map((p) => p.id)
+
+  it('puts the matched category ahead of hits that only mention it', () => {
+    // The live shape of a "bag" search: the pin and the keychain match on
+    // prose, the tote and the drawstring bag are the category.
+    const merged = mergeResults(
+      [elsewhere('pin'), elsewhere('keychain'), inCat('tote'), inCat('drawstring')],
+      [inCat('tote'), inCat('drawstring'), inCat('backpack')],
+      'bags',
+    )
+    expect(ids(merged)).toEqual([
+      'tote',
+      'drawstring',
+      'backpack',
+      'pin',
+      'keychain',
+    ])
     expect(merged.added).toBe(true)
     expect(merged.truncated).toBe(false)
   })
 
-  it("de-duplicates by id, keeping the search hit's position", () => {
-    const merged = mergeResults([hit('a'), hit('b')], [hit('b'), hit('c')])
-    expect(merged.products.map((p) => p.id)).toEqual(['a', 'b', 'c'])
+  it('appends the category behind an in-category hit', () => {
+    const merged = mergeResults([inCat('a')], [inCat('b'), inCat('c')], 'bags')
+    expect(ids(merged)).toEqual(['a', 'b', 'c'])
+    expect(merged.added).toBe(true)
+    expect(merged.truncated).toBe(false)
+  })
+
+  it('de-duplicates by id, keeping the search hit\'s position', () => {
+    const merged = mergeResults([inCat('a'), inCat('b')], [inCat('b'), inCat('c')], 'bags')
+    expect(ids(merged)).toEqual(['a', 'b', 'c'])
   })
 
   it('reports no addition when the category contributes nothing new', () => {
-    const merged = mergeResults([hit('a'), hit('b')], [hit('b')])
-    expect(merged.products.map((p) => p.id)).toEqual(['a', 'b'])
+    const merged = mergeResults([inCat('a'), inCat('b')], [inCat('b')], 'bags')
+    expect(ids(merged)).toEqual(['a', 'b'])
     expect(merged.added).toBe(false)
     expect(merged.truncated).toBe(false)
   })
 
   it('caps at five and reports the truncation', () => {
     const merged = mergeResults(
-      [hit('a'), hit('b')],
-      [hit('c'), hit('d'), hit('e'), hit('f')],
+      [inCat('a'), inCat('b')],
+      [inCat('c'), inCat('d'), inCat('e'), inCat('f')],
+      'bags',
     )
-    expect(merged.products.map((p) => p.id)).toEqual(['a', 'b', 'c', 'd', 'e'])
+    expect(ids(merged)).toEqual(['a', 'b', 'c', 'd', 'e'])
     expect(merged.added).toBe(true)
     expect(merged.truncated).toBe(true)
   })
 
+  it('lets a category product take a slot from a hit that only mentions it', () => {
+    // The stated cost of ranking by category: "keychain" is a real hit and
+    // still loses its place to a product that is actually in the category.
+    const merged = mergeResults(
+      [inCat('tote'), elsewhere('pin'), elsewhere('keychain')],
+      [inCat('tote'), inCat('drawstring'), inCat('backpack')],
+      'bags',
+      4,
+    )
+    expect(ids(merged)).toEqual(['tote', 'drawstring', 'backpack', 'pin'])
+    expect(merged.truncated).toBe(true)
+  })
+
   it('reports no addition when the cap cuts every category item', () => {
-    const search = ['a', 'b', 'c', 'd', 'e'].map(hit)
-    const merged = mergeResults(search, [hit('f')])
+    const search = ['a', 'b', 'c', 'd', 'e'].map(inCat)
+    const merged = mergeResults(search, [inCat('f')], 'bags')
     expect(merged.products).toHaveLength(5)
     expect(merged.added).toBe(false)
     expect(merged.truncated).toBe(true)
   })
 
   it('honours a custom cap', () => {
-    const merged = mergeResults([hit('a')], [hit('b'), hit('c')], 2)
-    expect(merged.products.map((p) => p.id)).toEqual(['a', 'b'])
+    const merged = mergeResults([inCat('a')], [inCat('b'), inCat('c')], 'bags', 2)
+    expect(ids(merged)).toEqual(['a', 'b'])
     expect(merged.truncated).toBe(true)
   })
 
   it('handles an empty search result', () => {
-    const merged = mergeResults([], [hit('a'), hit('b')])
-    expect(merged.products.map((p) => p.id)).toEqual(['a', 'b'])
+    const merged = mergeResults([], [inCat('a'), inCat('b')], 'bags')
+    expect(ids(merged)).toEqual(['a', 'b'])
     expect(merged.added).toBe(true)
   })
 })
