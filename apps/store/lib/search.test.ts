@@ -1,0 +1,133 @@
+import { describe, expect, it } from 'vitest'
+import { product } from '@/test/helpers'
+import type { Category } from './api/types'
+import { expandQuery, mergeResults, normaliseQuery } from './search'
+
+/** The live category list, so the expansion is tested against real names. */
+const categories: Category[] = [
+  { slug: 'bottles', name: 'Bottles', productCount: 1 },
+  { slug: 'cups', name: 'Cups', productCount: 2 },
+  { slug: 'mugs', name: 'Mugs', productCount: 2 },
+  { slug: 'desk', name: 'Desk', productCount: 2 },
+  { slug: 'stationery', name: 'Stationery', productCount: 5 },
+  { slug: 'accessories', name: 'Accessories', productCount: 4 },
+  { slug: 'bags', name: 'Bags', productCount: 3 },
+  { slug: 'hats', name: 'Hats', productCount: 3 },
+  { slug: 't-shirts', name: 'T Shirts', productCount: 1 },
+  { slug: 'hoodies', name: 'Hoodies', productCount: 1 },
+  { slug: 'socks', name: 'Socks', productCount: 1 },
+  { slug: 'tech', name: 'Tech', productCount: 2 },
+  { slug: 'books', name: 'Books', productCount: 1 },
+]
+
+describe('normaliseQuery', () => {
+  it('trims surrounding whitespace', () => {
+    expect(normaliseQuery('  hat  ')).toBe('hat')
+  })
+
+  it('treats whitespace-only input as no query', () => {
+    expect(normaliseQuery('   \t\n ')).toBe('')
+  })
+
+  it('treats a missing value as no query', () => {
+    expect(normaliseQuery(undefined)).toBe('')
+    expect(normaliseQuery(null)).toBe('')
+  })
+
+  it('cuts anything past 64 characters', () => {
+    const long = 'a'.repeat(300)
+    expect(normaliseQuery(long)).toHaveLength(64)
+  })
+
+  it('trims before slicing, so padding never eats the query', () => {
+    expect(normaliseQuery(`   ${'b'.repeat(64)}   `)).toBe('b'.repeat(64))
+  })
+})
+
+describe('expandQuery', () => {
+  it.each([
+    ['hat', 'hats'],
+    ['Hats', 'hats'],
+    ['bag', 'bags'],
+    ['cups', 'cups'],
+    ['shirt', 't-shirts'],
+    ['t-shirt', 't-shirts'],
+    ['mug', 'mugs'],
+    ['  BOOKS  ', 'books'],
+  ])('matches %s to the %s category', (query, slug) => {
+    expect(expandQuery(query, categories)?.slug).toBe(slug)
+  })
+
+  it.each([['tee'], ['black'], ['umbrella'], ['']])(
+    'leaves %s unexpanded',
+    (query) => {
+      expect(expandQuery(query, categories)).toBeNull()
+    },
+  )
+
+  it('does not match a substring that is not a whole word', () => {
+    // "at" sits inside "Hats" but is not a word there.
+    expect(expandQuery('at', categories)).toBeNull()
+  })
+
+  it('never matches when there are no categories', () => {
+    expect(expandQuery('hat', [])).toBeNull()
+  })
+
+  it('treats a query with regex characters as text', () => {
+    expect(expandQuery('ha.s', categories)).toBeNull()
+  })
+})
+
+const hit = (id: string) => product({ id, slug: id })
+
+describe('mergeResults', () => {
+  it('keeps search hits first and appends the category', () => {
+    const merged = mergeResults([hit('a')], [hit('b'), hit('c')])
+    expect(merged.products.map((p) => p.id)).toEqual(['a', 'b', 'c'])
+    expect(merged.added).toBe(true)
+    expect(merged.truncated).toBe(false)
+  })
+
+  it("de-duplicates by id, keeping the search hit's position", () => {
+    const merged = mergeResults([hit('a'), hit('b')], [hit('b'), hit('c')])
+    expect(merged.products.map((p) => p.id)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('reports no addition when the category contributes nothing new', () => {
+    const merged = mergeResults([hit('a'), hit('b')], [hit('b')])
+    expect(merged.products.map((p) => p.id)).toEqual(['a', 'b'])
+    expect(merged.added).toBe(false)
+    expect(merged.truncated).toBe(false)
+  })
+
+  it('caps at five and reports the truncation', () => {
+    const merged = mergeResults(
+      [hit('a'), hit('b')],
+      [hit('c'), hit('d'), hit('e'), hit('f')],
+    )
+    expect(merged.products.map((p) => p.id)).toEqual(['a', 'b', 'c', 'd', 'e'])
+    expect(merged.added).toBe(true)
+    expect(merged.truncated).toBe(true)
+  })
+
+  it('reports no addition when the cap cuts every category item', () => {
+    const search = ['a', 'b', 'c', 'd', 'e'].map(hit)
+    const merged = mergeResults(search, [hit('f')])
+    expect(merged.products).toHaveLength(5)
+    expect(merged.added).toBe(false)
+    expect(merged.truncated).toBe(true)
+  })
+
+  it('honours a custom cap', () => {
+    const merged = mergeResults([hit('a')], [hit('b'), hit('c')], 2)
+    expect(merged.products.map((p) => p.id)).toEqual(['a', 'b'])
+    expect(merged.truncated).toBe(true)
+  })
+
+  it('handles an empty search result', () => {
+    const merged = mergeResults([], [hit('a'), hit('b')])
+    expect(merged.products.map((p) => p.id)).toEqual(['a', 'b'])
+    expect(merged.added).toBe(true)
+  })
+})

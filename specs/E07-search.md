@@ -86,14 +86,14 @@ One file: the three functions are one concept and the repo groups `lib/*.ts` by 
 
 ## Acceptance criteria
 
-- [ ] Shell static, results dynamic (build output shows `/search` as a partial prerender; the RSC payload confirms the form is in the shell).
-- [ ] Enter, button and 3+ character typing all trigger a search; fewer than 3 characters do not.
-- [ ] Refresh and shared URLs reproduce results, and the form shows the URL's values after hydration.
-- [ ] Category select filters; combined with text it narrows.
-- [ ] Empty state (all three variants) and loading state visible; a results-level error renders without losing the form (verified by starting the server with an unreachable `API_BASE_URL`).
-- [ ] Up to 5 results in the 2 / 3 / 5 grid; the default state shows 10.
-- [ ] "hat" returns the three hats with the hint line; "hats" too; "black" shows "Showing 5 of 28 results" with the nudge.
-- [ ] The home page renders its grid at 2 / 3 columns with no visual regression elsewhere.
+- [x] Shell static, results dynamic (build output shows `/search` as a partial prerender; the RSC payload confirms the form is in the shell).
+- [x] Enter, button and 3+ character typing all trigger a search; fewer than 3 characters do not.
+- [x] Refresh and shared URLs reproduce results, and the form shows the URL's values after hydration.
+- [x] Category select filters; combined with text it narrows.
+- [x] Empty state (all three variants) and loading state visible; a results-level error renders without losing the form (verified by starting the server with an unreachable `API_BASE_URL`).
+- [x] Up to 5 results in the 2 / 3 / 5 grid; the default state shows 10.
+- [x] "hat" returns the three hats with the hint line; "hats" too; "black" shows "Showing 5 of 28 results" with the nudge.
+- [x] The home page renders its grid at 2 / 3 columns with no visual regression elsewhere.
 
 ## Out of scope
 

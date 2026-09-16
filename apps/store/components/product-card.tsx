@@ -7,12 +7,16 @@ import { formatPrice } from '@/lib/format'
  * One product in a grid; shared by the home page and search. The whole card is
  * the link. `priority` is for a first row that is in the first viewport
  * (search); the home page leaves it off because the hero image is the LCP.
+ * `sizes` comes from the grid, which owns the column count it follows from
+ * (`components/product-grid.tsx`).
  */
 export function ProductCard({
   product,
+  sizes,
   priority = false,
 }: {
   product: Product
+  sizes: string
   priority?: boolean
 }) {
   return (
@@ -25,7 +29,7 @@ export function ProductCard({
           product={product}
           alt=""
           priority={priority}
-          sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+          sizes={sizes}
         />
       </div>
       <div className="absolute bottom-3 left-3 flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-full border border-border bg-bg py-1 pr-1 pl-3 text-sm">
