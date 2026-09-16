@@ -26,7 +26,7 @@ Settled choices that every epic spec inherits. Change here first, then in the sp
 - Colour: monochrome. Dark canvas `#000` with `#0a0a0a` secondary; light canvas `#fff` with `#fafafa` secondary; one accent (blue, Vercel family) reserved for price pills, focus and primary action. No gradients, glows or shadows.
 - Theme: light and dark follow the visitor's operating-system preference through `prefers-color-scheme`. No selector, no `next-themes`, no theme script; Tailwind's default media-query `dark:` variant.
 - Branding: page title "Vercel Swag Store"; header shows the Vercel triangle as an inline SVG in `currentColor` with the store name as Geist text, not the wordmark SVG. Root metadata (title, template, description, site name) comes from the API's `/store/config` `seo` block.
-- Layout: mobile-first; breakpoints 375, 768, 1280; product grid 2 / 3 / 4 columns.
+- Layout: mobile-first; breakpoints 375, 768, 1280; product grid 2 / 3 columns on the home page, 2 / 3 / 5 on search (mobile / 768 / 1024).
 
 ## Sanity
 
@@ -37,7 +37,7 @@ Settled choices that every epic spec inherits. Change here first, then in the sp
 ## Platform signals
 
 - `@vercel/speed-insights` and `@vercel/analytics` in the store.
-- `opengraph-image.tsx` routes via `next/og` for home, product and search.
+- `opengraph-image.tsx` routes via `next/og` for home and product; every other route inherits the root image.
 - Preview deployments with comments enabled on every PR.
 - Indexing: the deployed store answers `X-Robots-Tag: noindex` on every route, because it sells invented products under the Vercel name. Root metadata, page metadata, Open Graph images, `sitemap.xml` and `robots.txt` are all built as the requirements ask; `robots.txt` allows crawling so the header is read.
 - Not included: Flags SDK, Edge Config, KV.

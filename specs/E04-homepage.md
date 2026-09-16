@@ -37,15 +37,15 @@ The banner sits between hero and grid, never above the hero: a banner that strea
 ### Featured products `components/home/featured-products.tsx`
 
 - Async server component with `"use cache"` at the component level (the UI-level form of the directive; the data underneath is cached too) calling `getFeaturedProducts({ limit: 12, min: 6 })`.
-- Grid: 2 columns on mobile, 3 at md, 4 at lg. Each `<ProductCard />`, none with `priority`: the hero image is the LCP element and the cards start below the fold.
+- Grid: `<ProductGrid variant="home" />` (E07), 2 columns on mobile and 3 from md; it maxes out at 3. Each `<ProductCard />`, none with `priority`: the hero image is the LCP element and the cards start below the fold.
 
 ### Top-up `lib/api/products.ts`
 
-`getFeaturedProducts({ limit, min }): Promise<Product[]>`, `"use cache"` like its siblings, tagged `products`. Fetches `getProducts({ featured: true, limit })`; if fewer than `min` come back, fetches `getProducts({ limit })` and appends products not already present, in API order, until `min`. Featured products always come first; a top-up product is never labelled as featured (`CONTEXT.md`). `min: 6` is the required minimum, not a count read off the API. E07's default state calls the same function with `{ limit: 8, min: 8 }`.
+`getFeaturedProducts({ limit, min }): Promise<Product[]>`, `"use cache"` like its siblings, tagged `products`. Fetches `getProducts({ featured: true, limit })`; if fewer than `min` come back, fetches `getProducts({ limit })` and appends products not already present, in API order, until `min`. Featured products always come first; a top-up product is never labelled as featured (`CONTEXT.md`). `min: 6` is the required minimum, not a count read off the API. E07's default state calls the same function with `{ limit: 10, min: 10 }`.
 
 ### Product card `components/product-card.tsx`
 
-Shared with E07. Props: `product`, `priority?`. Renders `next/image` with the product's first image, `fill` inside an `aspect-square` frame, `sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"`, name, `formatPrice(price, currency)`, wrapped in a `Link` to `/products/[slug]`. Whole card is the link; name and price sit in a pill in the bottom-left. Prefetch default. Image frame on `bg-secondary` with a 1px `border` and radius, the same frame as the hero.
+Shared with E07. Props: `product`, `priority?`, `sizes`. Renders `next/image` with the product's first image, `fill` inside an `aspect-square` frame and the `sizes` its grid passes in (E07's `ProductGrid` owns the column count and the matching `sizes`), name, `formatPrice(price, currency)`, wrapped in a `Link` to `/products/[slug]`. Whole card is the link; name and price sit in a pill in the bottom-left. Prefetch default. Image frame on `bg-secondary` with a 1px `border` and radius, the same frame as the hero.
 
 ### PDP stub `app/products/[slug]/page.tsx`
 

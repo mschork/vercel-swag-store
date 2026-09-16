@@ -43,7 +43,7 @@ Product cards and nav links render a `LinkStatus` child using `useLinkStatus()` 
 
 ### Layout rhythm
 
-Section gaps 48px mobile, 64px desktop; within-section 16 to 24px; container `max-w-6xl`. Product grids 2 / 3 / 4 (5 on search at lg).
+Section gaps 48px mobile, 64px desktop; within-section 16 to 24px; container `max-w-6xl`. Product grids 2 / 3 on home, 2 / 3 / 5 on search.
 
 ### Accessibility
 
