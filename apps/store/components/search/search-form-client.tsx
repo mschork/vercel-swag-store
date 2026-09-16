@@ -2,7 +2,7 @@
 
 import type { Route } from 'next'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useOptimistic, useRef, useState } from 'react'
 import type { Category } from '@/lib/api/types'
 import { ALL_CATEGORIES, SearchFormFields } from './search-form-fields'
 import { useSearchTransition } from './search-transition'
@@ -42,6 +42,9 @@ export function SearchFormClient({
   const urlCategory = params.get('category') ?? ALL_CATEGORIES
 
   const [query, setQuery] = useState(urlQuery)
+  // The select shows the chosen category at once; the URL is still the source
+  // of truth and takes over when the navigation commits (E10).
+  const [category, setCategory] = useOptimistic(urlCategory)
   // The query this form last navigated to. The URL holding anything else means
   // someone else changed it: a category chip, "Clear search", the product
   // page's breadcrumb, or the Back button.
@@ -67,6 +70,7 @@ export function SearchFormClient({
     const trimmed = nextQuery.trim()
     navigated.current = trimmed
     start(() => {
+      setCategory(nextCategory)
       router.replace(searchHref(trimmed, nextCategory), { scroll: false })
     })
   }
@@ -93,7 +97,7 @@ export function SearchFormClient({
     <SearchFormFields
       categories={categories}
       query={query}
-      category={urlCategory}
+      category={category}
       pending={isPending}
       onSubmit={(event) => {
         event.preventDefault()

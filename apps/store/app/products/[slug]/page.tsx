@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
+import { Container } from '@/components/container'
+import { Price } from '@/components/price'
 import { JsonLd } from '@/components/json-ld'
 import {
   Breadcrumb,
@@ -15,7 +17,6 @@ import { findCategory } from '@/lib/api/categories'
 import { findProduct, getAllProductSlugs } from '@/lib/api/products'
 import { getStoreConfig } from '@/lib/api/store'
 import { publicEnv } from '@/lib/env.public'
-import { formatPrice } from '@/lib/format'
 import { openGraphDefaults } from '@/lib/metadata'
 import { breadcrumbJsonLd } from '@/lib/structured-data'
 import { truncate } from '@/lib/text'
@@ -86,26 +87,26 @@ export default async function ProductPage({ params }: Props) {
   ]
 
   return (
-    <div className="flex flex-col gap-6 py-6 md:gap-8 md:py-10">
+    <Container className="flex flex-col gap-6 py-8 md:gap-8 md:py-12">
       <Breadcrumb trail={trail} current={product.name} />
       <JsonLd data={breadcrumbJsonLd(crumbs, publicEnv.NEXT_PUBLIC_SITE_URL)} />
       <article className="grid gap-8 md:grid-cols-2 md:gap-12">
         <ProductGallery product={product} />
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-medium tracking-tight text-balance md:text-4xl">
+            <h1 className="text-3xl font-medium tracking-tight text-balance">
               {product.name}
             </h1>
-            <p className="text-xl tabular-nums">
-              {formatPrice(product.price, product.currency)}
+            <p>
+              <Price cents={product.price} currency={product.currency} size="lg" />
             </p>
           </div>
-          <p className="max-w-prose text-fg-secondary">{product.description}</p>
+          <p className="max-w-prose text-base text-fg-secondary">{product.description}</p>
           <Suspense fallback={<StockSkeleton />}>
             <StockAndCart product={product} />
           </Suspense>
         </div>
       </article>
-    </div>
+    </Container>
   )
 }

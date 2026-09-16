@@ -26,7 +26,7 @@ export function AddToCartForm({
   return (
     <form action={formAction} className="flex flex-col gap-3">
       <input type="hidden" name="productId" value={productId} />
-      <div className="flex items-end gap-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end">
         <QuantityStepper
           name="quantity"
           min={1}
@@ -58,7 +58,7 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
       type="submit"
       size="lg"
       disabled={disabled || pending}
-      className="h-10 flex-1"
+      className="h-11 md:flex-1"
     >
       Add to Cart
     </Button>

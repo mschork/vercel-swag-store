@@ -53,7 +53,7 @@ export function SearchFormFields({
           type="search"
           placeholder="Search products"
           autoComplete="off"
-          className="h-10"
+          className="h-11"
           {...(query === undefined
             ? {}
             : { value: query, onChange: (event) => onQueryChange?.(event.target.value) })}
@@ -67,7 +67,7 @@ export function SearchFormFields({
           id="search-category"
           name="category"
           size="lg"
-          className="w-full sm:w-44"
+          className="w-full sm:w-48"
           {...(category === undefined
             ? {}
             : {
@@ -84,7 +84,7 @@ export function SearchFormFields({
             </NativeSelectOption>
           ))}
         </NativeSelect>
-        <Button type="submit" size="lg" className="h-10 px-4" disabled={pending}>
+        <Button type="submit" size="lg" className="h-11 px-4" disabled={pending}>
           Search
         </Button>
       </div>

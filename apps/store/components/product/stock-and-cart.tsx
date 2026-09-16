@@ -50,12 +50,12 @@ export function StockSkeleton() {
     <div className="flex flex-col gap-4" aria-hidden="true">
       <Skeleton className="h-6 w-24" />
       <div className="flex flex-col gap-3">
-        <div className="flex items-end gap-3">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end">
           <div className="flex flex-col gap-1">
             <Skeleton className="h-6 w-16" />
-            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-11 w-36" />
           </div>
-          <Skeleton className="h-10 flex-1" />
+          <Skeleton className="h-11 md:flex-1" />
         </div>
         <div className="min-h-6" />
       </div>

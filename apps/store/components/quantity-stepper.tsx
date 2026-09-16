@@ -2,9 +2,10 @@
 
 import { useEffect, useId, useRef, useState } from 'react'
 import { clampQuantity, parseQuantity, stepperState } from '@/lib/quantity'
+import { cn } from '@/lib/utils'
 
 const STEP_BUTTON =
-  'flex w-10 items-center justify-center text-lg hover:bg-bg-secondary disabled:pointer-events-none disabled:opacity-50'
+  'flex w-11 items-center justify-center text-lg hover:bg-bg-secondary disabled:pointer-events-none disabled:opacity-50'
 
 /**
  * A native number input between minus and plus buttons. The input carries
@@ -27,6 +28,7 @@ export function QuantityStepper({
   disabled = false,
   pending = false,
   onCommit,
+  labelClassName,
 }: {
   name: string
   min: number
@@ -45,6 +47,8 @@ export function QuantityStepper({
    */
   pending?: boolean
   onCommit?: (value: number) => void
+  /** Extra classes for the label, e.g. to hide it visually below a breakpoint. */
+  labelClassName?: string
 }) {
   const id = useId()
   const [draft, setDraft] = useState(() => String(defaultValue))
@@ -78,11 +82,14 @@ export function QuantityStepper({
   }
 
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-sm leading-6 text-fg-secondary">
+    <div className="flex flex-col items-start gap-1">
+      <label
+        htmlFor={id}
+        className={cn('text-sm leading-6 text-fg-secondary', labelClassName)}
+      >
         Quantity
       </label>
-      <div className="inline-flex h-10 items-stretch overflow-hidden rounded-lg border border-border">
+      <div className="inline-flex h-11 items-stretch overflow-hidden rounded-lg border border-border">
         <button
           type="button"
           className={STEP_BUTTON}
