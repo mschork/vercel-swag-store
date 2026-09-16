@@ -54,4 +54,31 @@ What that costs in the browser, measured with Playwright against `next start` on
 
 One add is three cart calls: read the cart (or create one), write the line, then the header badge's own read when `refresh()` re-renders the route. The end-to-end tests allow 30 s per cart assertion for the same reason, and a slow add is not a defect.
 
-What the store does about it. The cart page's shell is prerendered, so the slow part never blocks first paint. Its rows change through `useOptimistic`, so a quantity change or a removal is instant and the round trip happens behind the visitor. The badge streams in its own boundary and never holds up a page. A cart the API cannot return degrades to "Your cart could not be loaded" instead of a wrong empty cart. What stays visible is Add to Cart on the product page, which waits for the round trip; the ways to shorten or hide that wait are specified in `specs/E16-cart-api-improvements.md`.
+What the store does about it. The cart page's shell is prerendered, so the slow part never blocks first paint. Its rows change through `useOptimistic`, so a quantity change or a removal is instant and the round trip happens behind the visitor. The badge streams in its own boundary and never holds up a page. A cart the API cannot return degrades to "Your cart could not be loaded" instead of a wrong empty cart. What stayed visible after E06 was Add to Cart on the product page, which waited for the round trip. E16 removed and hid that wait; the section below has the numbers.
+
+## Cart latency after E16
+
+Measured on 17 Sep 2026 with the same live API, before the first E16 commit and after the last. A Playwright script drove `next start` on a production build, three runs per flow, each in a fresh browser context. A fetch hook preloaded into the server logged every cart call, so the call counts are the server's own. First the endpoints themselves, re-measured with `curl` before starting, to confirm the epic was still worth doing:
+
+| Endpoint | Runs (s) |
+|---|---|
+| `GET /products?limit=1` | 0.22, 0.18, 0.15 |
+| `POST /cart/create` | 3.05, 2.65, 3.10 |
+| `GET /cart` | 2.10, 1.60, 1.63 |
+| `POST /cart` (add a line) | 2.53, 2.46, 2.99 |
+| `PATCH /cart/{productId}` | 2.86, 2.39, 2.30 |
+| `DELETE /cart/{productId}` | 2.47 |
+
+Then the flows. "Acknowledged" is the first visible response to the click. "Saved" is when the action's response has arrived, which is also when "View cart" becomes a link.
+
+| Flow | Before: acknowledged | Before: saved | Before: cart calls | After: acknowledged | After: saved | After: cart calls |
+|---|---|---|---|---|---|---|
+| First Add to Cart | 6.9 to 7.4 s | 6.9 to 7.4 s | 3 | 0.02 to 0.03 s | 5.4 to 6.1 s | 2 |
+| Second Add to Cart | 6.3 to 7.3 s | 6.3 to 7.3 s | 3 | 0.02 to 0.03 s | 2.8 to 3.3 s | 1 |
+| One plus click on `/cart` | 0.03 to 0.05 s | 4.8 s | 3 | 0.03 to 0.04 s | 4.2 to 4.7 s | 2 |
+| Four plus clicks on `/cart`, 3 to 7 | 13.7 to 15.7 s to show 7 | 19.0 to 21.0 s | 12 | 0.26 to 0.27 s to show 7 | 4.7 to 5.3 s | 2 |
+| Loading `/cart` | | | 2 reads | | | 1 read |
+
+The header badge follows the click in 0.04 to 0.07 s after E16, on both pages; before, it moved only when the action's response arrived. A saved quantity change still includes one cart read, because the cart page re-renders its lines from the server; the 400 ms pause is part of its saved time. "Four plus clicks" before E16 means four saves in a row, because a row ignored clicks while one was saving.
+
+What changed, in order: a spinner on the busy button; the add writes first and reads only after a 404; quantity clicks wait for a pause and send the last value; the badge and the cart page share one read per request; actions return the item count and the badge holds it on the client; the product page confirms at submit time. What is left is the API's own time for one write, which no storefront change removes.
