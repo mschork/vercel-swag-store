@@ -2,7 +2,6 @@
 
 Ideas deliberately left out of the submission. Each entry names the decision it comes from so the trade-off is traceable. Nothing here is scheduled. Cart latency used to sit here; it is now specified in `specs/E16-cart-api-improvements.md`, a stretch epic attempted only after E12.
 
-- **Inline header search** (E03 Q4). The nav has a link to `/search` because the brief asks for a search page. A header search box, as on vercel.store, would shorten the path to results but means a second form and a second debounce; revisit once the search page is stable.
 - **Copy-to-clipboard on the promo code** (E04 Q8). The promo banner is static text inside a Suspense hole so it stays a server component. A copy button needs a small client leaf.
 - **Category browsing route** (E05 Q10). The breadcrumb category links to `/search?category=<slug>`, reusing the search page. A dedicated `/category/<slug>` route could be fully static (no `searchParams`) and offer richer category content from Sanity.
 - **Cookie banner**. The cart token lives in an httpOnly cookie. It is strictly necessary for the cart to work, so consent is not legally required in most jurisdictions, but a short notice would make the behaviour transparent. Decide with the README's privacy note in E12.
