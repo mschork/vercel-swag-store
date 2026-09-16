@@ -30,6 +30,14 @@
   --text-3xl: 2rem;
   --text-3xl--line-height: 2.5rem;
 
+  /* The promo strip's marquee; `--marquee-duration` is set per strip from the text's width. */
+  --animate-marquee: marquee var(--marquee-duration, 20s) linear infinite;
+  @keyframes marquee {
+    to {
+      transform: translateX(-100%);
+    }
+  }
+
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }

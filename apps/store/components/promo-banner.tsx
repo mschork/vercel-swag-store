@@ -1,18 +1,22 @@
 import { Container } from '@/components/container'
+import { PromoMarquee } from '@/components/promo-marquee'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getPromotion } from '@/lib/api/promotions'
 import { loadOptional } from '@/lib/load-optional'
 
 /**
  * The strip and its skeleton share this box so the shell reserves the same
- * space before and after the promotion streams in. Sized for the longest of
- * the four current promos at 13px on 20px lines plus 16px of padding: three
- * lines at 375 (76px), two at md (56px), one at lg (36px).
+ * space before and after the promotion streams in: one line (36px), because
+ * a line that does not fit scrolls. Under reduced motion the text wraps
+ * instead, so there the box keeps the wrapped height of the longest of the
+ * four current promos: three lines at 375 (76px), two at md (56px).
  */
-const RESERVED_BOX = 'flex min-h-19 items-center md:min-h-14 lg:min-h-9'
+const RESERVED_BOX =
+  'flex min-h-9 items-center motion-reduce:min-h-19 motion-reduce:md:min-h-14 motion-reduce:lg:min-h-9'
 
 /**
- * The accent strip under the header, on every route (E10). `getPromotion` is
+ * The accent strip under the header, on every route (E10); the code is a
+ * ticket chip and a line that does not fit scrolls (`PromoMarquee`). `getPromotion` is
  * never cached and this renders inside `<Suspense>` in the root layout, so it
  * is the one dynamic hole every page has. Every field is shown as the API
  * returns it (specs/improvements.md). No promotion, or a failed call, leaves
@@ -26,13 +30,15 @@ export async function PromoBanner() {
       aria-label="Current promotion"
       className={`${RESERVED_BOX} bg-accent text-accent-fg`}
     >
-      <Container>
-        <p className="py-2 text-center text-[13px] leading-5">
+      <PromoMarquee>
+        <p className="py-2 text-[13px] leading-5">
           <strong className="font-medium">{promotion.title}.</strong>{' '}
           {promotion.description} {promotion.discountPercent}% off with code{' '}
-          <code className="font-mono">{promotion.code}</code>
+          <code className="ml-0.5 rounded-sm border-x-4 border-y border-accent-fg/70 px-1.5 py-px font-mono text-xs">
+            {promotion.code}
+          </code>
         </p>
-      </Container>
+      </PromoMarquee>
     </aside>
   )
 }
@@ -42,8 +48,8 @@ export function PromoBannerSkeleton() {
     <div className={RESERVED_BOX} aria-hidden="true">
       <Container className="flex flex-col items-center gap-2 py-2">
         <Skeleton className="h-4 w-full max-w-3xl" />
-        <Skeleton className="h-4 w-4/5 max-w-2xl lg:hidden" />
-        <Skeleton className="h-4 w-3/5 md:hidden" />
+        <Skeleton className="hidden h-4 w-4/5 max-w-2xl motion-reduce:block motion-reduce:lg:hidden" />
+        <Skeleton className="hidden h-4 w-3/5 motion-reduce:block motion-reduce:md:hidden" />
       </Container>
     </div>
   )
