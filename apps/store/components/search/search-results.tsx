@@ -6,8 +6,16 @@ import type { Category, Product } from '@/lib/api/types'
 import { RESULT_CAP, expandQuery, mergeResults, normaliseQuery } from '@/lib/search'
 import { EmptyState } from './empty-state'
 
-/** How many products the default state shows; the required grid, not a count from the API. */
-const DEFAULT_COUNT = 10
+/**
+ * How many products the default state shows. Five, to match the cap on
+ * results: arriving at a fuller grid than any search can return reads as the
+ * search taking products away. It is also all the API flags as featured can
+ * fill without a top-up, so nothing under the "Featured" heading is an
+ * ordinary catalogue product. A display choice, never the featured count read
+ * off the API (AGENTS.md rule 6); `min` keeps the grid full if one is
+ * unflagged.
+ */
+const DEFAULT_COUNT = RESULT_CAP
 /** How many images start loading at once: the first row on mobile. */
 const PRIORITY_COUNT = 2
 
