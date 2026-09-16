@@ -12,6 +12,7 @@ Branch: `epic/E07-search`. Depends on: E02, E03, E04 (ProductCard). Blocks: E13.
 - Empty `q` and no `category`: default state.
 - Any other params are ignored. `page` is not supported (results capped at 5 per the brief).
 - `q` is never sent to the API empty and `category` is never sent unvalidated: the API answers 422 for `search=` and for an unknown `category`.
+- The API's `search` is a case-insensitive substring match over `name`, `description` and `tags`, with no normalisation: `t-shirt` hits, `tshirt` and `t shirt` do not, and `cold-cup` finds a product that says so only in its tags.
 
 ## Scope
 
@@ -76,12 +77,12 @@ A results-scoped client error boundary (`components/error-boundary.tsx`, a small
 One file: the three functions are one concept and the repo groups `lib/*.ts` by topic.
 
 - `normaliseQuery(raw)`: trim, slice to 64 characters.
-- `expandQuery(q, categories)`: `norm = q.toLowerCase().replace(/s$/, '')`; returns the first category whose `slug` or lowercased `name` equals `norm` or `norm + 's'`, or contains either as a whole word. The plural case relies entirely on this: the API does not search category names, so `search=hats` returns 0 hits on its own.
+- `expandQuery(q, categories)`: `norm = q.toLowerCase().replace(/s$/, '')`; returns the first category whose `slug` or lowercased `name` equals `norm` or `norm + 's'` once every non-alphanumeric character is removed from both sides, or contains either as a whole word in its raw form. Separators are dropped for the equality test so `tshirt` and `t shirt` reach `t-shirts`, which the API's literal substring match never does; they are kept for the whole-word test, because the hyphen is the boundary that finds `shirt` inside `t-shirts`. The expansion carries the whole plural case: the API does not search category names, so `search=hats` returns 0 hits on its own.
 - `mergeResults(searchHits, categoryItems, cap)`: search hits first, then category items not already present by `id`, capped; returns the merged list plus an `added` flag (the category contributed at least one product) and a `truncated` flag (the cap cut something).
 
 ## Tests
 
-- Vitest `lib/search.test.ts`: `expandQuery` covering "hat" → hats, "Hats" → hats, "bag" → bags, "tee" → none, "cups" → cups, "shirt" → t-shirts; `mergeResults` covering search-first ordering, de-duplication by `id`, the cap, and the `added` / `truncated` flags; `normaliseQuery` covering trimming, the 64-character slice and whitespace-only → empty.
+- Vitest `lib/search.test.ts`: `expandQuery` covering "hat" → hats, "Hats" → hats, "bag" → bags, "tee" → none, "cups" → cups, "shirt" → t-shirts, "tshirt" and "t shirt" → t-shirts; `mergeResults` covering search-first ordering, de-duplication by `id`, the cap, and the `added` / `truncated` flags; `normaliseQuery` covering trimming, the 64-character slice and whitespace-only → empty.
 - Playwright `apps/store/e2e/search.spec.ts`: visit `/search?q=hat` directly, see three hats and the hint line, reload and see the same; type "bea" and see the Beanie without pressing Enter; select a category and see the URL and the grid update; combine text and category and see the narrowed result; search "umbrella" and see the empty state with chips; `/search` shows the "Featured" default with 10 cards. The category select and the grid are located by role and accessible name, never by class.
 
 ## Acceptance criteria
