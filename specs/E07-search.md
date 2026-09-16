@@ -53,7 +53,7 @@ Async server component receiving the `searchParams` promise.
 Shared by the home page and search, so the column count and the `sizes` string can never drift apart.
 
 - `ProductGrid({ products, variant, priorityCount })` and `ProductGridSkeleton({ variant, count })`.
-- `variant: 'home' | 'search'` owns the column classes and the matching `sizes` it passes to `ProductCard`: `home` is `grid grid-cols-2 gap-4 md:grid-cols-3`, `search` is `grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5`.
+- `variant: 'home' | 'search'` owns the column classes and the matching `sizes` it passes to `ProductCard`: `home` is one column of row cards below md and 3 grid cards from md; `search` is the same with 5 columns from lg (E10).
 - `ProductCard` takes `sizes` as a prop instead of hard-coding it; the grid owns it from now on.
 
 ### Empty state `components/search/empty-state.tsx`
@@ -92,9 +92,9 @@ One file: the three functions are one concept and the repo groups `lib/*.ts` by 
 - [x] Refresh and shared URLs reproduce results, and the form shows the URL's values after hydration.
 - [x] Category select filters; combined with text it narrows.
 - [x] Empty state (all three variants) and loading state visible; a results-level error renders without losing the form (verified by starting the server with an unreachable `API_BASE_URL`).
-- [x] Up to 5 results in the 2 / 3 / 5 grid; the default state shows 5, all of them featured.
+- [x] Up to 5 results in the rows / 3 / 5 grid; the default state shows 5, all of them featured.
 - [x] "hat" returns the three hats with the hint line; "hats" too; "black" shows "Showing 5 of 28 results" with the nudge.
-- [x] The home page renders its grid at 2 / 3 columns with no visual regression elsewhere.
+- [x] The home page renders its grid at rows / 3 columns with no visual regression elsewhere.
 
 ## Out of scope
 

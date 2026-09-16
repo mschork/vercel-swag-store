@@ -44,7 +44,7 @@ Tags: every query tags `sanity` and `sanity:<type>`; single-document queries als
 
 ### Homepage (E04 revisit)
 
-- Hero reads `homePage.hero` with fallback; hero image from Sanity via `urlFor` when present, else the product image.
+- Hero reads `homePage.hero` with fallback; hero image from Sanity via `urlFor` when present, else `public/hero.jpg` (E10).
 - Optional sections: `collectionSection` renders the collection's products via cached `getProduct` calls in `Promise.all`; `lookbookSection` renders a horizontal strip of entries. Both only if present in the document; both stretch.
 
 ### PDP (E05 revisit)

@@ -12,20 +12,19 @@ Branch: `epic/E04-home`. Depends on: E02, E03. Blocks: E07 (ProductCard, `getFea
 
 Server component. Structure, top to bottom:
 
-1. `<Hero />` static.
+1. `<Hero />` static, full bleed (E10).
 2. `<Suspense fallback={<PromoBannerSkeleton />}><PromoBanner /></Suspense>`.
 3. `<FeaturedProducts />` cached.
 
-The banner sits between hero and grid, never above the hero: a banner that streams in above the LCP image would push it down.
+The banner sits above the hero, in the root layout on every route (E10); its box reserves its height so it never pushes the LCP image when it streams in.
 
 `export async function generateMetadata()` awaits the cached `getStoreConfig()` and returns `title: { absolute: seo.defaultTitle }`, with a comment that the home title is the store name without the template. Next never applies `title.template` to the root's own default, so the override changes nothing; it exists because the requirements ask every page to export its own metadata, and it keeps the value API-sourced. Description and Open Graph inherit from the root.
 
 ### Hero `components/home/hero.tsx`
 
 - Headline, supporting paragraph, primary CTA button linking to `/search`. No secondary text link: the requirements ask for a headline, a description, a CTA and a visual element, and the visual element links to the product itself.
-- Visual: the hero product's photo via `next/image` with `priority`, `sizes="(min-width: 1152px) 576px, (min-width: 768px) 50vw, 100vw"` and the product name as `alt`, wrapped in a `Link` to its PDP. On the right at md and up, below the copy on mobile. The hero fills most of the first viewport at md and up (image about 480 to 560px tall) so the featured cards start below the fold and the hero image is the only LCP candidate. Photo framed like the cards: on `bg-secondary`, 1px `border`, rounded, because every API photo sits on a light background and reads as a light tile in the dark theme.
-- Content comes from a `HERO_FALLBACK` constant in `lib/content/fallbacks.ts` so E09 can swap in Sanity data without touching the component. Field names match E08's `homePage.hero`: `{ headline, description, ctaLabel, ctaHref, productSlug }`. Values: headline "Ship in black.", description "Official Vercel merchandise. Apparel, desk gear and accessories from the team behind Next.js, all in one colour.", `ctaLabel` "Shop the collection", `ctaHref` `/search`, `productSlug` `minimal-black-backpack`. The copy is placeholder marketing text (`improvements.md`).
-- The hero resolves its product through the cached `getProduct(productSlug)`, so the photo URL stays an API fact. A slug that vanishes from the API fails the build, consistent with `callout.md`.
+- Visual (E10): a full-bleed lifestyle photo from `public/hero.jpg` via `next/image` with `priority`, `fill` and `sizes="100vw"`, the only LCP candidate. Copy over the photo at md and up, under it on phones. No link, no button.
+- Content comes from a `HERO_FALLBACK` constant in `lib/content/fallbacks.ts` so E09 can swap in Sanity data without touching the component. Field names match E08's `homePage.hero`: `{ headline, description }`. Values: headline "Ship in black.", description "Official Vercel merchandise. Apparel, desk gear and accessories from the team behind Next.js, all in one colour.". The copy is placeholder marketing text (`improvements.md`).
 
 ### Promo banner `components/home/promo-banner.tsx`
 
@@ -37,7 +36,7 @@ The banner sits between hero and grid, never above the hero: a banner that strea
 ### Featured products `components/home/featured-products.tsx`
 
 - Async server component with `"use cache"` at the component level (the UI-level form of the directive; the data underneath is cached too) calling `getFeaturedProducts({ limit: 12, min: 6 })`.
-- Grid: `<ProductGrid variant="home" />` (E07), 2 columns on mobile and 3 from md; it maxes out at 3. Each `<ProductCard />`, none with `priority`: the hero image is the LCP element and the cards start below the fold.
+- Grid: `<ProductGrid variant="home" />` (E07), row cards on mobile and 3 columns from md; it maxes out at 3 (E10). Each `<ProductCard />`, none with `priority`: the hero image is the LCP element and the cards start below the fold.
 
 ### Top-up `lib/api/products.ts`
 
@@ -45,7 +44,7 @@ The banner sits between hero and grid, never above the hero: a banner that strea
 
 ### Product card `components/product-card.tsx`
 
-Shared with E07. Props: `product`, `priority?`, `sizes`. Renders `next/image` with the product's first image, `fill` inside an `aspect-square` frame and the `sizes` its grid passes in (E07's `ProductGrid` owns the column count and the matching `sizes`), name, `formatPrice(price, currency)`, wrapped in a `Link` to `/products/[slug]`. Whole card is the link; name and price sit in a pill in the bottom-left. Prefetch default. Image frame on `bg-secondary` with a 1px `border` and radius, the same frame as the hero.
+Shared with E07. Props: `product`, `priority?`, `sizes`. Renders `next/image` with the product's first image, `fill` inside an `aspect-square` frame and the `sizes` its grid passes in (E07's `ProductGrid` owns the column count and the matching `sizes`), name, `formatPrice(price, currency)`, wrapped in a `Link` to `/products/[slug]`. Whole card is the link; the price is a pill on the photo and the name sits under it (E10 owns the card's two shapes). Prefetch default. Image frame on `bg-secondary` with a 1px `border` and radius.
 
 ### PDP stub `app/products/[slug]/page.tsx`
 
