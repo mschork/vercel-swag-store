@@ -22,7 +22,7 @@ Tailwind v4 `@theme` block defining:
 - `--color-on-photo: #171717` in both themes: the only text colour that does not flip, used for the hero copy over the photo, which does not flip either.
 - Radii: `--radius-sm: 4px`, `--radius: 8px`, pills `rounded-full`. Spacing uses Tailwind's scale.
 - Fonts: `--font-sans: var(--font-geist-sans)`, `--font-mono: var(--font-geist-mono)`.
-- Type scale: 14 / 16 body, 20 / 24 / 32 / 48 headings with matching line heights. Prices, quantities, counts and promo codes are Geist Mono with `font-variant-numeric: tabular-nums`; the `Price` component owns that.
+- Type scale: 14 / 16 body, 20 / 24 / 32 / 48 headings with matching line heights; the hero headline alone is 67 at md and up. Prices, quantities, counts and promo codes are Geist Mono with `font-variant-numeric: tabular-nums`; the `Price` component owns that.
 - Transitions: 250 ms `ease-in-out` for colour and border changes, 400 ms for the card photo; every transition under `motion-safe:`.
 
 Tailwind's default `dark:` variant follows the media query; no custom variant.
@@ -35,7 +35,7 @@ Installed: `button`, `input`, `native-select`, `skeleton` (E03 to E07), plus `ba
 
 - Header: full width like vercel.com, 56px, content inside aligned to the `max-w-6xl` column. `position: sticky; top: 0` at every width. No rule at rest; a 1px `border` hairline appears once the page has scrolled and fades out again at the top. The hairline is the only client code added to the header: a leaf that watches a sentinel above the header with `IntersectionObserver` and toggles a data attribute.
 - Nav pending cue: `NavLink` renders a child that reads `useLinkStatus()`; while pending the link fades to `fg-secondary` (250 ms), back to `fg` when the route commits. No progress bar.
-- Promo banner: in the root layout, directly below the header, on every route. Accent strip: `bg-accent text-accent-fg`, one centred line at 13px, code in mono; wraps to two or three lines on phones. Contrast of `#0070f3` on white is 4.5:1, AA at this size; verify it in axe. It scrolls away with the page (not sticky). The box reserves the same height per breakpoint as today so nothing below moves when it streams in, and renders empty when there is no active promotion or the call fails. Cost, accepted: one uncached `/promotions` call per page view on every route, not only the home page. The `PromoBanner` component moves from `components/home/` to `components/`.
+- Promo banner: in the root layout, directly below the header, on every route. Accent strip: `bg-accent text-accent-fg`, one centred line at 13px; the code is a ticket chip in mono (1px top and bottom border, 4px left and right, small radius). When the line does not fit the strip it becomes a marquee: the text scrolls left at about 40 px/s in a seamless loop, pauses on hover and focus, and starts only when a `ResizeObserver` finds it overflowing; a line that fits stays still. This is the one animation that is not a confirmation, accepted for the strip alone. Under `prefers-reduced-motion` nothing moves and the text wraps to two or three lines instead. Contrast of `#0070f3` on white is 4.5:1, AA at this size; verify it in axe. It scrolls away with the page (not sticky). The box reserves one line (36px), or the wrapped height under reduced motion, so nothing below moves when it streams in, and renders empty when there is no active promotion or the call fails. Cost, accepted: one uncached `/promotions` call per page view on every route, not only the home page. The `PromoBanner` component moves from `components/home/` to `components/`.
 - Footer: full width with a 1px hairline above, content aligned to the column; otherwise as E03.
 - Skip link, `aria-current` on nav and the header Suspense boundary are unchanged.
 
@@ -43,7 +43,7 @@ Installed: `button`, `input`, `native-select`, `skeleton` (E03 to E07), plus `ba
 
 - Full-bleed band, edge to edge, directly under the banner. Image `/hero.jpg` from `public/` (converted from the supplied 1774 x 887 PNG; the source stays out of the repo), `next/image` with `priority`, `fill`, `object-cover`, `sizes="100vw"`; the only image with `priority` on the page and the LCP element.
 - Height: `min(60svh, 640px)` at md and up, positioned so the figure on the left stays in frame. Below md the band is `aspect-[4/3]` with `object-position: left center`.
-- Copy: headline at 48 (32 on phones) and the paragraph, nothing else: no button, no link, no product. At md and up the copy sits over the sky on the right half of the column, in `--color-on-photo`, with no scrim; below md the copy sits under the band in the column in normal `fg`.
+- Copy: headline at 67 (32 on phones) and the paragraph, nothing else: no button, no link, no product. At md and up the copy sits over the sky on the right half of the column, in `--color-on-photo`, with no scrim; below md the copy sits under the band in the column in normal `fg`.
 - Content: `HeroContent` becomes `{ headline, description }`; `HERO_FALLBACK` drops `ctaLabel`, `ctaHref` and `productSlug`, and `getProduct` leaves the component. The Sanity `homePage.hero` (E08) carries the same two fields plus an image; E09 falls back to `/hero.jpg` when the image is unset.
 
 ### Product card `components/product-card.tsx`
