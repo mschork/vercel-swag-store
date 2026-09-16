@@ -2,6 +2,7 @@ import { cacheLife } from 'next/cache'
 import { getStoreConfig } from '@/lib/api/store'
 import { loadOptional } from '@/lib/load-optional'
 import { socialLinks } from '@/lib/social-links'
+import { Container } from './container'
 
 /**
  * The year is computed on the server inside a cached component so the shell
@@ -36,13 +37,16 @@ async function SocialLinks() {
   )
 }
 
+/** Full width with a hairline above, mirroring the header (E10). */
 export function Footer() {
   return (
-    <footer className="mx-auto mt-16 flex w-full max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-fg-secondary sm:mt-24 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-      <p>
-        © <CopyrightYear /> Vercel Swag Store
-      </p>
-      <SocialLinks />
+    <footer className="mt-12 border-t border-border text-sm text-fg-secondary md:mt-16">
+      <Container className="flex flex-col gap-4 py-8 sm:flex-row sm:items-center sm:justify-between">
+        <p>
+          © <CopyrightYear /> Vercel Swag Store
+        </p>
+        <SocialLinks />
+      </Container>
     </footer>
   )
 }

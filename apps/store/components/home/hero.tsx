@@ -1,44 +1,42 @@
-import Link from 'next/link'
-import { ProductImage } from '@/components/product-image'
-import { Button } from '@/components/ui/button'
-import { getProduct } from '@/lib/api/products'
-import { HERO_FALLBACK } from '@/lib/content/fallbacks'
+import Image from 'next/image'
+import { Container } from '@/components/container'
+import { HERO_FALLBACK, HERO_IMAGE } from '@/lib/content/fallbacks'
 
 /**
- * Static hero. The product is resolved through the cached `getProduct`, so the
- * photo stays an API fact; a slug missing from the API fails the build
- * (specs/callout.md). The photo is the LCP element and the only image with
- * `priority` on the page. E09 reads the same fields from Sanity.
+ * Full-bleed hero (E10): the photo edge to edge, the copy over the open sky
+ * on its right from lg up and under it below that, where the band is the
+ * photo's own 2:1 at md and a 4:3 crop around the figure on phones. At md the
+ * figure and the copy would share the width, so the copy stays below. The photo is the LCP element and the
+ * only preloaded image on the page. No link, no button. E09 reads the same
+ * fields from Sanity.
  */
-export async function Hero() {
-  const { headline, description, ctaLabel, ctaHref, productSlug } =
-    HERO_FALLBACK
-  const product = await getProduct(productSlug)
+export function Hero() {
+  const { headline, description } = HERO_FALLBACK
   return (
-    <section className="grid gap-8 py-8 md:grid-cols-2 md:items-center md:gap-12 md:py-16">
-      <div className="flex flex-col gap-6">
-        <h1 className="text-4xl font-medium tracking-tight text-balance md:text-5xl">
-          {headline}
-        </h1>
-        <p className="max-w-prose text-lg text-fg-secondary">{description}</p>
-        <p>
-          <Button size="lg" render={<Link href={ctaHref} />}>
-            {ctaLabel}
-          </Button>
-        </p>
-      </div>
-      {/* Square on mobile; at md and up a fixed height fills most of the first viewport and the photo's white margins absorb the crop. */}
-      <Link
-        href={`/products/${product.slug}`}
-        className="relative block aspect-square overflow-hidden rounded-lg border border-border bg-bg-secondary md:aspect-auto md:h-[480px] lg:h-[560px]"
-      >
-        <ProductImage
-          product={product}
-          alt={product.name}
-          priority
-          sizes="(min-width: 1152px) 576px, (min-width: 768px) 50vw, 100vw"
+    <section aria-labelledby="hero-heading" className="relative">
+      <div className="relative aspect-[4/3] w-full md:aspect-[2/1] lg:aspect-auto lg:h-[min(60svh,640px)]">
+        <Image
+          src={HERO_IMAGE.src}
+          alt={HERO_IMAGE.alt}
+          fill
+          preload
+          sizes="100vw"
+          className="object-cover object-[20%_15%] lg:object-[30%_20%]"
         />
-      </Link>
+      </div>
+      <Container className="flex flex-col gap-4 py-8 lg:absolute lg:inset-0 lg:justify-start lg:pt-[6%]">
+        <div className="flex flex-col gap-4 lg:ml-auto lg:w-[42%] lg:max-w-md lg:text-on-photo">
+          <h1
+            id="hero-heading"
+            className="text-3xl font-medium tracking-tight text-balance md:text-5xl"
+          >
+            {headline}
+          </h1>
+          <p className="max-w-prose text-base text-fg-secondary md:text-lg lg:text-on-photo/80">
+            {description}
+          </p>
+        </div>
+      </Container>
     </section>
   )
 }

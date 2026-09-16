@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { EmptyState } from '@/components/empty-state'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { loadCart } from '@/lib/cart/get-cart'
 import { toLines } from '@/lib/cart/lines'
@@ -21,14 +23,11 @@ export async function CartContents() {
 
 function CartUnavailable() {
   return (
-    <div className="flex flex-col gap-4">
-      <p>Your cart could not be loaded.</p>
-      <p>
-        <Link href="/cart" className="underline underline-offset-4">
-          Try again
-        </Link>
-      </p>
-    </div>
+    <EmptyState title="Your cart could not be loaded">
+      <Button size="lg" variant="outline" render={<Link href="/cart" />}>
+        Try again
+      </Button>
+    </EmptyState>
   )
 }
 
@@ -36,7 +35,7 @@ function CartUnavailable() {
 export function CartSkeleton() {
   return (
     <div
-      className="grid gap-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-start"
+      className="grid gap-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-start lg:grid-cols-[minmax(0,1fr)_20rem]"
       aria-hidden="true"
     >
       <div className="flex flex-col divide-y divide-border border-y border-border">
@@ -53,8 +52,8 @@ export function CartSkeleton() {
               </div>
               <div className="flex items-end justify-between gap-3">
                 <div className="flex flex-col gap-1">
-                  <Skeleton className="h-6 w-16" />
-                  <Skeleton className="h-10 w-32" />
+                  <Skeleton className="hidden h-6 w-16 md:block" />
+                  <Skeleton className="h-11 w-36" />
                 </div>
                 <Skeleton className="h-9 w-20" />
               </div>
@@ -62,7 +61,7 @@ export function CartSkeleton() {
           </div>
         ))}
       </div>
-      <Skeleton className="h-48 rounded-lg" />
+      <Skeleton className="h-52 rounded-lg" />
     </div>
   )
 }

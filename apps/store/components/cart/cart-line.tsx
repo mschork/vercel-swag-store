@@ -8,10 +8,10 @@ import {
   updateQuantity,
   type CartActionResult,
 } from '@/app/cart/actions'
+import { Price } from '@/components/price'
 import { QuantityStepper } from '@/components/quantity-stepper'
 import { Button } from '@/components/ui/button'
 import type { Line, LineChange } from '@/lib/cart/lines'
-import { formatPrice } from '@/lib/format'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
 import { cn } from '@/lib/utils'
 
@@ -51,7 +51,7 @@ export function CartLine({
       aria-busy={pending || undefined}
     >
       <div className="flex gap-4">
-        <div className="relative size-20 shrink-0 overflow-hidden rounded-lg border border-border bg-bg-secondary sm:size-24">
+        <div className="relative size-24 shrink-0 overflow-hidden rounded-lg border border-border bg-bg-secondary">
           {line.image ? (
             <Image
               src={line.image}
@@ -71,13 +71,13 @@ export function CartLine({
               >
                 {line.name}
               </Link>
-              <p className="text-sm text-fg-secondary tabular-nums">
-                {formatPrice(line.price, currency)} each
+              <p className="text-sm text-fg-secondary">
+                <Price cents={line.price} currency={currency} size="sm" /> each
               </p>
             </div>
-            <p className="font-medium tabular-nums">
+            <p className="font-medium">
               <span className="sr-only">Line total </span>
-              {formatPrice(line.price * line.quantity, currency)}
+              <Price cents={line.price * line.quantity} currency={currency} />
             </p>
           </div>
           <div className="flex items-end justify-between gap-3">
@@ -87,6 +87,7 @@ export function CartLine({
               max={CART_MAX_QUANTITY}
               defaultValue={line.quantity}
               pending={pending}
+              labelClassName="sr-only md:not-sr-only"
               onCommit={(quantity) =>
                 save(quantity, () => updateQuantity(line.productId, quantity))
               }

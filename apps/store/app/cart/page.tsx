@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
+import { Container } from '@/components/container'
 import {
   CartContents,
   CartSkeleton,
@@ -13,11 +14,11 @@ export const metadata: Metadata = { title: 'Cart', robots: { index: false } }
  */
 export default function CartPage() {
   return (
-    <div className="flex flex-col gap-6 py-6 md:gap-8 md:py-10">
-      <h1 className="text-3xl font-medium tracking-tight md:text-4xl">Cart</h1>
+    <Container className="flex flex-col gap-6 py-8 md:gap-8 md:py-12">
+      <h1 className="text-3xl font-medium tracking-tight">Cart</h1>
       <Suspense fallback={<CartSkeleton />}>
         <CartContents />
       </Suspense>
-    </div>
+    </Container>
   )
 }

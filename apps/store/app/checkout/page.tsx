@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Container } from '@/components/container'
 import { CHECKOUT_FALLBACK } from '@/lib/content/fallbacks'
 
 export const metadata: Metadata = {
@@ -16,8 +17,8 @@ export const metadata: Metadata = {
 export default function CheckoutPage() {
   const { title, body, continueShoppingLabel } = CHECKOUT_FALLBACK
   return (
-    <section className="flex flex-col gap-4 py-12">
-      <h1 className="text-3xl font-medium tracking-tight md:text-4xl">
+    <Container className="flex flex-col gap-4 py-12">
+      <h1 className="text-3xl font-medium tracking-tight">
         {title}
       </h1>
       <p className="max-w-prose text-fg-secondary">{body}</p>
@@ -26,6 +27,6 @@ export default function CheckoutPage() {
           {continueShoppingLabel}
         </Link>
       </p>
-    </section>
+    </Container>
   )
 }
