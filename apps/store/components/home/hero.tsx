@@ -28,7 +28,7 @@ export function Hero() {
         <div className="flex flex-col gap-4 lg:ml-auto lg:w-[42%] lg:max-w-md lg:text-on-photo">
           <h1
             id="hero-heading"
-            className="text-3xl font-medium tracking-tight text-balance md:text-5xl"
+            className="text-3xl font-medium tracking-tight text-balance md:text-[4.2rem] md:leading-none"
           >
             {headline}
           </h1>
