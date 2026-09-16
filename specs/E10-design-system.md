@@ -82,6 +82,10 @@ Two shapes, chosen by the grid's breakpoint, one anatomy: photo in a frame (`bg-
 - `skeletons.tsx`: card (both shapes), banner, stock, cart row.
 - `empty-state.tsx`: heading, one line of text, actions row; used by search (E07) and the cart.
 
+### Search category select `components/search/search-form-client.tsx`
+
+The select's value is derived from `useSearchParams`, so between the change and the transition committing React resets it and the visitor sees their choice snap back (about 120 ms live, longer on a slow network). The selected slug goes through `useOptimistic` inside the existing search transition, so the select shows the chosen category immediately and settles to the URL when the navigation commits. No local state beyond that; the URL stays the source of truth (E07).
+
 ### Layout rhythm
 
 Section gaps 48px mobile, 64px desktop; within-section 16 to 24px; container `max-w-6xl`. The hero and the chrome are the only full-bleed elements.
@@ -111,4 +115,4 @@ Squint test on each page in both themes; text-mask test; 390 and 1440 screenshot
 
 ## Out of scope
 
-Illustrations, custom icons beyond the logo and a cart glyph, animation beyond hover, focus and pending cues, the `useOptimistic` fix for the search category select (`improvements.md`).
+Illustrations, custom icons beyond the logo and a cart glyph, animation beyond hover, focus and pending cues.
