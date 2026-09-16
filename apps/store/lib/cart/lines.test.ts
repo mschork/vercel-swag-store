@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Cart } from '@/lib/api/types'
 import { product } from '@/test/helpers'
-import { applyLineChange, cartTotals, toLines, type Line } from './lines'
+import { applyDrafts, applyLineChange, cartTotals, setDraft, toLines, type Line } from './lines'
 
 const cart: Cart = {
   items: [
@@ -87,5 +87,36 @@ describe('cartTotals', () => {
 
   it('is zero for no lines', () => {
     expect(cartTotals([])).toEqual({ totalItems: 0, subtotal: 0 })
+  })
+})
+
+describe('drafts', () => {
+  const lines: Line[] = [
+    { productId: 'a', slug: 'a', name: 'A', image: null, price: 100, quantity: 1 },
+    { productId: 'b', slug: 'b', name: 'B', image: null, price: 250, quantity: 2 },
+  ]
+
+  it('shows a waiting quantity over the line and leaves others alone', () => {
+    const shown = applyDrafts(lines, { a: 4 })
+    expect(shown.map((line) => line.quantity)).toEqual([4, 2])
+    expect(shown[1]).toBe(lines[1])
+    expect(cartTotals(shown)).toEqual({ totalItems: 6, subtotal: 900 })
+  })
+
+  it('ignores a draft for a line that is gone', () => {
+    expect(applyDrafts(lines.slice(1), { a: 4 })).toEqual(lines.slice(1))
+  })
+
+  it('sets and removes a draft', () => {
+    const set = setDraft({}, 'a', 3)
+    expect(set).toEqual({ a: 3 })
+    expect(setDraft(set, 'a', 3)).toBe(set)
+    expect(setDraft(set, 'a', null)).toEqual({})
+    expect(setDraft({}, 'a', null)).toEqual({})
+  })
+
+  it('a late removal never wipes a newer draft', () => {
+    expect(setDraft({ a: 5 }, 'a', null, 4)).toEqual({ a: 5 })
+    expect(setDraft({ a: 4 }, 'a', null, 4)).toEqual({})
   })
 })
