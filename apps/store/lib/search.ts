@@ -18,21 +18,32 @@ export function normaliseQuery(raw: string | undefined | null): string {
 const escapeRegExp = (value: string) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
+/** Letters and digits only, so "t-shirts", "T Shirts" and "tshirts" compare equal. */
+const squash = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '')
+
 /** True when `haystack` contains `needle` bounded by non-word characters. */
 function containsWord(haystack: string, needle: string): boolean {
   return new RegExp(`(?:^|[^a-z0-9])${escapeRegExp(needle)}(?:[^a-z0-9]|$)`, 'i').test(haystack)
 }
 
 /**
- * The category a query names, or `null`. The API's `search` is a substring
- * match over product `name` and `description` only: `search=hats` returns
- * nothing, because no product says "hats". So the singular and plural of a
- * category name are matched here instead, against the slug and the display
- * name.
+ * The category a query names, or `null`. The API's `search` is a literal
+ * substring match over product `name`, `description` and `tags`: `search=hats`
+ * returns nothing, because no product says "hats". So the singular and plural
+ * of a category name are matched here instead, against the slug and the
+ * display name.
  *
  * `norm` drops one trailing "s" so "hats" and "hat" ask the same question;
- * both forms are then compared. The whole-word test is what reaches "t-shirts"
- * from "shirt": the hyphen is a boundary, so "shirts" is a word inside it.
+ * both forms are then compared two ways.
+ *
+ * The equality test squashes hyphens and spaces out of both sides, so
+ * "tshirt", "t shirt" and "tshirts" all reach `t-shirts`. The API cannot:
+ * it matches the punctuation literally, so "t-shirt" finds the product and
+ * "tshirt" finds nothing.
+ *
+ * The whole-word test keeps the raw text, because there the hyphen is the
+ * boundary that finds "shirt" inside "t-shirts". Squashing first would erase
+ * it and lose that match.
  */
 export function expandQuery(
   query: string,
@@ -41,13 +52,12 @@ export function expandQuery(
   const norm = query.trim().toLowerCase().replace(/s$/, '')
   if (!norm) return null
   const plural = `${norm}s`
+  const squashed = new Set([squash(norm), squash(plural)])
   return (
     categories.find((category) => {
       const slug = category.slug.toLowerCase()
       const name = category.name.toLowerCase()
-      if (slug === norm || slug === plural || name === norm || name === plural) {
-        return true
-      }
+      if (squashed.has(squash(slug)) || squashed.has(squash(name))) return true
       return (
         containsWord(slug, norm) ||
         containsWord(slug, plural) ||
