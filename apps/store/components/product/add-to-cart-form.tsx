@@ -5,13 +5,17 @@ import { useActionState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { addToCart } from '@/app/cart/actions'
 import { QuantityStepper } from '@/components/quantity-stepper'
+import { Spinner } from '@/components/spinner'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 /**
  * Add to Cart as a Server Action form. `max` is live stock and `disabled` is
  * set when the product is out of stock or its stock is unknown. The result
  * shows inline in a polite status line, cleared while the next submit is
- * pending; the line keeps its height so nothing moves when it fills.
+ * pending; the line keeps its height so nothing moves when it fills. While the
+ * action runs the button turns a spinner and reads "Adding…", at full
+ * strength so the visitor sees the click was taken.
  */
 export function AddToCartForm({
   productId,
@@ -58,9 +62,16 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
       type="submit"
       size="lg"
       disabled={disabled || pending}
-      className="h-11 md:flex-1"
+      className={cn('h-11 md:flex-1', pending && 'disabled:opacity-100')}
     >
-      Add to Cart
+      {pending ? (
+        <>
+          <Spinner />
+          Adding…
+        </>
+      ) : (
+        'Add to Cart'
+      )}
     </Button>
   )
 }
