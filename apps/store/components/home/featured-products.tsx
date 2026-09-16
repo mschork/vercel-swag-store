@@ -1,6 +1,6 @@
 import { cacheLife, cacheTag } from 'next/cache'
 import Link from 'next/link'
-import { ProductCard } from '@/components/product-card'
+import { ProductGrid } from '@/components/product-grid'
 import { CATALOG_PROFILE, TAGS } from '@/lib/api/cache'
 import { getFeaturedProducts } from '@/lib/api/products'
 
@@ -39,13 +39,7 @@ export async function FeaturedProducts() {
           View all
         </Link>
       </div>
-      <ul className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-        {products.map((product) => (
-          <li key={product.id}>
-            <ProductCard product={product} />
-          </li>
-        ))}
-      </ul>
+      <ProductGrid products={products} variant="home" />
     </section>
   )
 }
