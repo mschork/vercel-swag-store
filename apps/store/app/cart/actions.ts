@@ -11,19 +11,28 @@ import {
   updateCartItem,
 } from '@/lib/api/cart'
 import { ApiError } from '@/lib/api/client'
+import type { Cart } from '@/lib/api/types'
 import { clearCartToken, getCartToken, setCartToken } from '@/lib/cart/cookie'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
 
 /**
- * Cart Server Actions (specs/E06-cart.md). Each one validates its input, calls
- * the API with the token from the httpOnly cookie and answers with
- * user-facing copy, never with the cart: `refresh()` re-renders the badge and
- * the cart page from the server's own view in the same round trip. After a
- * successful write the cookie is set again, so its one-day expiry slides with
- * the API cart's.
+ * Cart Server Actions (specs/E06-cart.md, specs/E16-cart-api-improvements.md).
+ * Each one validates its input, calls the API with the token from the
+ * httpOnly cookie and answers with user-facing copy and the cart's item
+ * count, never its lines or token. The count lets the header badge update
+ * without reading the cart again (the badge skips its read while rendering an
+ * action's response). `refresh()` re-renders the cart page from the server's
+ * view in the same round trip. After a successful write the cookie is set
+ * again, so its one-day expiry slides with the API cart's.
  */
 
-export type CartActionResult = { ok: true } | { ok: false; error: string }
+/**
+ * `totalItems` is on every success, and on a failure whenever the action
+ * read the cart, as it does after a 404.
+ */
+export type CartActionResult =
+  | { ok: true; totalItems: number }
+  | { ok: false; error: string; totalItems?: number }
 export type AddToCartState = CartActionResult | null
 
 const EXPIRED = 'Your cart expired. Add products again to start a new cart.'
@@ -145,7 +154,7 @@ async function openCart(): Promise<string> {
   return created.token
 }
 
-type WriteCopy = {
+type WriteOptions = {
   gone: string
   failed: string
   /**
@@ -164,11 +173,12 @@ type WriteCopy = {
  */
 async function write(
   token: string,
-  run: () => Promise<unknown>,
-  copy: WriteCopy,
+  run: () => Promise<Cart>,
+  copy: WriteOptions,
 ): Promise<CartActionResult> {
+  let cart: Cart
   try {
-    await run()
+    cart = await run()
   } catch (error) {
     unstable_rethrow(error)
     if (error instanceof ApiError && error.status === 404) {
@@ -179,31 +189,31 @@ async function write(
   }
   await setCartToken(token)
   refresh()
-  return { ok: true }
+  return { ok: true, totalItems: cart.totalItems }
 }
 
 async function afterNotFound(
   token: string,
-  copy: WriteCopy,
+  copy: WriteOptions,
 ): Promise<CartActionResult> {
-  let cartExists: boolean
+  let cart: Cart | null
   try {
-    cartExists = (await getCart(token)) !== null
+    cart = await getCart(token)
   } catch (error) {
     unstable_rethrow(error)
     console.error('[cart] could not re-check the cart after a 404', error)
     return { ok: false, error: copy.failed }
   }
-  if (!cartExists) return copy.onExpired ? copy.onExpired() : expired()
+  if (!cart) return copy.onExpired ? copy.onExpired() : expired()
   refresh()
-  return { ok: false, error: copy.gone }
+  return { ok: false, error: copy.gone, totalItems: cart.totalItems }
 }
 
 /** Forgets an expired cart; the refresh re-renders `/cart` to its empty state. */
 async function expired(): Promise<CartActionResult> {
   await clearCartToken()
   refresh()
-  return { ok: false, error: EXPIRED }
+  return { ok: false, error: EXPIRED, totalItems: 0 }
 }
 
 async function hasLines(token: string): Promise<boolean> {
