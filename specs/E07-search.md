@@ -39,7 +39,7 @@ Branch: `epic/E07-search`. Depends on: E02, E03, E04 (ProductCard). Blocks: E13.
 Async server component receiving the `searchParams` promise.
 
 - Normalise: `q = (q ?? '').trim().slice(0, 64)`, `category` validated against the cached category slugs (unknown slug treated as none).
-- Default state (no q, no category): `getFeaturedProducts({ limit: 10, min: 10 })` from E04, heading "Featured", no count.
+- Default state (no q, no category): `getFeaturedProducts({ limit: 5, min: 5 })` from E04, heading "Featured", no count. Five, not more: the results grid never shows more than five, so the default sets an honest expectation of the page, and asking for more than the API flags as featured would fill a grid headed "Featured" with ordinary catalogue products. The count is a display choice, never the number of featured products read off the API (rule 6); `min` keeps the grid full if someone unflags one.
 - Category only: `getProducts({ category, limit: 5 })`.
 - Query present, no explicit `category`: category-aware expansion. If `expandQuery` matches a category, run `getProducts({ search: q, limit: 5 })` and `getProducts({ category: matched.slug, limit: 5 })` with `Promise.all` and merge with `mergeResults`; otherwise one `getProducts({ search: q, limit: 5 })`.
 - Query plus an explicit `category`: `getProducts({ search: q, category, limit: 5 })` only.
@@ -66,7 +66,7 @@ One component, three variants, all of them ending in category chips (links to `/
 
 ### Loading state
 
-`ResultsSkeleton` is `ProductGridSkeleton({ variant: 'search', count: 5 })` under a skeleton heading, so the swap into real results causes no CLS. The default state's extra rows (10 cards) append below the 5-card skeleton, which grows the page rather than shifting it.
+`ResultsSkeleton` is `ProductGridSkeleton({ variant: 'search', count: 5 })` under a skeleton heading, so the swap into real results causes no CLS. Every state the page can reach fills the same five slots, the default state included, so nothing is ever appended below the skeleton either.
 
 ### Failure
 
@@ -83,7 +83,7 @@ One file: the three functions are one concept and the repo groups `lib/*.ts` by 
 ## Tests
 
 - Vitest `lib/search.test.ts`: `expandQuery` covering "hat" → hats, "Hats" → hats, "bag" → bags, "tee" → none, "cups" → cups, "shirt" → t-shirts, "tshirt" and "t shirt" → t-shirts; `mergeResults` covering search-first ordering, de-duplication by `id`, the cap, and the `added` / `truncated` flags; `normaliseQuery` covering trimming, the 64-character slice and whitespace-only → empty.
-- Playwright `apps/store/e2e/search.spec.ts`: visit `/search?q=hat` directly, see three hats and the hint line, reload and see the same; type "bea" and see the Beanie without pressing Enter; select a category and see the URL and the grid update; combine text and category and see the narrowed result; search "umbrella" and see the empty state with chips; `/search` shows the "Featured" default with 10 cards. The category select and the grid are located by role and accessible name, never by class.
+- Playwright `apps/store/e2e/search.spec.ts`: visit `/search?q=hat` directly, see three hats and the hint line, reload and see the same; type "bea" and see the Beanie without pressing Enter; select a category and see the URL and the grid update; combine text and category and see the narrowed result; search "umbrella" and see the empty state with chips; `/search` shows the "Featured" default with five cards, every one of them flagged featured by the API. The category select and the grid are located by role and accessible name, never by class.
 
 ## Acceptance criteria
 
@@ -92,7 +92,7 @@ One file: the three functions are one concept and the repo groups `lib/*.ts` by 
 - [x] Refresh and shared URLs reproduce results, and the form shows the URL's values after hydration.
 - [x] Category select filters; combined with text it narrows.
 - [x] Empty state (all three variants) and loading state visible; a results-level error renders without losing the form (verified by starting the server with an unreachable `API_BASE_URL`).
-- [x] Up to 5 results in the 2 / 3 / 5 grid; the default state shows 10.
+- [x] Up to 5 results in the 2 / 3 / 5 grid; the default state shows 5, all of them featured.
 - [x] "hat" returns the three hats with the hint line; "hats" too; "black" shows "Showing 5 of 28 results" with the nudge.
 - [x] The home page renders its grid at 2 / 3 columns with no visual regression elsewhere.
 
