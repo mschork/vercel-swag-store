@@ -134,13 +134,13 @@ describe('addToCart', () => {
     },
   )
 
-  it('creates a cart and sets the cookie on the first add', async () => {
+  it('creates a cart, sets the cookie and answers with the count on the first add', async () => {
     mocked.createCart.mockResolvedValue({ cart: cart(0), token: 'new-token' })
     mocked.addCartItem.mockResolvedValue(cart(2))
 
     await expect(
       addToCart(null, form({ productId: 'tshirt_001', quantity: '2' })),
-    ).resolves.toEqual({ ok: true })
+    ).resolves.toEqual({ ok: true, totalItems: 2 })
 
     expect(mocked.getCart).not.toHaveBeenCalled()
     expect(mocked.addCartItem).toHaveBeenCalledWith('new-token', 'tshirt_001', 2)
@@ -155,7 +155,7 @@ describe('addToCart', () => {
 
     await expect(
       addToCart(null, form({ productId: 'tshirt_001', quantity: '1' })),
-    ).resolves.toEqual({ ok: true })
+    ).resolves.toEqual({ ok: true, totalItems: 2 })
 
     expect(mocked.getCart).not.toHaveBeenCalled()
     expect(mocked.createCart).not.toHaveBeenCalled()
@@ -175,7 +175,7 @@ describe('addToCart', () => {
 
     await expect(
       addToCart(null, form({ productId: 'tshirt_001', quantity: '1' })),
-    ).resolves.toEqual({ ok: true })
+    ).resolves.toEqual({ ok: true, totalItems: 1 })
 
     expect(mocked.addCartItem.mock.calls).toEqual([
       ['expired', 'tshirt_001', 1],
@@ -199,6 +199,7 @@ describe('addToCart', () => {
     ).resolves.toEqual({
       ok: false,
       error: 'This product is no longer available.',
+      totalItems: 0,
     })
 
     expect(mocked.addCartItem).toHaveBeenCalledTimes(2)
@@ -235,6 +236,7 @@ describe('addToCart', () => {
     ).resolves.toEqual({
       ok: false,
       error: 'This product is no longer available.',
+      totalItems: 1,
     })
 
     expect(jar.get(CART_COOKIE)).toBe('live')
@@ -306,6 +308,7 @@ describe('updateQuantity', () => {
     mocked.updateCartItem.mockResolvedValue(cart(quantity))
     await expect(updateQuantity('tshirt_001', quantity)).resolves.toEqual({
       ok: true,
+      totalItems: quantity,
     })
     expect(mocked.updateCartItem).toHaveBeenCalledWith(
       'live',
@@ -318,7 +321,7 @@ describe('updateQuantity', () => {
     jar.set(CART_COOKIE, 'live')
     mocked.updateCartItem.mockResolvedValue(cart(2))
 
-    await expect(updateQuantity('tshirt_001', 2)).resolves.toEqual({ ok: true })
+    await expect(updateQuantity('tshirt_001', 2)).resolves.toEqual({ ok: true, totalItems: 2 })
 
     expectCookieSlid('live')
     expect(refresh).toHaveBeenCalledTimes(1)
@@ -328,6 +331,7 @@ describe('updateQuantity', () => {
     await expect(updateQuantity('tshirt_001', 2)).resolves.toEqual({
       ok: false,
       error: EXPIRED,
+      totalItems: 0,
     })
     expect(mocked.updateCartItem).not.toHaveBeenCalled()
     expect(refresh).toHaveBeenCalledTimes(1)
@@ -341,6 +345,7 @@ describe('updateQuantity', () => {
     await expect(updateQuantity('tshirt_001', 2)).resolves.toEqual({
       ok: false,
       error: NOT_IN_CART,
+      totalItems: 0,
     })
 
     expect(mocked.getCart).toHaveBeenCalledTimes(1)
@@ -358,6 +363,7 @@ describe('updateQuantity', () => {
     await expect(updateQuantity('tshirt_001', 2)).resolves.toEqual({
       ok: false,
       error: EXPIRED,
+      totalItems: 0,
     })
 
     expect(jar.has(CART_COOKIE)).toBe(false)
@@ -417,7 +423,7 @@ describe('removeItem', () => {
     jar.set(CART_COOKIE, 'live')
     mocked.removeCartItem.mockResolvedValue(cart(0))
 
-    await expect(removeItem('tshirt_001')).resolves.toEqual({ ok: true })
+    await expect(removeItem('tshirt_001')).resolves.toEqual({ ok: true, totalItems: 0 })
 
     expect(mocked.removeCartItem).toHaveBeenCalledWith('live', 'tshirt_001')
     expectCookieSlid('live')
@@ -431,6 +437,7 @@ describe('removeItem', () => {
     await expect(removeItem('tshirt_001')).resolves.toEqual({
       ok: false,
       error: NOT_IN_CART,
+      totalItems: 1,
     })
     expect(jar.get(CART_COOKIE)).toBe('live')
 
@@ -438,6 +445,7 @@ describe('removeItem', () => {
     await expect(removeItem('tshirt_001')).resolves.toEqual({
       ok: false,
       error: EXPIRED,
+      totalItems: 0,
     })
     expect(jar.has(CART_COOKIE)).toBe(false)
   })

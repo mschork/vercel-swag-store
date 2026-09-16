@@ -1,9 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
 import { useFormStatus } from 'react-dom'
 import { addToCart } from '@/app/cart/actions'
+import { useCartCount } from '@/components/cart/cart-count'
 import { QuantityStepper } from '@/components/quantity-stepper'
 import { Spinner } from '@/components/spinner'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,10 @@ import { cn } from '@/lib/utils'
  * pending; the line keeps its height so nothing moves when it fills. While the
  * action runs the button turns a spinner and reads "Adding…", at full
  * strength so the visitor sees the click was taken.
+ *
+ * The action answers with the cart's count, which goes straight to the
+ * badge. The form stays a native Server Action form, so it works before
+ * hydration.
  */
 export function AddToCartForm({
   productId,
@@ -27,6 +32,10 @@ export function AddToCartForm({
   disabled: boolean
 }) {
   const [state, formAction, pending] = useActionState(addToCart, null)
+  const { confirm } = useCartCount()
+  useEffect(() => {
+    if (state?.totalItems !== undefined) confirm(state.totalItems)
+  }, [state, confirm])
   return (
     <form action={formAction} className="flex flex-col gap-3">
       <input type="hidden" name="productId" value={productId} />

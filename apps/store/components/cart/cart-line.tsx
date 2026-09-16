@@ -8,6 +8,7 @@ import {
   updateQuantity,
   type CartActionResult,
 } from '@/app/cart/actions'
+import { useCartCount } from '@/components/cart/cart-count'
 import { Price } from '@/components/price'
 import { QuantityStepper } from '@/components/quantity-stepper'
 import { Button } from '@/components/ui/button'
@@ -46,6 +47,7 @@ export function CartLine({
 }) {
   const { productId } = line
   const [pending, startTransition] = useTransition()
+  const { confirm } = useCartCount()
 
   const save = (quantity: number, action: () => Promise<CartActionResult>) =>
     startTransition(async () => {
@@ -54,7 +56,10 @@ export function CartLine({
       // lines only once they arrive, and never if a newer draft replaced it.
       onDraft(productId, null, quantity)
       const result = await action()
-      startTransition(() => onResult(productId, result.ok ? null : result.error))
+      startTransition(() => {
+        if (result.totalItems !== undefined) confirm(result.totalItems)
+        onResult(productId, result.ok ? null : result.error)
+      })
     })
 
   // The coalescer outlives renders; it calls whichever `save` is current.

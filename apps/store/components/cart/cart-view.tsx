@@ -1,6 +1,7 @@
 'use client'
 
-import { useOptimistic, useState } from 'react'
+import { useEffect, useOptimistic, useState } from 'react'
+import { useCartCount } from '@/components/cart/cart-count'
 import {
   applyDrafts,
   applyLineChange,
@@ -19,7 +20,8 @@ import { EmptyCart } from './empty-cart'
  * arrives through `refresh()` in the same round trip and replaces `lines`; a
  * failed change reverts on its own when its transition ends. Above them sit
  * drafts: quantities a row shows during its pause before saving, so rapid
- * clicks move the row and the totals before any request starts.
+ * clicks move the row and the totals before any request starts. While the
+ * view is open the header badge shows its total, so the two never disagree.
  *
  * Messages are kept here, keyed by product, rather than in the rows: a row
  * removed optimistically unmounts, and if the removal fails the row comes
@@ -35,6 +37,7 @@ export function CartView({
   const [optimisticLines, applyChange] = useOptimistic(lines, applyLineChange)
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({})
   const [drafts, setDrafts] = useState<Drafts>({})
+  const { setCartPage } = useCartCount()
 
   const draft = (productId: string, quantity: number | null, onlyIf?: number) =>
     setDrafts((current) => setDraft(current, productId, quantity, onlyIf))
@@ -49,8 +52,14 @@ export function CartView({
     })
 
   const shownLines = applyDrafts(optimisticLines, drafts)
-  if (shownLines.length === 0) return <EmptyCart />
   const { totalItems, subtotal } = cartTotals(shownLines)
+
+  useEffect(() => {
+    setCartPage(totalItems)
+  }, [totalItems, setCartPage])
+  useEffect(() => () => setCartPage(null), [setCartPage])
+
+  if (shownLines.length === 0) return <EmptyCart />
 
   return (
     <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-start lg:grid-cols-[minmax(0,1fr)_20rem]">
