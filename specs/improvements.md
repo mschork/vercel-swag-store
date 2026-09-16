@@ -1,6 +1,6 @@
 # Improvements
 
-Ideas deliberately left out of the release. Each entry names the decision it comes from so the trade-off is traceable. Nothing here is scheduled. Cart latency used to sit here; it is now specified in `specs/E16-cart-api-improvements.md`, a stretch epic attempted only after E12.
+Ideas deliberately left out of the release. Each entry names the decision it comes from so the trade-off is traceable. Nothing here is scheduled. Cart latency used to sit here; it is now specified in `specs/E16-cart-api-improvements.md`, built before E11.
 
 - **Copy-to-clipboard on the promo code** (E04 Q8). The promo banner is static text inside a Suspense hole so it stays a server component. A copy button needs a small client leaf.
 - **Category browsing route** (E05 Q10). The breadcrumb category links to `/search?category=<slug>`, reusing the search page. A dedicated `/category/<slug>` route could be fully static (no `searchParams`) and offer richer category content from Sanity.
