@@ -39,6 +39,42 @@ export function applyLineChange(
 }
 
 /**
+ * Quantities a row shows before it saves them, by product id. They sit above
+ * the optimistic lines, so a change still waiting for its pause shows at once.
+ */
+export type Drafts = Readonly<Record<string, number>>
+
+export function applyDrafts(lines: Line[], drafts: Drafts): Line[] {
+  return lines.map((line) => {
+    const quantity = drafts[line.productId]
+    return quantity === undefined || quantity === line.quantity
+      ? line
+      : { ...line, quantity }
+  })
+}
+
+/**
+ * Sets a draft, or with `null` removes it. With `onlyIf` the draft is removed
+ * only while it still holds that value, so a save that finishes late never
+ * wipes a newer change.
+ */
+export function setDraft(
+  drafts: Drafts,
+  productId: string,
+  quantity: number | null,
+  onlyIf?: number,
+): Drafts {
+  if (quantity !== null) {
+    return drafts[productId] === quantity ? drafts : { ...drafts, [productId]: quantity }
+  }
+  if (!(productId in drafts)) return drafts
+  if (onlyIf !== undefined && drafts[productId] !== onlyIf) return drafts
+  const next = { ...drafts }
+  delete next[productId]
+  return next
+}
+
+/**
  * Item count and subtotal from price × quantity, the same arithmetic as the
  * API's `lineTotal` and `subtotal`, so optimistic lines total correctly before
  * the server answers.
