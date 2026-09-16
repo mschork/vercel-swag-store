@@ -1,6 +1,6 @@
 # E11 Performance and caching verification
 
-Branch: `epic/E11-performance`. Depends on: E04 to E07, E10. Blocks: E12.
+Branch: `epic/E11-performance`. Depends on: E04 to E07, E10, E16. Blocks: E12.
 
 ## Goal
 

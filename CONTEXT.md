@@ -36,6 +36,10 @@ _Avoid_: Item, entry, row, line item
 A cart the API has forgotten after 24 hours without a change. The store treats a 404 for the cart itself as expiry and starts a new cart on the next add.
 _Avoid_: Lost cart, session timeout, stale cart
 
+**Confirmed count**:
+The number of items in the cart as the API last reported it. The header badge may run ahead of it while a change is saving, and falls back to it when the change fails or gets no answer.
+_Avoid_: Cart count, badge number, server count
+
 **Cart token**:
 The credential that identifies one anonymous cart. Lives only in an httpOnly cookie and on the server; the browser never reads it.
 _Avoid_: Cart id, session, session token
