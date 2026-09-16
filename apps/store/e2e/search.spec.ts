@@ -119,10 +119,12 @@ test('a query with no matches offers the categories', async ({ page }) => {
   await expect(queryBox(page)).toHaveValue('')
 })
 
-test('the default state shows ten products', async ({ page }) => {
+test('the default state shows as many products as a search can', async ({
+  page,
+}) => {
   await page.goto('/search')
   await expect(page.getByRole('heading', { name: 'Featured' })).toBeVisible()
-  await expect(cards(page)).toHaveCount(10)
+  await expect(cards(page)).toHaveCount(5)
 })
 
 test('a capped result set says so and suggests narrowing', async ({ page }) => {
