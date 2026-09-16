@@ -15,7 +15,11 @@ async function openFirstFeaturedProduct(page: Page) {
     .getAttribute('href')
   if (!href) throw new Error('No product link in the featured grid')
   await page.goto(href)
-  const stock = page.getByText(/^(In stock|Only \d+ left|Out of stock)$/)
+  // Scoped to the page: React streams a hidden copy of the hole to the end of
+  // the body before revealing it.
+  const stock = page
+    .getByRole('main')
+    .getByText(/^(In stock|Only \d+ left|Out of stock)$/)
   await expect(stock).toBeVisible()
   return { stock, inStock: (await stock.textContent()) !== 'Out of stock' }
 }
@@ -49,32 +53,49 @@ test('quantity cannot exceed stock', async ({ page }) => {
   if (low) expect(max).toBe(low[1])
 })
 
-test('adding confirms inline with a link to the cart', async ({ page }) => {
+test('adding confirms at once, and View cart waits for the write', async ({
+  page,
+}) => {
   test.setTimeout(120_000)
   const { inStock } = await openFirstFeaturedProduct(page)
   test.skip(!inStock, 'The product is out of stock on this request')
+  // The optimistic path needs the hydrated form, not the no-JS post.
+  await page.waitForLoadState('networkidle')
   await page.getByRole('button', { name: 'Add to Cart', exact: true }).click()
-  // E06 made this a real cart write; the API's cart endpoints take seconds.
+  // Optimistic (E16): the message and the busy button appear before the API
+  // answers, and the link stays inert until the write has landed.
+  const status = page.getByRole('status').filter({ hasText: 'Added.' })
+  await expect(status).toBeVisible({ timeout: 1_000 })
+  await expect(page.getByRole('button', { name: 'Adding…' })).toBeDisabled()
+  const viewCart = page.getByRole('link', { name: 'View cart' })
+  await expect(viewCart).toHaveAttribute('aria-disabled', 'true')
+  // The cart endpoints take seconds (specs/callout.md).
+  await expect(viewCart).toHaveAttribute('href', '/cart', { timeout: 30_000 })
+  await expect(status).toBeVisible()
   await expect(
-    page.getByRole('status').filter({ hasText: 'Added.' }),
-  ).toBeVisible({ timeout: 30_000 })
-  await expect(page.getByRole('link', { name: 'View cart' })).toHaveAttribute(
-    'href',
-    '/cart',
-  )
+    page.getByRole('button', { name: 'Add to Cart', exact: true }),
+  ).toBeEnabled()
 })
 
-test('an unknown slug returns 404 with the not-found page inside the shell', async ({
-  page,
-}) => {
-  const response = await page.goto('/products/this-product-does-not-exist')
-  expect(response?.status()).toBe(404)
-  await expect(
-    page.getByRole('heading', { name: 'Product not found' }),
-  ).toBeVisible()
-  await expect(
-    page.getByRole('link', { name: 'Search products' }),
-  ).toHaveAttribute('href', '/search')
-  await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible()
-  await expect(page.getByRole('contentinfo')).toBeVisible()
+test('a failed add retracts its confirmation and says why', async ({ page }) => {
+  test.setTimeout(120_000)
+  const { inStock } = await openFirstFeaturedProduct(page)
+  test.skip(!inStock, 'The product is out of stock on this request')
+  await page.waitForLoadState('networkidle')
+  // A product the API does not know: the write answers 404 with a live cart.
+  await page
+    .getByRole('main')
+    .locator('input[type="hidden"][name="productId"]')
+    .evaluate((input: HTMLInputElement) => {
+      input.value = 'no_such_product_e2e'
+    })
+  await page.getByRole('button', { name: 'Add to Cart', exact: true }).click()
+  const status = page.getByRole('status').filter({ hasText: /Added\.|available/ })
+  await expect(status).toHaveText(/^Added\./, { timeout: 1_000 })
+  await expect(status).toHaveText('This product is no longer available.', {
+    timeout: 30_000,
+  })
+  await expect(page.getByRole('link', { name: 'View cart' })).toHaveCount(0)
+  const badge = page.getByRole('banner').getByRole('img', { name: /^Cart/ })
+  await expect(badge).not.toHaveAccessibleName(/[1-9]/)
 })

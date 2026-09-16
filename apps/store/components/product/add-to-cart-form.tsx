@@ -12,15 +12,17 @@ import { cn } from '@/lib/utils'
 
 /**
  * Add to Cart as a Server Action form. `max` is live stock and `disabled` is
- * set when the product is out of stock or its stock is unknown. The result
- * shows inline in a polite status line, cleared while the next submit is
- * pending; the line keeps its height so nothing moves when it fills. While the
- * action runs the button turns a spinner and reads "Adding…", at full
- * strength so the visitor sees the click was taken.
+ * set when the product is out of stock or its stock is unknown. The form
+ * stays a native Server Action form, so it works before hydration.
  *
- * The action answers with the cart's count, which goes straight to the
- * badge. The form stays a native Server Action form, so it works before
- * hydration.
+ * With JavaScript the add is optimistic. At submit the status line says
+ * "Added." and the header badge counts the new items, while the button shows
+ * a spinner and "Adding…" until the API answers. "View cart" stays inert
+ * until then, because a cart page opened before the write lands would show a
+ * cart without it and nothing would correct that. The answer carries the
+ * cart's count, which becomes the badge's confirmed count; a failed add
+ * replaces the message with the reason and the badge drops back. The status
+ * line keeps its height so nothing moves when it fills.
  */
 export function AddToCartForm({
   productId,
@@ -48,8 +50,20 @@ export function AddToCartForm({
         />
         <SubmitButton disabled={disabled} />
       </div>
+      <AddingCount />
       <p role="status" className="min-h-6 text-sm leading-6">
-        {pending || !state ? null : state.ok ? (
+        {pending ? (
+          <>
+            Added.{' '}
+            <span
+              role="link"
+              aria-disabled="true"
+              className="text-fg-secondary underline underline-offset-4"
+            >
+              View cart
+            </span>
+          </>
+        ) : !state ? null : state.ok ? (
           <>
             Added.{' '}
             <Link href="/cart" className="underline underline-offset-4">
@@ -62,6 +76,19 @@ export function AddToCartForm({
       </p>
     </form>
   )
+}
+
+/** Tells the badge how many items the submit in flight adds; 0 when idle. */
+function AddingCount() {
+  const { pending, data } = useFormStatus()
+  const { setAdding } = useCartCount()
+  const quantity = pending ? Number(data?.get('quantity')) : 0
+  const adding = Number.isInteger(quantity) && quantity > 0 ? quantity : 0
+  useEffect(() => {
+    setAdding(adding)
+  }, [adding, setAdding])
+  useEffect(() => () => setAdding(0), [setAdding])
+  return null
 }
 
 function SubmitButton({ disabled }: { disabled: boolean }) {
