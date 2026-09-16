@@ -95,10 +95,10 @@ test('add, change and remove a line; the cart survives a reload', async ({
   await expect(line.getByLabel('Quantity', { exact: true })).toHaveValue('2')
 
   await line.getByRole('button', { name: `Remove ${product.name}` }).click()
-  await expect(page.getByText('Your cart is empty.')).toBeVisible(SAVED)
+  await expect(page.getByRole('heading', { name: 'Your cart is empty' })).toBeVisible(SAVED)
   await expect(badge(page, 'Cart, 0 items')).toBeVisible(SAVED)
   await page.reload()
-  await expect(page.getByText('Your cart is empty.')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Your cart is empty' })).toBeVisible()
 
   // Every request the browser made went to this origin: cart calls happen
   // only inside Server Actions.
@@ -126,5 +126,5 @@ test('placing the order empties the cart and lands on the checkout page', async 
   await expect(badge(page, 'Cart, 0 items')).toBeVisible(SAVED)
 
   await page.goto('/cart')
-  await expect(page.getByText('Your cart is empty.')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Your cart is empty' })).toBeVisible()
 })

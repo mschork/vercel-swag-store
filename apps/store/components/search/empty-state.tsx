@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { EmptyState as Frame } from '@/components/empty-state'
 import type { Category } from '@/lib/api/types'
 
 /**
@@ -20,8 +21,7 @@ export function EmptyState({
   // E13 records the miss here: a query with no category and no results is the
   // signal it aggregates. No code for it in E07.
   return (
-    <div className="flex flex-col items-start gap-6 py-6">
-      <p className="text-lg">{headline(query, category)}</p>
+    <Frame title={headline(query, category)}>
       {query && category ? (
         <Link
           href={`/search?q=${encodeURIComponent(query)}`}
@@ -50,7 +50,7 @@ export function EmptyState({
           Clear search
         </Link>
       ) : null}
-    </div>
+    </Frame>
   )
 }
 

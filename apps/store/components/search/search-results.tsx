@@ -4,7 +4,8 @@ import { getCategories } from '@/lib/api/categories'
 import { getFeaturedProducts, getProducts } from '@/lib/api/products'
 import type { Category, Product } from '@/lib/api/types'
 import { RESULT_CAP, expandQuery, mergeResults, normaliseQuery } from '@/lib/search'
-import { EmptyState } from './empty-state'
+import { EmptyState } from '@/components/empty-state'
+import { EmptyState as SearchEmptyState } from './empty-state'
 
 /**
  * How many products the default state shows. Five, to match the cap on
@@ -16,8 +17,8 @@ import { EmptyState } from './empty-state'
  * unflagged.
  */
 const DEFAULT_COUNT = RESULT_CAP
-/** How many images start loading at once: the first row on mobile. */
-const PRIORITY_COUNT = 2
+/** How many images are preloaded: the first two rows on a phone. */
+const PRELOAD_COUNT = 2
 
 type ParamValue = string | string[] | undefined
 
@@ -61,16 +62,16 @@ export async function SearchResults({
 
   if (outcome.products.length === 0) {
     return query || category ? (
-      <EmptyState query={query} category={category} categories={categories} />
+      <SearchEmptyState query={query} category={category} categories={categories} />
     ) : (
-      <p className="py-6 text-fg-secondary">No products yet.</p>
+      <EmptyState title="No products yet" />
     )
   }
 
   return (
     <>
       <div className="flex flex-col gap-1">
-        <h2 aria-live="polite" className="text-lg font-medium">
+        <h2 aria-live="polite" className="text-xl font-medium tracking-tight">
           {outcome.heading}
         </h2>
         {outcome.hint ? (
@@ -85,7 +86,7 @@ export async function SearchResults({
       <ProductGrid
         products={outcome.products}
         variant="search"
-        priorityCount={PRIORITY_COUNT}
+        preloadCount={PRELOAD_COUNT}
       />
     </>
   )

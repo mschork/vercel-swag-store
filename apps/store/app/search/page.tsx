@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
+import { Container } from '@/components/container'
 import { SearchForm } from '@/components/search/search-form'
 import {
   ResultsSkeleton,
@@ -42,17 +43,15 @@ export async function generateMetadata({
 export default function SearchPage({ searchParams }: Props) {
   return (
     <SearchTransition>
-      <div className="flex flex-col gap-6 py-6 md:gap-8 md:py-10">
-        <h1 className="text-3xl font-medium tracking-tight md:text-4xl">
-          Search
-        </h1>
+      <Container className="flex flex-col gap-6 py-8 md:gap-8 md:py-12">
+        <h1 className="text-3xl font-medium tracking-tight">Search</h1>
         <SearchForm />
         <SearchResultsRegion>
           <Suspense fallback={<ResultsSkeleton />}>
             <SearchResults searchParams={searchParams} />
           </Suspense>
         </SearchResultsRegion>
-      </div>
+      </Container>
     </SearchTransition>
   )
 }

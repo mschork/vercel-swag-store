@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { EmptyState } from '@/components/empty-state'
+import { Button } from '@/components/ui/button'
 
 /**
  * Shown when there is no cart, it expired, or its last line was removed. Used
@@ -7,13 +9,10 @@ import Link from 'next/link'
  */
 export function EmptyCart() {
   return (
-    <div className="flex flex-col gap-4">
-      <p className="text-fg-secondary">Your cart is empty.</p>
-      <p>
-        <Link href="/search" className="underline underline-offset-4">
-          Search products
-        </Link>
-      </p>
-    </div>
+    <EmptyState title="Your cart is empty">
+      <Button size="lg" render={<Link href="/search" />}>
+        Search products
+      </Button>
+    </EmptyState>
   )
 }

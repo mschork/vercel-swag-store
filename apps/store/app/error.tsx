@@ -1,22 +1,21 @@
 'use client'
 
+import { Container } from '@/components/container'
+import { Button } from '@/components/ui/button'
+
 export default function ErrorPage({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   return (
-    <section className="flex flex-col gap-4 py-12">
-      <h1 className="text-2xl font-medium">Something went wrong</h1>
+    <Container className="flex flex-col gap-4 py-12">
+      <h1 className="text-3xl font-medium tracking-tight">Something went wrong</h1>
       <p className="text-fg-secondary">
         The page could not be rendered.
         {error.digest ? <span className="font-mono"> Reference {error.digest}.</span> : null}
       </p>
       <p>
-        <button
-          type="button"
-          onClick={retry}
-          className="rounded-sm border border-border-strong px-3 py-2 text-sm hover:bg-bg-secondary"
-        >
+        <Button type="button" size="lg" variant="outline" onClick={retry}>
           Try again
-        </button>
+        </Button>
       </p>
-    </section>
+    </Container>
   )
 }
