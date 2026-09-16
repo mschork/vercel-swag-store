@@ -1,11 +1,7 @@
 import type { Metadata } from 'next'
-import { Suspense } from 'react'
+import { Container } from '@/components/container'
 import { FeaturedProducts } from '@/components/home/featured-products'
 import { Hero } from '@/components/home/hero'
-import {
-  PromoBanner,
-  PromoBannerSkeleton,
-} from '@/components/home/promo-banner'
 import { getStoreConfig } from '@/lib/api/store'
 
 /**
@@ -20,18 +16,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Static hero and featured grid from the prerender; the promo banner is the
- * page's only dynamic hole and sits between them so it never pushes the LCP
- * image when it streams in.
+ * Static hero and featured grid from the prerender. The promo banner, the
+ * page's only dynamic hole, lives in the root layout above the hero (E10).
  */
 export default function HomePage() {
   return (
     <>
       <Hero />
-      <Suspense fallback={<PromoBannerSkeleton />}>
-        <PromoBanner />
-      </Suspense>
-      <FeaturedProducts />
+      <Container>
+        <FeaturedProducts />
+      </Container>
     </>
   )
 }
