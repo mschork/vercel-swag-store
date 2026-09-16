@@ -56,6 +56,20 @@ test('a query the API spells with a hyphen still finds the category', async ({
   await expect(cards(page).first()).toContainText('Black Crewneck T-Shirt')
 })
 
+test('the named category outranks a product that only mentions it', async ({
+  page,
+}) => {
+  await page.goto('/search?q=bag')
+  await expect(page.getByRole('heading', { name: '5 results' })).toBeVisible()
+  await expect(results(page)).toContainText('Includes everything in Bags')
+  // The enamel pin and the keychain are real hits: both descriptions mention a
+  // bag. They belong below the bags, not above them.
+  await expect(cards(page).nth(0)).toContainText('Black Canvas Tote Bag')
+  await expect(cards(page).nth(1)).toContainText('Black Drawstring Bag')
+  await expect(cards(page).nth(2)).toContainText('Minimal Black Backpack')
+  await expect(cards(page).nth(3)).toContainText('Black Enamel Pin')
+})
+
 test('typing three characters searches without pressing Enter', async ({
   page,
 }) => {

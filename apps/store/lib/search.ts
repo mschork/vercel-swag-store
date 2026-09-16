@@ -78,20 +78,39 @@ export interface MergedResults {
 }
 
 /**
- * Search hits first, then the category's products that the search missed, cut
- * to `cap`. `added` and `truncated` drive the heading and the hint: the hint
- * may only promise "everything in {Category}" when the category contributed
- * something *and* nothing was cut, or it would name products the grid does not
- * show.
+ * Three groups, in this order: the search hits that are in the matched
+ * category, the category's other products, then the remaining hits. Cut to
+ * `cap`.
+ *
+ * The category outranks the API's own order on purpose. The API matches
+ * substrings anywhere in the prose, so "bag" hits an enamel pin that is "an
+ * accent for bags and jackets" and a keychain "easy to spot in a bag", and in
+ * API order both of them come before the tote. Neither is a wrong result;
+ * leading with them is wrong. Once the query has been taken to name a
+ * category, that category says more than a substring in a sentence.
+ *
+ * The cost: with a full `cap` of search hits and a category holding others,
+ * a category product now takes a slot a text match used to hold.
+ *
+ * `added` and `truncated` drive the heading and the hint: the hint may only
+ * promise "everything in {Category}" when the category contributed something
+ * *and* nothing was cut, or it would name products the grid does not show.
  */
 export function mergeResults(
   searchHits: readonly Product[],
   categoryItems: readonly Product[],
+  categorySlug: string,
   cap: number = RESULT_CAP,
 ): MergedResults {
   const seen = new Set(searchHits.map((product) => product.id))
+  const inCategory = searchHits.filter(
+    (product) => product.category === categorySlug,
+  )
+  const elsewhere = searchHits.filter(
+    (product) => product.category !== categorySlug,
+  )
   const extras = categoryItems.filter((product) => !seen.has(product.id))
-  const merged = [...searchHits, ...extras]
+  const merged = [...inCategory, ...extras, ...elsewhere]
   const products = merged.slice(0, cap)
   return {
     products,

@@ -128,7 +128,7 @@ async function search(
     listProducts({ search: query }),
     listProducts({ category: matched.slug }),
   ])
-  const merged = mergeResults(hits.products, inCategory.products)
+  const merged = mergeResults(hits.products, inCategory.products, matched.slug)
   return {
     products: merged.products,
     heading: merged.truncated
