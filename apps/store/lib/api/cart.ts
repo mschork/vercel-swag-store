@@ -12,6 +12,13 @@ import type { Cart } from './types'
  * The API's `{itemId}` path segment is the product id, not a line-item id.
  */
 
+/**
+ * The cart namespace answers in 1.5 to 3 s (specs/callout.md), so its calls
+ * wait longer than the client's default before giving up. A write aborted
+ * early can still land on the API while the store reports a failure.
+ */
+export const CART_TIMEOUT_MS = 10_000
+
 const tokenHeader = (token: string) => ({ 'x-cart-token': token })
 
 /**
@@ -23,6 +30,7 @@ export async function createCart(): Promise<{ cart: Cart; token: string }> {
   const { data, headers } = await fetchApi('/cart/create', {
     method: 'POST',
     schema: RawCartSchema,
+    timeoutMs: CART_TIMEOUT_MS,
   })
   const token = headers.get('x-cart-token') ?? data.token
   return { cart: withoutToken(data), token }
@@ -31,7 +39,11 @@ export async function createCart(): Promise<{ cart: Cart; token: string }> {
 /** The cart for `token`, or `null` when the API no longer knows it (expired after 24 h idle, or bogus). */
 export async function getCart(token: string): Promise<Cart | null> {
   try {
-    const { data } = await fetchApi('/cart', { schema: CartSchema, headers: tokenHeader(token) })
+    const { data } = await fetchApi('/cart', {
+      schema: CartSchema,
+      headers: tokenHeader(token),
+      timeoutMs: CART_TIMEOUT_MS,
+    })
     return data
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) return null
@@ -45,6 +57,7 @@ export async function addCartItem(token: string, productId: string, quantity = 1
     body: { productId, quantity },
     schema: CartSchema,
     headers: tokenHeader(token),
+    timeoutMs: CART_TIMEOUT_MS,
   })
   return data
 }
@@ -56,6 +69,7 @@ export async function updateCartItem(token: string, productId: string, quantity:
     body: { quantity },
     schema: CartSchema,
     headers: tokenHeader(token),
+    timeoutMs: CART_TIMEOUT_MS,
   })
   return data
 }
@@ -65,6 +79,7 @@ export async function removeCartItem(token: string, productId: string): Promise<
     method: 'DELETE',
     schema: CartSchema,
     headers: tokenHeader(token),
+    timeoutMs: CART_TIMEOUT_MS,
   })
   return data
 }

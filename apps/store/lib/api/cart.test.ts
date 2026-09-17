@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { apiError, fetchCall, headerOf, jsonResponse, mockFetch, ok, product, rawCart } from '@/test/helpers'
 import { ApiError } from './client'
-import { addCartItem, createCart, getCart, removeCartItem, updateCartItem } from './cart'
+import { addCartItem, CART_TIMEOUT_MS, createCart, getCart, removeCartItem, updateCartItem } from './cart'
 
 let fetchMock: ReturnType<typeof mockFetch>
 
@@ -98,5 +98,19 @@ describe('mutations', () => {
     expect(init.method).toBe('DELETE')
     expect(init.body).toBeUndefined()
     expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('cart timeout', () => {
+  it('gives every cart call 10 s instead of the default 5 s', async () => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout')
+    fetchMock.mockImplementation(async () => jsonResponse(200, { success: true, data: rawCart() }))
+    await createCart()
+    await getCart('abc')
+    await addCartItem('abc', 'tshirt_001')
+    await updateCartItem('abc', 'tshirt_001', 2)
+    await removeCartItem('abc', 'tshirt_001')
+    expect(CART_TIMEOUT_MS).toBe(10_000)
+    expect(timeout.mock.calls).toEqual(Array.from({ length: 5 }, () => [CART_TIMEOUT_MS]))
   })
 })

@@ -165,6 +165,22 @@ describe('fetchApi', () => {
     expect(error.code).toBe('TIMEOUT')
   })
 
+  it('aborts after 5 s by default and after `timeoutMs` when given', async () => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout')
+    fetchMock.mockImplementation(async () => json(200, { success: true, data: { id: 'a' } }))
+    await fetchApi('/things', { schema: Thing })
+    await fetchApi('/things', { schema: Thing, timeoutMs: 10_000 })
+    expect(timeout.mock.calls).toEqual([[5000], [10_000]])
+  })
+
+  it('names the timeout it waited in the error', async () => {
+    const timeout = new Error('The operation was aborted due to timeout')
+    timeout.name = 'TimeoutError'
+    fetchMock.mockRejectedValue(timeout)
+    const error = await capture(fetchApi('/things', { schema: Thing, timeoutMs: 10_000 }))
+    expect(error.message).toBe('Request to /things timed out after 10000 ms')
+  })
+
   it('throws INVALID_RESPONSE on a schema mismatch and logs only the path and issues', async () => {
     fetchMock.mockResolvedValueOnce(
       json(200, { success: true, data: { id: 42, token: 'cart-secret-token' } }),

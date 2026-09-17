@@ -1,4 +1,5 @@
 import 'server-only'
+import { cache } from 'react'
 import { getCart } from '@/lib/api/cart'
 import type { Cart } from '@/lib/api/types'
 import { loadOptional } from '@/lib/load-optional'
@@ -9,11 +10,15 @@ import { getCartToken } from './cookie'
  * cookie yet, or the API no longer knows the token (an expired cart). The
  * cookie is left alone, because a render cannot set cookies; the next action
  * replaces or clears it. Any other failure throws.
+ *
+ * Memoized per request with React's `cache()`: the badge and the cart page
+ * share one slow read. `fetch` memoization cannot do it, because the client's
+ * timeout signal opts every request out of it.
  */
-export async function getCartFromCookie(): Promise<Cart | null> {
+export const getCartFromCookie = cache(async (): Promise<Cart | null> => {
   const token = await getCartToken()
   return token ? getCart(token) : null
-}
+})
 
 /**
  * `getCartFromCookie` for components that render without the cart when the
