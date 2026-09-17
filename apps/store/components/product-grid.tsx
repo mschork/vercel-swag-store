@@ -11,15 +11,18 @@ import type { Product } from '@/lib/api/types'
  * Below md both are a single column of row cards whose photo is 42% wide.
  * `home` stops at three columns: the home grid holds up to twelve products.
  * `search` shows at most five, so one row of five at lg fits the cap exactly.
+ * From 1152px the column stops growing (1104px of content), so the hints turn
+ * into fixed widths: three columns of 357px, or five of 208px.
  */
 const VARIANTS = {
   home: {
     grid: 'grid gap-4 md:grid-cols-3',
-    sizes: '(min-width: 768px) 33vw, 42vw',
+    sizes: '(min-width: 1152px) 358px, (min-width: 768px) 33vw, 42vw',
   },
   search: {
     grid: 'grid gap-4 md:grid-cols-3 lg:grid-cols-5',
-    sizes: '(min-width: 1024px) 20vw, (min-width: 768px) 33vw, 42vw',
+    sizes:
+      '(min-width: 1152px) 208px, (min-width: 1024px) 20vw, (min-width: 768px) 33vw, 42vw',
   },
 } as const
 
