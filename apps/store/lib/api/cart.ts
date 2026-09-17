@@ -28,6 +28,7 @@ const tokenHeader = (token: string) => ({ 'x-cart-token': token })
  */
 export async function createCart(): Promise<{ cart: Cart; token: string }> {
   const { data, headers } = await fetchApi('/cart/create', {
+    cache: 'live',
     method: 'POST',
     schema: RawCartSchema,
     timeoutMs: CART_TIMEOUT_MS,
@@ -40,6 +41,7 @@ export async function createCart(): Promise<{ cart: Cart; token: string }> {
 export async function getCart(token: string): Promise<Cart | null> {
   try {
     const { data } = await fetchApi('/cart', {
+      cache: 'live',
       schema: CartSchema,
       headers: tokenHeader(token),
       timeoutMs: CART_TIMEOUT_MS,
@@ -53,6 +55,7 @@ export async function getCart(token: string): Promise<Cart | null> {
 
 export async function addCartItem(token: string, productId: string, quantity = 1): Promise<Cart> {
   const { data } = await fetchApi('/cart', {
+    cache: 'live',
     method: 'POST',
     body: { productId, quantity },
     schema: CartSchema,
@@ -65,6 +68,7 @@ export async function addCartItem(token: string, productId: string, quantity = 1
 /** Sets the quantity of a line; the API removes the line at 0. */
 export async function updateCartItem(token: string, productId: string, quantity: number): Promise<Cart> {
   const { data } = await fetchApi(`/cart/${encodeURIComponent(productId)}`, {
+    cache: 'live',
     method: 'PATCH',
     body: { quantity },
     schema: CartSchema,
@@ -76,6 +80,7 @@ export async function updateCartItem(token: string, productId: string, quantity:
 
 export async function removeCartItem(token: string, productId: string): Promise<Cart> {
   const { data } = await fetchApi(`/cart/${encodeURIComponent(productId)}`, {
+    cache: 'live',
     method: 'DELETE',
     schema: CartSchema,
     headers: tokenHeader(token),

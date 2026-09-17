@@ -51,11 +51,13 @@ export function SearchResultsRegion({
   children: React.ReactNode
 }) {
   const { isPending } = useSearchTransition()
+  // At least a screen tall, so the footer starts below the fold: results
+  // shorter or taller than the skeleton then move nothing the visitor sees.
   return (
     <section
       aria-label="Search results"
       aria-busy={isPending || undefined}
-      className="flex flex-col gap-6"
+      className="flex min-h-svh flex-col gap-6"
     >
       <ErrorBoundary
         fallback={(reset) => <ResultsError onReset={reset} />}
