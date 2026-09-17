@@ -1,4 +1,5 @@
 import 'server-only'
+import { SpanStatusCode, trace } from '@opentelemetry/api'
 import { unstable_rethrow } from 'next/navigation'
 import { z } from 'zod'
 import { serverEnv } from '@/lib/env'
@@ -31,8 +32,16 @@ export class ApiError extends Error {
 
 type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE'
 
+/**
+ * The caller's cache policy, recorded on the call's trace span. `cached`: the
+ * caller is a `"use cache"` function, so this call runs only on a cache miss.
+ * `live`: the caller is never cached (stock, promotions, cart, health).
+ */
+export type CachePolicy = 'cached' | 'live'
+
 export interface FetchApiOptions<TData> {
   schema: z.ZodType<TData>
+  cache: CachePolicy
   method?: Method
   body?: unknown
   /** Extra request headers, e.g. `x-cart-token`. Merged over the defaults. */
@@ -78,6 +87,54 @@ export async function fetchApi<TData, TMeta>(
   options: FetchApiOptions<TData> & { metaSchema?: z.ZodType<TMeta> },
 ): Promise<ApiResult<TData, TMeta | undefined>> {
   const method = options.method ?? 'GET'
+  // One span per call. The path never carries a token (tokens travel in
+  // headers), so it is safe as an attribute; the route pattern keeps span
+  // names low-cardinality.
+  return tracer.startActiveSpan(
+    `swag-api ${method} ${routeOf(path)}`,
+    {
+      attributes: {
+        'http.request.method': method,
+        'swag.api.path': path,
+        'swag.api.cache': options.cache,
+      },
+    },
+    async (span) => {
+      try {
+        const result = await request(path, method, options)
+        span.setAttribute('http.response.status_code', result.status)
+        return result.value
+      } catch (error) {
+        if (error instanceof ApiError) {
+          span.setAttribute('http.response.status_code', error.status)
+          span.setAttribute('swag.api.error', error.code)
+        }
+        span.setStatus({ code: SpanStatusCode.ERROR })
+        throw error
+      } finally {
+        span.end()
+      }
+    },
+  )
+}
+
+const tracer = trace.getTracer('vercel-swag-store')
+
+/** `/products/tumbler_001/stock` becomes `/products/:id/stock`. */
+export function routeOf(path: string): string {
+  const [pathname = ''] = path.split('?')
+  const [, first, second, third] = pathname.split('/')
+  if (!first) return pathname
+  if (first === 'cart' && second && second !== 'create') return '/cart/:productId'
+  if (first === 'products' && second) return third ? `/products/:id/${third}` : '/products/:idOrSlug'
+  return `/${[first, second].filter(Boolean).join('/')}`
+}
+
+async function request<TData, TMeta>(
+  path: string,
+  method: Method,
+  options: FetchApiOptions<TData> & { metaSchema?: z.ZodType<TMeta> },
+): Promise<{ status: number; value: ApiResult<TData, TMeta | undefined> }> {
   const headers: Record<string, string> = {
     accept: 'application/json',
     'x-vercel-protection-bypass': serverEnv.API_BYPASS_TOKEN,
@@ -115,9 +172,12 @@ export async function fetchApi<TData, TMeta>(
     throw invalidResponse(path, response.status, z.prettifyError(parsed.error))
   }
   return {
-    data: parsed.data.data as TData,
-    meta: parsed.data.meta as TMeta | undefined,
-    headers: response.headers,
+    status: response.status,
+    value: {
+      data: parsed.data.data as TData,
+      meta: parsed.data.meta as TMeta | undefined,
+      headers: response.headers,
+    },
   }
 }
 

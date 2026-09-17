@@ -11,7 +11,7 @@ export async function getCategories(): Promise<Category[]> {
   'use cache'
   cacheTag(TAGS.categories)
   cacheLife(CATALOG_PROFILE)
-  const { data } = await fetchApi('/categories', { schema: z.array(CategorySchema) })
+  const { data } = await fetchApi('/categories', { cache: 'cached', schema: z.array(CategorySchema) })
   return data
 }
 

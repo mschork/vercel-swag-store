@@ -45,6 +45,7 @@ describe('fetchApi', () => {
       json(200, { success: true, data: { id: 'a' }, meta: { page: 2 } }, { 'x-thing': 'yes' }),
     )
     const result = await fetchApi('/things', {
+      cache: 'cached',
       schema: Thing,
       metaSchema: z.object({ page: z.number() }),
     })
@@ -55,13 +56,13 @@ describe('fetchApi', () => {
 
   it('ignores meta when no meta schema is given', async () => {
     fetchMock.mockResolvedValueOnce(json(200, { success: true, data: { id: 'a' }, meta: { extra: 1 } }))
-    const result = await fetchApi('/things', { schema: Thing })
+    const result = await fetchApi('/things', { cache: 'live', schema: Thing })
     expect(result.data).toEqual({ id: 'a' })
   })
 
   it('builds the URL from API_BASE_URL and sends the bypass and accept headers', async () => {
     fetchMock.mockResolvedValueOnce(json(200, { success: true, data: { id: 'a' } }))
-    await fetchApi('/things?limit=1', { schema: Thing })
+    await fetchApi('/things?limit=1', { cache: 'live', schema: Thing })
     const [url, init] = call()
     expect(url).toBe(`${BASE}/things?limit=1`)
     const headers = init.headers as Record<string, string>
@@ -75,6 +76,7 @@ describe('fetchApi', () => {
   it('merges caller headers and serialises a JSON body', async () => {
     fetchMock.mockResolvedValueOnce(json(201, { success: true, data: { id: 'a' } }))
     await fetchApi('/cart', {
+      cache: 'live',
       schema: Thing,
       method: 'POST',
       body: { productId: 'p1', quantity: 2 },
@@ -95,7 +97,7 @@ describe('fetchApi', () => {
     fetchMock.mockResolvedValueOnce(
       json(status, { success: false, error: { code, message, details: { quantity: ['min 1'] } } }),
     )
-    const error = await capture(fetchApi('/things', { schema: Thing }))
+    const error = await capture(fetchApi('/things', { cache: 'live', schema: Thing }))
     expect(error.status).toBe(status)
     expect(error.code).toBe(code)
     expect(error.message).toBe(message)
@@ -107,7 +109,7 @@ describe('fetchApi', () => {
     fetchMock.mockResolvedValueOnce(
       json(200, { success: false, error: { code: 'WEIRD', message: 'Nope' } }),
     )
-    const error = await capture(fetchApi('/things', { schema: Thing }))
+    const error = await capture(fetchApi('/things', { cache: 'live', schema: Thing }))
     expect(error.code).toBe('WEIRD')
     expect(error.status).toBe(200)
   })
@@ -116,7 +118,7 @@ describe('fetchApi', () => {
     fetchMock.mockResolvedValue(
       json(500, { success: false, error: { code: 'INTERNAL', message: 'boom' } }),
     )
-    const error = await capture(fetchApi('/things', { schema: Thing }))
+    const error = await capture(fetchApi('/things', { cache: 'live', schema: Thing }))
     expect(fetchMock).toHaveBeenCalledTimes(2)
     expect(error.status).toBe(500)
     expect(error.code).toBe('INTERNAL')
@@ -126,14 +128,14 @@ describe('fetchApi', () => {
     fetchMock
       .mockResolvedValueOnce(html(502, 'Bad Gateway'))
       .mockResolvedValueOnce(json(200, { success: true, data: { id: 'a' } }))
-    const result = await fetchApi('/things', { schema: Thing })
+    const result = await fetchApi('/things', { cache: 'live', schema: Thing })
     expect(result.data).toEqual({ id: 'a' })
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
   it('never retries a mutation', async () => {
     fetchMock.mockResolvedValue(html(503, 'Service Unavailable'))
-    const error = await capture(fetchApi('/cart', { schema: Thing, method: 'POST', body: {} }))
+    const error = await capture(fetchApi('/cart', { cache: 'live', schema: Thing, method: 'POST', body: {} }))
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(error.code).toBe('HTTP_ERROR')
     expect(error.status).toBe(503)
@@ -141,7 +143,7 @@ describe('fetchApi', () => {
 
   it('maps a non-JSON 401 (Vercel protection page) to HTTP_ERROR without the body', async () => {
     fetchMock.mockResolvedValueOnce(html(401))
-    const error = await capture(fetchApi('/products', { schema: Thing }))
+    const error = await capture(fetchApi('/products', { cache: 'live', schema: Thing }))
     expect(error.code).toBe('HTTP_ERROR')
     expect(error.status).toBe(401)
     expect(error.message).toBe('Unauthorized')
@@ -150,7 +152,7 @@ describe('fetchApi', () => {
 
   it('retries a network error once for GET, then throws NETWORK_ERROR', async () => {
     fetchMock.mockRejectedValue(new TypeError('fetch failed'))
-    const error = await capture(fetchApi('/things', { schema: Thing }))
+    const error = await capture(fetchApi('/things', { cache: 'live', schema: Thing }))
     expect(fetchMock).toHaveBeenCalledTimes(2)
     expect(error.code).toBe('NETWORK_ERROR')
     expect(error.status).toBe(0)
@@ -160,7 +162,7 @@ describe('fetchApi', () => {
     const timeout = new Error('The operation was aborted due to timeout')
     timeout.name = 'TimeoutError'
     fetchMock.mockRejectedValue(timeout)
-    const error = await capture(fetchApi('/things', { schema: Thing }))
+    const error = await capture(fetchApi('/things', { cache: 'live', schema: Thing }))
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(error.code).toBe('TIMEOUT')
   })
@@ -168,8 +170,8 @@ describe('fetchApi', () => {
   it('aborts after 5 s by default and after `timeoutMs` when given', async () => {
     const timeout = vi.spyOn(AbortSignal, 'timeout')
     fetchMock.mockImplementation(async () => json(200, { success: true, data: { id: 'a' } }))
-    await fetchApi('/things', { schema: Thing })
-    await fetchApi('/things', { schema: Thing, timeoutMs: 10_000 })
+    await fetchApi('/things', { cache: 'live', schema: Thing })
+    await fetchApi('/things', { cache: 'live', schema: Thing, timeoutMs: 10_000 })
     expect(timeout.mock.calls).toEqual([[5000], [10_000]])
   })
 
@@ -177,7 +179,7 @@ describe('fetchApi', () => {
     const timeout = new Error('The operation was aborted due to timeout')
     timeout.name = 'TimeoutError'
     fetchMock.mockRejectedValue(timeout)
-    const error = await capture(fetchApi('/things', { schema: Thing, timeoutMs: 10_000 }))
+    const error = await capture(fetchApi('/things', { cache: 'live', schema: Thing, timeoutMs: 10_000 }))
     expect(error.message).toBe('Request to /things timed out after 10000 ms')
   })
 
@@ -185,7 +187,7 @@ describe('fetchApi', () => {
     fetchMock.mockResolvedValueOnce(
       json(200, { success: true, data: { id: 42, token: 'cart-secret-token' } }),
     )
-    const error = await capture(fetchApi('/cart', { schema: Thing }))
+    const error = await capture(fetchApi('/cart', { cache: 'live', schema: Thing }))
     expect(error.code).toBe('INVALID_RESPONSE')
     expect(error.message).not.toContain('cart-secret-token')
     const logged = JSON.stringify(vi.mocked(console.error).mock.calls)
@@ -197,7 +199,7 @@ describe('fetchApi', () => {
     fetchMock.mockResolvedValueOnce(
       new Response('ok', { status: 200, headers: { 'content-type': 'text/plain' } }),
     )
-    const error = await capture(fetchApi('/health', { schema: Thing }))
+    const error = await capture(fetchApi('/health', { cache: 'live', schema: Thing }))
     expect(error.code).toBe('INVALID_RESPONSE')
   })
 
@@ -210,7 +212,7 @@ describe('fetchApi', () => {
     for (const make of responses) {
       fetchMock = mockFetch()
       fetchMock.mockImplementation(async () => make())
-      const error = await capture(fetchApi('/things', { schema: Thing }))
+      const error = await capture(fetchApi('/things', { cache: 'live', schema: Thing }))
       expect(error.message).not.toContain(TOKEN)
       expect(error.path).not.toContain(TOKEN)
       expect(String(error)).not.toContain(TOKEN)

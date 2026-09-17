@@ -43,6 +43,7 @@ export async function getProducts(
   cacheTag(TAGS.products)
   cacheLife(CATALOG_PROFILE)
   const { data, meta } = await fetchApi(`/products${buildQuery(params)}`, {
+    cache: 'cached',
     schema: z.array(ProductSchema),
     metaSchema: ProductListMetaSchema,
   })
@@ -94,6 +95,7 @@ export async function findProduct(idOrSlug: string): Promise<Product | null> {
   cacheTag(TAGS.products)
   try {
     const { data } = await fetchApi(productPath(idOrSlug), {
+      cache: 'cached',
       schema: ProductSchema,
     })
     cacheLife(CATALOG_PROFILE)
