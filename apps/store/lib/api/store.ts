@@ -10,7 +10,7 @@ export async function getStoreConfig(): Promise<StoreConfig> {
   'use cache'
   cacheTag(TAGS.store)
   cacheLife(CATALOG_PROFILE)
-  const { data } = await fetchApi('/store/config', { schema: StoreConfigSchema })
+  const { data } = await fetchApi('/store/config', { cache: 'cached', schema: StoreConfigSchema })
   return data
 }
 
@@ -19,6 +19,6 @@ export async function getStoreConfig(): Promise<StoreConfig> {
  * Used by the opt-in integration test; no page renders it (see specs/callout.md).
  */
 export async function getHealth(): Promise<Health> {
-  const { data } = await fetchApi('/health', { schema: HealthSchema })
+  const { data } = await fetchApi('/health', { cache: 'live', schema: HealthSchema })
   return data
 }

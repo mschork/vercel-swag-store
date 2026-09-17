@@ -11,6 +11,7 @@ import type { StockInfo } from './types'
  */
 export async function getStock(productId: string): Promise<StockInfo> {
   const { data } = await fetchApi(`/products/${encodeURIComponent(productId)}/stock`, {
+    cache: 'live',
     schema: StockInfoSchema,
   })
   return data

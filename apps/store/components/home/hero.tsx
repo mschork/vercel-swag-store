@@ -7,7 +7,8 @@ import { HERO_FALLBACK, HERO_IMAGE } from '@/lib/content/fallbacks'
  * on its right from lg up and under it below that, where the band is the
  * photo's own 2:1 at md and a 4:3 crop around the figure on phones. At md the
  * figure and the copy would share the width, so the copy stays below. The photo is the LCP element and the
- * only preloaded image on the page. No link, no button. E09 reads the same
+ * only preloaded image on the page, fetched at high priority because `preload`
+ * alone leaves the browser's default. No link, no button. E09 reads the same
  * fields from Sanity.
  */
 export function Hero() {
@@ -20,6 +21,7 @@ export function Hero() {
           alt={HERO_IMAGE.alt}
           fill
           preload
+          fetchPriority="high"
           sizes="100vw"
           className="object-cover object-[20%_15%] lg:object-[30%_20%]"
         />
