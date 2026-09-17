@@ -21,6 +21,8 @@ const nextConfig: NextConfig = {
     return [{ source: '/:path*', headers: securityHeaders({ allowEval: process.env.NODE_ENV === 'development' }) }]
   },
   images: {
+    // AVIF first, WebP for browsers without it (Next's default is WebP only).
+    formats: ['image/avif', 'image/webp'],
     // One list for `next/image` and the CSP `img-src`, so a new host is one edit.
     remotePatterns: IMAGE_HOSTS.map((host) => ({ protocol: 'https', hostname: new URL(host).hostname })),
   },
