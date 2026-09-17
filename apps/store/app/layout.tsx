@@ -1,7 +1,6 @@
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
-import { GeistMono } from 'geist/font/mono'
-import { GeistSans } from 'geist/font/sans'
+import { Geist, Geist_Mono } from 'next/font/google'
 import type { Metadata, Viewport } from 'next'
 import { Suspense } from 'react'
 import { CartCountProvider } from '@/components/cart/cart-count'
@@ -17,6 +16,18 @@ import './globals.css'
  * Root metadata comes from the API's `/store/config` `seo` block. The call is
  * cached, so the metadata is resolved at build and the shell stays prerendered.
  */
+const geistSans = Geist({
+  subsets: ['latin'],
+  variable: '--font-geist-sans',
+  display: 'swap',
+})
+
+const geistMono = Geist_Mono({
+  subsets: ['latin'],
+  variable: '--font-geist-mono',
+  display: 'swap',
+})
+
 export async function generateMetadata(): Promise<Metadata> {
   const { storeName, seo } = await getStoreConfig()
   return {
@@ -44,7 +55,7 @@ export const viewport: Viewport = {
  */
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="flex min-h-svh flex-col">
         <a
           href="#main"
