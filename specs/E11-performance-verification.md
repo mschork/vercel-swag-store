@@ -55,10 +55,10 @@ Write `docs/static-vs-dynamic.md`: one table with route, static parts, dynamic p
 
 ## Acceptance criteria
 
-- [ ] `docs/build-output.md` and `docs/static-vs-dynamic.md` committed and accurate.
-- [ ] Lighthouse scores recorded in `docs/lighthouse.md` with dates and URLs.
-- [ ] Token grep clean; client component list justified.
-- [ ] No CLS from any dynamic hole (skeleton dimensions match content).
+- [x] `docs/build-output.md` and `docs/static-vs-dynamic.md` committed and accurate.
+- [x] Lighthouse scores recorded in `docs/lighthouse.md` with dates and URLs.
+- [x] Token grep clean; client component list justified.
+- [x] No CLS from any dynamic hole (skeleton dimensions match content).
 
 ## Out of scope
 
