@@ -7,7 +7,9 @@
  * `X-Robots-Tag` rides along because it applies to exactly the same route set:
  * the store is a demo of invented products, so nothing it serves belongs in a
  * search index. A header, unlike a meta tag, also covers `sitemap.xml` and the
- * Open Graph image routes (specs/callout.md).
+ * Open Graph image routes (specs/callout.md). `allowIndexing` drops it; it
+ * exists only so a Lighthouse run can score SEO without the header
+ * (`ALLOW_INDEXING=true` at build time), and is off everywhere else.
  */
 
 /** Hosts that may serve product images; `next.config.ts` derives `remotePatterns` from it. */
@@ -27,6 +29,8 @@ export type SecurityHeaderOptions = {
    * Production React never calls `eval()`, so the directive stays out there.
    */
   allowEval: boolean
+  /** Leaves out `X-Robots-Tag: noindex`. For a measurement run only. */
+  allowIndexing?: boolean
 }
 
 export function contentSecurityPolicy({ allowEval }: SecurityHeaderOptions): string {
@@ -52,6 +56,6 @@ export function securityHeaders(options: SecurityHeaderOptions): { key: string; 
     { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
     { key: 'X-Content-Type-Options', value: 'nosniff' },
     { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-    { key: 'X-Robots-Tag', value: 'noindex' },
+    ...(options.allowIndexing ? [] : [{ key: 'X-Robots-Tag', value: 'noindex' }]),
   ]
 }

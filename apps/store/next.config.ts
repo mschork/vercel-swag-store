@@ -23,7 +23,12 @@ const nextConfig: NextConfig = {
     '/products/[slug]/opengraph-image': [GEIST_TTF],
   },
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders({ allowEval: process.env.NODE_ENV === 'development' }) }]
+    const headers = securityHeaders({
+      allowEval: process.env.NODE_ENV === 'development',
+      // Off unless a measurement build sets it (lib/security-headers.ts).
+      allowIndexing: process.env.ALLOW_INDEXING === 'true',
+    })
+    return [{ source: '/:path*', headers }]
   },
   images: {
     // AVIF first, WebP for browsers without it (Next's default is WebP only).
