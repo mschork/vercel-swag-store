@@ -69,4 +69,10 @@ describe('securityHeaders', () => {
   it('keeps every route out of the search index', () => {
     expect(value('X-Robots-Tag')).toBe('noindex')
   })
+
+  it('leaves out noindex only when a measurement build allows indexing', () => {
+    const open = securityHeaders({ allowEval: false, allowIndexing: true })
+    expect(open.map((h) => h.key)).not.toContain('X-Robots-Tag')
+    expect(securityHeaders({ allowEval: false, allowIndexing: false })).toEqual(headers)
+  })
 })
