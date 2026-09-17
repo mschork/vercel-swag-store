@@ -1,17 +1,28 @@
 'use client'
 
 import Link from 'next/link'
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
 import { useFormStatus } from 'react-dom'
 import { addToCart } from '@/app/cart/actions'
+import { useCartCount } from '@/components/cart/cart-count'
 import { QuantityStepper } from '@/components/quantity-stepper'
+import { Spinner } from '@/components/spinner'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 /**
  * Add to Cart as a Server Action form. `max` is live stock and `disabled` is
- * set when the product is out of stock or its stock is unknown. The result
- * shows inline in a polite status line, cleared while the next submit is
- * pending; the line keeps its height so nothing moves when it fills.
+ * set when the product is out of stock or its stock is unknown. The form
+ * stays a native Server Action form, so it works before hydration.
+ *
+ * With JavaScript the add is optimistic. At submit the status line says
+ * "Added." and the header badge counts the new items, while the button shows
+ * a spinner and "Adding…" until the API answers. "View cart" stays inert
+ * until then, because a cart page opened before the write lands would show a
+ * cart without it and nothing would correct that. The answer carries the
+ * cart's count, which becomes the badge's confirmed count; a failed add
+ * replaces the message with the reason and the badge drops back. The status
+ * line keeps its height so nothing moves when it fills.
  */
 export function AddToCartForm({
   productId,
@@ -23,6 +34,10 @@ export function AddToCartForm({
   disabled: boolean
 }) {
   const [state, formAction, pending] = useActionState(addToCart, null)
+  const { confirm } = useCartCount()
+  useEffect(() => {
+    if (state?.totalItems !== undefined) confirm(state.totalItems)
+  }, [state, confirm])
   return (
     <form action={formAction} className="flex flex-col gap-3">
       <input type="hidden" name="productId" value={productId} />
@@ -35,8 +50,20 @@ export function AddToCartForm({
         />
         <SubmitButton disabled={disabled} />
       </div>
+      <AddingCount />
       <p role="status" className="min-h-6 text-sm leading-6">
-        {pending || !state ? null : state.ok ? (
+        {pending ? (
+          <>
+            Added.{' '}
+            <span
+              role="link"
+              aria-disabled="true"
+              className="text-fg-secondary underline underline-offset-4"
+            >
+              View cart
+            </span>
+          </>
+        ) : !state ? null : state.ok ? (
           <>
             Added.{' '}
             <Link href="/cart" className="underline underline-offset-4">
@@ -51,6 +78,19 @@ export function AddToCartForm({
   )
 }
 
+/** Tells the badge how many items the submit in flight adds; 0 when idle. */
+function AddingCount() {
+  const { pending, data } = useFormStatus()
+  const { setAdding } = useCartCount()
+  const quantity = pending ? Number(data?.get('quantity')) : 0
+  const adding = Number.isInteger(quantity) && quantity > 0 ? quantity : 0
+  useEffect(() => {
+    setAdding(adding)
+  }, [adding, setAdding])
+  useEffect(() => () => setAdding(0), [setAdding])
+  return null
+}
+
 function SubmitButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus()
   return (
@@ -58,9 +98,16 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
       type="submit"
       size="lg"
       disabled={disabled || pending}
-      className="h-11 md:flex-1"
+      className={cn('h-11 md:flex-1', pending && 'disabled:opacity-100')}
     >
-      Add to Cart
+      {pending ? (
+        <>
+          <Spinner />
+          Adding…
+        </>
+      ) : (
+        'Add to Cart'
+      )}
     </Button>
   )
 }

@@ -8,10 +8,9 @@ import { expect, test, type Page } from '@playwright/test'
  */
 
 /**
- * The API's cart endpoints answer in about two seconds each, and one action is
- * several of them (read the cart, write, then the badge's own read through
- * `refresh`), so cart assertions wait far longer than Playwright's five-second
- * default and each flow gets a generous test budget.
+ * The API's cart endpoints answer in two to three seconds each, and a first
+ * add is two of them, so cart assertions wait far longer than Playwright's
+ * five-second default and each flow gets a generous test budget.
  */
 const SAVED = { timeout: 30_000 }
 
@@ -35,7 +34,9 @@ async function openInStockProduct(page: Page) {
   for (const href of hrefs) {
     if (!href) continue
     await page.goto(href)
-    const stock = page.getByText(STOCK_LINE)
+    // Scoped to the page: React streams a hidden copy of the hole to the end
+    // of the body before revealing it.
+    const stock = page.getByRole('main').getByText(STOCK_LINE)
     await expect(stock).toBeVisible()
     if ((await stock.textContent()) === 'Out of stock') continue
     const name = await page.getByRole('heading', { level: 1 }).textContent()
@@ -48,11 +49,34 @@ async function openInStockProduct(page: Page) {
   return null
 }
 
+/** Adds and waits for the write to land, which enables "View cart". */
 async function addToCart(page: Page) {
   await page.getByRole('button', { name: 'Add to Cart', exact: true }).click()
   await expect(
     page.getByRole('status').filter({ hasText: 'Added.' }),
   ).toBeVisible(SAVED)
+  await expect(
+    page.getByRole('link', { name: 'View cart' }),
+  ).toHaveAttribute('href', '/cart', SAVED)
+}
+
+/**
+ * Resolves when the next Server Action answers. Rows and the badge update
+ * before the save, so a test waits on this before reloading.
+ */
+const actionAnswer = (page: Page) =>
+  page.waitForResponse(
+    (response) => !!response.request().headers()['next-action'],
+    SAVED,
+  )
+
+/** Server Action posts, told apart from navigations by Next's header. */
+function countActions(page: Page) {
+  const sent: string[] = []
+  page.on('request', (request) => {
+    if (request.headers()['next-action']) sent.push(request.url())
+  })
+  return sent
 }
 
 /** The header badge, found by the count its label announces. */
@@ -84,6 +108,7 @@ test('add, change and remove a line; the cart survives a reload', async ({
     .filter({ has: page.getByRole('link', { name: product.name, exact: true }) })
   await expect(line).toContainText(`${usd(product.priceCents)} each`)
 
+  const increased = actionAnswer(page)
   await line.getByRole('button', { name: 'Increase quantity' }).click()
   await expect(badge(page, 'Cart, 2 items')).toBeVisible(SAVED)
   await expect(line).toContainText(
@@ -91,12 +116,15 @@ test('add, change and remove a line; the cart survives a reload', async ({
     SAVED,
   )
 
+  await increased
   await page.reload()
   await expect(line.getByLabel('Quantity', { exact: true })).toHaveValue('2')
 
+  const removed = actionAnswer(page)
   await line.getByRole('button', { name: `Remove ${product.name}` }).click()
   await expect(page.getByRole('heading', { name: 'Your cart is empty' })).toBeVisible(SAVED)
   await expect(badge(page, 'Cart, 0 items')).toBeVisible(SAVED)
+  await removed
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Your cart is empty' })).toBeVisible()
 
@@ -127,4 +155,38 @@ test('placing the order empties the cart and lands on the checkout page', async 
 
   await page.goto('/cart')
   await expect(page.getByRole('heading', { name: 'Your cart is empty' })).toBeVisible()
+})
+
+test('rapid plus clicks save once, with the final quantity', async ({
+  page,
+}) => {
+  const product = await openInStockProduct(page)
+  test.skip(!product, 'No featured product is in stock on this request')
+  if (!product) return
+
+  await addToCart(page)
+  await page.getByRole('link', { name: 'View cart' }).click()
+  await expect(page).toHaveURL(/\/cart$/)
+  const line = page
+    .getByRole('listitem')
+    .filter({ has: page.getByRole('link', { name: product.name, exact: true }) })
+  const quantity = line.getByLabel('Quantity', { exact: true })
+  await expect(quantity).toHaveValue('1')
+
+  const actions = countActions(page)
+  const plus = line.getByRole('button', { name: 'Increase quantity' })
+  for (let click = 0; click < 4; click++) await plus.click()
+  // The row and the badge move at once, before anything is sent.
+  await expect(quantity).toHaveValue('5')
+  await expect(badge(page, 'Cart, 5 items')).toBeVisible()
+  await expect(line).toContainText(`Line total ${usd(product.priceCents * 5)}`)
+  expect(actions).toHaveLength(0)
+
+  // One save after the pause; the reload shows what the API holds.
+  await expect(line).toHaveAttribute('aria-busy', 'true', SAVED)
+  await expect(line).not.toHaveAttribute('aria-busy', SAVED)
+  expect(actions).toHaveLength(1)
+  await page.reload()
+  await expect(quantity).toHaveValue('5', SAVED)
+  await expect(badge(page, 'Cart, 5 items')).toBeVisible(SAVED)
 })

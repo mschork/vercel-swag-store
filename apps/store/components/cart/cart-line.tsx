@@ -2,48 +2,96 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useTransition } from 'react'
+import { useEffect, useRef, useTransition } from 'react'
 import {
   removeItem,
   updateQuantity,
   type CartActionResult,
 } from '@/app/cart/actions'
+import { useCartCount } from '@/components/cart/cart-count'
 import { Price } from '@/components/price'
 import { QuantityStepper } from '@/components/quantity-stepper'
 import { Button } from '@/components/ui/button'
+import {
+  createCoalescer,
+  QUANTITY_PAUSE_MS,
+  type Coalescer,
+} from '@/lib/cart/coalesce'
 import type { Line, LineChange } from '@/lib/cart/lines'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
 import { cn } from '@/lib/utils'
 
 /**
- * One line of the cart. Each row has its own transition: while a change is
- * saving, the row dims and its controls ignore input, and other rows stay
- * usable. The status line is always rendered, so screen readers announce a
- * message when one appears.
+ * One line of the cart. Quantity changes wait for a short pause and then save
+ * only the last value, so going from 1 to 5 is one request. During the pause
+ * the row shows the value as a draft; while a save runs the row dims but keeps
+ * taking clicks, and a newer value simply follows the running one. Leaving
+ * the page during the pause saves at once. Remove drops any waiting value and
+ * saves immediately. The status line is always rendered, so screen readers
+ * announce a message when one appears.
  */
 export function CartLine({
   line,
   currency,
   error,
   onChange,
+  onDraft,
   onResult,
 }: {
   line: Line
   currency: string
   error: string | null
   onChange: (change: LineChange) => void
+  onDraft: (productId: string, quantity: number | null, onlyIf?: number) => void
   onResult: (productId: string, error: string | null) => void
 }) {
+  const { productId } = line
   const [pending, startTransition] = useTransition()
+  const { confirm } = useCartCount()
 
   const save = (quantity: number, action: () => Promise<CartActionResult>) =>
     startTransition(async () => {
-      onChange({ productId: line.productId, quantity })
+      onChange({ productId, quantity })
+      // Held with the transition, so the draft gives way to the server's
+      // lines only once they arrive, and never if a newer draft replaced it.
+      onDraft(productId, null, quantity)
       const result = await action()
-      startTransition(() =>
-        onResult(line.productId, result.ok ? null : result.error),
-      )
+      startTransition(() => {
+        if (result.totalItems !== undefined) confirm(result.totalItems)
+        onResult(productId, result.ok ? null : result.error)
+      })
     })
+
+  // The coalescer outlives renders; it calls whichever `save` is current.
+  const saveQuantity = useRef<(quantity: number) => void>(() => {})
+  useEffect(() => {
+    saveQuantity.current = (quantity) =>
+      save(quantity, () => updateQuantity(productId, quantity))
+  })
+  const waiting = useRef<Coalescer<number> | null>(null)
+  useEffect(() => {
+    const coalescer = createCoalescer<number>(QUANTITY_PAUSE_MS, (quantity) =>
+      saveQuantity.current(quantity),
+    )
+    waiting.current = coalescer
+    return () => {
+      coalescer.flush()
+      waiting.current = null
+    }
+  }, [])
+
+  const change = (quantity: number) => {
+    onDraft(productId, quantity)
+    onResult(productId, null)
+    if (waiting.current) waiting.current.push(quantity)
+    else saveQuantity.current(quantity)
+  }
+
+  const remove = () => {
+    waiting.current?.cancel()
+    onDraft(productId, null)
+    save(0, () => removeItem(productId))
+  }
 
   return (
     <li
@@ -86,19 +134,15 @@ export function CartLine({
               min={1}
               max={CART_MAX_QUANTITY}
               defaultValue={line.quantity}
-              pending={pending}
               labelClassName="sr-only md:not-sr-only"
-              onCommit={(quantity) =>
-                save(quantity, () => updateQuantity(line.productId, quantity))
-              }
+              onCommit={change}
             />
             <Button
               type="button"
               variant="ghost"
               size="lg"
-              disabled={pending}
               aria-label={`Remove ${line.name}`}
-              onClick={() => save(0, () => removeItem(line.productId))}
+              onClick={remove}
             >
               Remove
             </Button>

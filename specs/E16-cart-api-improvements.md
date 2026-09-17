@@ -59,14 +59,14 @@ One trap to handle: while the write is still in flight, a visitor who follows "V
 ## Acceptance criteria
 
 - [x] The endpoint latencies are re-measured first; the epic proceeds only if the cart namespace is still slow.
-- [ ] Add to Cart acknowledges the click immediately, before any server answer, with a spinner that stays still under reduced motion.
-- [ ] A first add makes at most two cart calls; every later add makes exactly one.
-- [ ] `/cart` makes one cart read per request.
-- [ ] Rapid plus clicks on a row send one request after the pause, carrying the final quantity.
-- [ ] The badge count matches the server's `totalItems` after every action, including after a failed one.
-- [ ] A failed add retracts its confirmation and says why; "View cart" never leads to a cart the write has not reached.
-- [ ] No cart request originates from the browser, unchanged from E06.
-- [ ] Measured against the live API: a repeat add confirms in about the time of one write.
+- [x] Add to Cart acknowledges the click immediately, before any server answer, with a spinner that stays still under reduced motion.
+- [x] A first add makes at most two cart calls; every later add makes exactly one.
+- [x] `/cart` makes one cart read per request.
+- [x] Rapid plus clicks on a row send one request after the pause, carrying the final quantity.
+- [x] The badge count matches the server's `totalItems` after every action, including after a failed one.
+- [x] A failed add retracts its confirmation and says why; "View cart" never leads to a cart the write has not reached.
+- [x] No cart request originates from the browser, unchanged from E06.
+- [x] Measured against the live API: a repeat add confirms in about the time of one write.
 
 ## Out of scope
 

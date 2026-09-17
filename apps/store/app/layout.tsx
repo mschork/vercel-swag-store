@@ -4,6 +4,7 @@ import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
 import type { Metadata, Viewport } from 'next'
 import { Suspense } from 'react'
+import { CartCountProvider } from '@/components/cart/cart-count'
 import { Footer } from '@/components/footer'
 import { Header } from '@/components/header'
 import { PromoBanner, PromoBannerSkeleton } from '@/components/promo-banner'
@@ -38,7 +39,8 @@ export const viewport: Viewport = {
  * Header, promo strip, page, footer. The strip is the one dynamic hole every
  * route has (E10); its box reserves its height so the page never moves when
  * it streams in. `main` is full width so a page can bleed to the edges;
- * content sits in `Container`.
+ * content sits in `Container`. The cart count provider is the shell's only
+ * client state: the badge's number, which actions update without a re-read.
  */
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
@@ -50,14 +52,16 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         >
           Skip to content
         </a>
-        <Header />
-        <Suspense fallback={<PromoBannerSkeleton />}>
-          <PromoBanner />
-        </Suspense>
-        <main id="main" className="w-full flex-1">
-          {children}
-        </main>
-        <Footer />
+        <CartCountProvider>
+          <Header />
+          <Suspense fallback={<PromoBannerSkeleton />}>
+            <PromoBanner />
+          </Suspense>
+          <main id="main" className="w-full flex-1">
+            {children}
+          </main>
+          <Footer />
+        </CartCountProvider>
         <SpeedInsights />
         <Analytics />
       </body>

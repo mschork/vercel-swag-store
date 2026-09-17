@@ -37,6 +37,8 @@ export interface FetchApiOptions<TData> {
   body?: unknown
   /** Extra request headers, e.g. `x-cart-token`. Merged over the defaults. */
   headers?: Record<string, string>
+  /** Abort after this many milliseconds; `REQUEST_TIMEOUT_MS` when omitted. */
+  timeoutMs?: number
 }
 
 export interface ApiResult<TData, TMeta = undefined> {
@@ -56,7 +58,7 @@ export interface ApiResult<TData, TMeta = undefined> {
  * Failure modes, all thrown as `ApiError`:
  * - API error envelope (any status, or `success: false`): the API's own code and message.
  * - Non-JSON non-2xx (Vercel's HTML 401 for a bad bypass token, a gateway page): `HTTP_ERROR`.
- * - No response within 5 s: `TIMEOUT`, never retried.
+ * - No response within `timeoutMs` (5 s by default): `TIMEOUT`, never retried.
  * - Network failure or 5xx: retried once for GET only, then `NETWORK_ERROR` / the API error.
  * - 2xx body that is not JSON or fails the schema: `INVALID_RESPONSE`, logged with the path only.
  *
@@ -88,7 +90,13 @@ export async function fetchApi<TData, TMeta>(
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
   }
 
-  const response = await send(`${serverEnv.API_BASE_URL}${path}`, init, path, method === 'GET')
+  const response = await send(
+    `${serverEnv.API_BASE_URL}${path}`,
+    init,
+    path,
+    method === 'GET',
+    options.timeoutMs ?? REQUEST_TIMEOUT_MS,
+  )
 
   const json = await readJson(response)
   if (json === NOT_JSON) {
@@ -118,13 +126,19 @@ export async function fetchApi<TData, TMeta>(
  * failure was a network error or a 5xx. The failure to surface if the retry
  * also fails is the last one seen.
  */
-async function send(url: string, init: RequestInit, path: string, retryable: boolean): Promise<Response> {
+async function send(
+  url: string,
+  init: RequestInit,
+  path: string,
+  retryable: boolean,
+  timeoutMs: number,
+): Promise<Response> {
   const attempts = retryable ? 2 : 1
   let lastFailure: Response | ApiError = new ApiError(0, 'NETWORK_ERROR', `No response for ${path}`, path)
   for (let attempt = 0; attempt < attempts; attempt++) {
     if (attempt > 0) await sleep(RETRY_BACKOFF_MS)
     try {
-      const response = await fetch(url, { ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
+      const response = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) })
       if (response.status < 500) return response
       lastFailure = response
     } catch (error) {
@@ -132,7 +146,7 @@ async function send(url: string, init: RequestInit, path: string, retryable: boo
       // uncached fetch was pending) must reach Next, not become an ApiError.
       unstable_rethrow(error)
       if (isTimeout(error)) {
-        throw new ApiError(0, 'TIMEOUT', `Request to ${path} timed out after ${REQUEST_TIMEOUT_MS} ms`, path)
+        throw new ApiError(0, 'TIMEOUT', `Request to ${path} timed out after ${timeoutMs} ms`, path)
       }
       lastFailure = new ApiError(0, 'NETWORK_ERROR', `Could not reach the API for ${path}`, path)
     }
