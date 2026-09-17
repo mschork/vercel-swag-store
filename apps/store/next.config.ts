@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
     catalog: { stale: 300, revalidate: 3600, expire: 86400 },
   },
   typedRoutes: true,
+  experimental: {
+    // The Tailwind stylesheet is small (about 8 KB gzipped), so it goes into
+    // the HTML instead of a render-blocking request.
+    inlineCss: true,
+  },
   // The OG images read this font with a runtime path (lib/og-font.ts), which
   // the file trace cannot see; list it so each image function carries it.
   outputFileTracingIncludes: {
