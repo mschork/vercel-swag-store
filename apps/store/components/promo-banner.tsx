@@ -12,7 +12,7 @@ import { loadOptional } from '@/lib/load-optional'
  * four current promos: three lines at 375 (76px), two at md (56px).
  */
 const RESERVED_BOX =
-  'flex min-h-9 items-center motion-reduce:min-h-19 motion-reduce:md:min-h-14 motion-reduce:lg:min-h-9'
+  'flex min-h-9 items-center bg-accent text-accent-fg motion-reduce:min-h-19 motion-reduce:md:min-h-14 motion-reduce:lg:min-h-9'
 
 /**
  * The accent strip under the header, on every route (E10); the code is a
@@ -20,7 +20,8 @@ const RESERVED_BOX =
  * never cached and this renders inside `<Suspense>` in the root layout, so it
  * is the one dynamic hole every page has. Every field is shown as the API
  * returns it (specs/improvements.md). No promotion, or a failed call, leaves
- * the reserved box empty so nothing below it moves.
+ * the reserved box empty so nothing below it moves. The box is accent-coloured
+ * in every state, so the band never changes colour while the strip loads.
  */
 export async function PromoBanner() {
   const promotion = await loadOptional('PromoBanner: promotion', getPromotion)
@@ -28,7 +29,7 @@ export async function PromoBanner() {
   return (
     <aside
       aria-label="Current promotion"
-      className={`${RESERVED_BOX} bg-accent text-accent-fg`}
+      className={RESERVED_BOX}
     >
       <PromoMarquee>
         <p className="py-2 text-sm leading-5">
@@ -47,9 +48,9 @@ export function PromoBannerSkeleton() {
   return (
     <div className={RESERVED_BOX} aria-hidden="true">
       <Container className="flex flex-col items-center gap-2 py-2">
-        <Skeleton className="h-4 w-full max-w-3xl" />
-        <Skeleton className="hidden h-4 w-4/5 max-w-2xl motion-reduce:block motion-reduce:lg:hidden" />
-        <Skeleton className="hidden h-4 w-3/5 motion-reduce:block motion-reduce:md:hidden" />
+        <Skeleton className="h-4 w-full max-w-3xl bg-accent-fg/20" />
+        <Skeleton className="hidden h-4 w-4/5 max-w-2xl bg-accent-fg/20 motion-reduce:block motion-reduce:lg:hidden" />
+        <Skeleton className="hidden h-4 w-3/5 bg-accent-fg/20 motion-reduce:block motion-reduce:md:hidden" />
       </Container>
     </div>
   )

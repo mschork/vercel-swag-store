@@ -31,7 +31,11 @@ function CartUnavailable() {
   )
 }
 
-/** Mirrors `CartView`: two rows beside the summary from 768px, stacked below. */
+/**
+ * Mirrors `CartView`: two rows beside the summary from 768px, stacked below.
+ * A row's name takes two lines below lg, where most names wrap, and the row
+ * reserves them, so the rows match the skeleton whatever the name.
+ */
 export function CartSkeleton() {
   return (
     <div
@@ -41,11 +45,11 @@ export function CartSkeleton() {
       <div className="flex flex-col divide-y divide-border border-y border-border">
         {[0, 1].map((row) => (
           <div key={row} className="flex gap-4 py-4">
-            <Skeleton className="size-20 shrink-0 rounded-lg sm:size-24" />
+            <Skeleton className="size-24 shrink-0 rounded-lg" />
             <div className="flex flex-1 flex-col gap-3">
               <div className="flex justify-between gap-4">
                 <div className="flex flex-col gap-1">
-                  <Skeleton className="h-6 w-40" />
+                  <Skeleton className="h-12 w-40 lg:h-6" />
                   <Skeleton className="h-5 w-20" />
                 </div>
                 <Skeleton className="h-6 w-16" />

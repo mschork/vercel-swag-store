@@ -115,7 +115,7 @@ export function CartLine({
             <div className="flex min-w-0 flex-col gap-1">
               <Link
                 href={`/products/${line.slug}`}
-                className="font-medium underline-offset-4 hover:underline"
+                className="line-clamp-2 min-h-12 font-medium underline-offset-4 hover:underline lg:min-h-0"
               >
                 {line.name}
               </Link>
