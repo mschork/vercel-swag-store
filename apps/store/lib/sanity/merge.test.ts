@@ -7,7 +7,6 @@ const blocks = [{ _type: 'block', _key: 'a', children: [] }] as never
 const document = {
   extendedDescription: blocks,
   care: blocks,
-  badges: ['New'],
   gallery: [
     { _key: 'g1', asset: { _ref: 'image-extra', _type: 'reference' }, lqip: null, aspectRatio: 1, alt: 'Extra' },
   ],
@@ -26,7 +25,6 @@ describe('mergeProduct', () => {
       category: api.category,
     })
     expect(merged.extendedDescription).toBeNull()
-    expect(merged.badges).toEqual([])
     expect(merged.gallery).toEqual(api.images)
   })
 
@@ -48,7 +46,6 @@ describe('mergeProduct', () => {
     const merged = mergeProduct(product(), document as never)
     expect(merged.extendedDescription).toBe(blocks)
     expect(merged.care).toBe(blocks)
-    expect(merged.badges).toEqual(['New'])
   })
 
   it('treats empty rich text as no content', () => {

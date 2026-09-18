@@ -130,7 +130,6 @@ async function seed() {
         'The triangle is printed, not embroidered, so it stays soft against the chest.',
       ),
       care: text('Wash at 30 degrees inside out. Dry flat. Do not iron the print.'),
-      badges: ['Staff pick'],
     },
   })
   editorial.createIfNotExists({
@@ -145,7 +144,6 @@ async function seed() {
         'Twenty litres, a padded sleeve for a 16 inch laptop, and a pocket at the top for the things you reach for on a train.',
       ),
       care: text('Wipe clean with a damp cloth. Air dry.'),
-      badges: ['New'],
       faqs: [{ _type: 'reference', _key: 'laptop-fit', _ref: 'faq-laptop-fit' }],
     },
   })

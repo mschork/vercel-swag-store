@@ -12,10 +12,13 @@ import Link from 'next/link'
  *
  * Internal links use `Link` so they navigate on the client; external ones get
  * the usual safety attributes.
+ *
+ * The paragraphs take the width they are given: whoever renders the text owns
+ * its measure, so a heading or a rule beside it is never wider than the text.
  */
 const components: PortableTextComponents = {
   block: {
-    normal: ({ children }) => <p className="max-w-prose leading-7">{children}</p>,
+    normal: ({ children }) => <p className="leading-7">{children}</p>,
   },
   marks: {
     strong: ({ children }) => <strong className="font-medium">{children}</strong>,
