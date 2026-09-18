@@ -15,7 +15,6 @@ export type SanityImage = NonNullable<NonNullable<ProductQueryResult>['gallery']
 export interface MergedProduct extends Product {
   extendedDescription: NonNullable<ProductQueryResult>['extendedDescription'] | null
   care: NonNullable<ProductQueryResult>['care'] | null
-  badges: string[]
   /** The API's photos first, then the editor's. */
   gallery: (string | SanityImage)[]
   faqs: ProductFaq[]
@@ -34,7 +33,6 @@ export function mergeProduct(
       ? document.extendedDescription
       : null,
     care: hasBlocks(document?.care) ? document.care : null,
-    badges: document?.badges?.filter((badge) => badge.length > 0) ?? [],
     gallery: [...product.images, ...extra],
     faqs: faqsForProduct(document ?? null),
   }

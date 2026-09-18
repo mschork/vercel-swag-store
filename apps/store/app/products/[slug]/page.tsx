@@ -10,7 +10,6 @@ import {
 } from '@/components/product/breadcrumb'
 import {
   CommonQuestions,
-  ProductBadges,
   ProductStory,
   SeenOn,
 } from '@/components/product/enrichment'
@@ -116,8 +115,7 @@ export default async function ProductPage({ params }: Props) {
       <Breadcrumb trail={trail} current={product.name} />
       <JsonLd data={breadcrumbJsonLd(crumbs, publicEnv.NEXT_PUBLIC_SITE_URL)} />
       <article className="grid gap-8 md:grid-cols-2 md:gap-12">
-        <div className="relative">
-          <ProductBadges badges={merged.badges} />
+        <div>
           <ProductGallery images={photoUrls(merged.gallery)} name={product.name} />
         </div>
         <div className="flex flex-col gap-6">
@@ -136,7 +134,9 @@ export default async function ProductPage({ params }: Props) {
         </div>
       </article>
       {enriched ? (
-        <div className="flex flex-col gap-8">
+        // One readable column for everything below the buy row, so a heading
+        // or a rule is never wider than the text under it.
+        <div className="flex max-w-[68ch] flex-col gap-8">
           <ProductStory product={merged} />
           <SeenOn entries={entries} />
           <CommonQuestions faqs={merged.faqs} />

@@ -24,7 +24,7 @@ export default async function CheckoutPage() {
     <Container className="flex flex-col gap-4 py-12">
       <h1 className="text-3xl font-medium tracking-tight">{title}</h1>
       {content?.body ? (
-        <div className="text-fg-secondary">
+        <div className="max-w-prose text-fg-secondary">
           <PortableText value={content.body} />
         </div>
       ) : (

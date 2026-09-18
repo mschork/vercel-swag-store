@@ -8,25 +8,9 @@ import type { LookbookForProductQueryResult } from '@repo/sanity/generated'
 /**
  * What an editor adds to a product page (E09). Every block renders only when
  * it has content, so a product nobody has touched looks exactly as it did
- * before Sanity existed.
+ * before Sanity existed. The page gives this stack one readable column; the
+ * blocks fill whatever width they are given.
  */
-
-/** Badges sit over the photo, where a shopper scanning a grid would see them. */
-export function ProductBadges({ badges }: { badges: readonly string[] }) {
-  if (badges.length === 0) return null
-  return (
-    <ul className="absolute top-3 left-3 z-10 flex flex-wrap gap-2">
-      {badges.map((badge) => (
-        <li
-          key={badge}
-          className="rounded-full border border-border bg-bg px-2 py-0.5 text-xs font-medium"
-        >
-          {badge}
-        </li>
-      ))}
-    </ul>
-  )
-}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -55,33 +39,72 @@ export function ProductStory({ product }: { product: MergedProduct }) {
   )
 }
 
-/** Lookbook entries naming this product: a photo, who is in it and what they said. */
+type LookbookEntry = LookbookForProductQueryResult[number]
+
+/** Who is in the photo and what they do, under the quote in both layouts. */
+function Attribution({ entry }: { entry: LookbookEntry }) {
+  return (
+    <p className="text-sm text-fg-secondary">
+      {entry.person}
+      {entry.role ? `, ${entry.role}` : ''}
+    </p>
+  )
+}
+
+function EntryPhoto({ entry, sizes }: { entry: LookbookEntry; sizes: string }) {
+  if (!entry.photo) return null
+  return (
+    <div className="relative aspect-[4/5] overflow-hidden rounded-lg border border-border bg-bg-secondary">
+      <Image
+        {...sanityImageProps(entry.photo, { width: 800 })}
+        alt={entry.photo.alt ?? entry.person}
+        fill
+        sizes={sizes}
+        className="object-cover"
+      />
+    </div>
+  )
+}
+
+/**
+ * Lookbook entries naming this product. One entry is a feature row, photo on
+ * the right so it does not sit under the product photo, with the quote given
+ * the room a single quote deserves. Two or more fall back to a grid, where
+ * equal weight is the point.
+ */
 export function SeenOn({ entries }: { entries: LookbookForProductQueryResult }) {
   if (entries.length === 0) return null
+  const [only] = entries
+  if (entries.length === 1 && only) {
+    return (
+      <Section title="Seen on">
+        <div className="flex flex-col gap-5 sm:flex-row-reverse sm:items-center sm:gap-8">
+          <div className="sm:w-2/5 sm:shrink-0">
+            <EntryPhoto entry={only} sizes="(min-width: 640px) 30vw, 90vw" />
+          </div>
+          <div className="flex flex-col gap-2">
+            {only.quote ? (
+              <blockquote className="text-lg leading-8 text-pretty sm:text-xl sm:leading-9">
+                &ldquo;{only.quote}&rdquo;
+              </blockquote>
+            ) : null}
+            <Attribution entry={only} />
+          </div>
+        </div>
+      </Section>
+    )
+  }
   return (
     <Section title="Seen on">
       <ul className="grid gap-6 sm:grid-cols-2">
         {entries.map((entry) => (
           <li key={entry._id} className="flex flex-col gap-3">
-            {entry.photo ? (
-              <div className="relative aspect-[4/5] overflow-hidden rounded-lg border border-border bg-bg-secondary">
-                <Image
-                  {...sanityImageProps(entry.photo, { width: 800 })}
-                  alt={entry.photo.alt ?? entry.person}
-                  fill
-                  sizes="(min-width: 640px) 45vw, 90vw"
-                  className="object-cover"
-                />
-              </div>
-            ) : null}
+            <EntryPhoto entry={entry} sizes="(min-width: 640px) 45vw, 90vw" />
             <div className="flex flex-col gap-1">
               {entry.quote ? (
                 <blockquote className="text-pretty">&ldquo;{entry.quote}&rdquo;</blockquote>
               ) : null}
-              <p className="text-sm text-fg-secondary">
-                {entry.person}
-                {entry.role ? `, ${entry.role}` : ''}
-              </p>
+              <Attribution entry={entry} />
             </div>
           </li>
         ))}
@@ -90,10 +113,30 @@ export function SeenOn({ entries }: { entries: LookbookForProductQueryResult }) 
   )
 }
 
+/** The chevron on a question, pointing down when closed and up when open. */
+function Chevron() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 16 16"
+      className="size-4 shrink-0 text-fg-secondary motion-safe:transition-transform motion-safe:duration-250 group-open:-rotate-180"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 6l4 4 4-4" />
+    </svg>
+  )
+}
+
 /**
  * The questions this product answers, from its category and from its own list.
  * Native `details` elements: they open without JavaScript and announce their
- * state to a screen reader on their own.
+ * state to a screen reader on their own. The open and close animate in CSS
+ * (`app/globals.css`), where a browser without `::details-content` and anyone
+ * asking for less motion simply gets the instant toggle.
  */
 export function CommonQuestions({ faqs }: { faqs: readonly ProductFaq[] }) {
   if (faqs.length === 0) return null
@@ -102,15 +145,10 @@ export function CommonQuestions({ faqs }: { faqs: readonly ProductFaq[] }) {
       <ul className="flex flex-col divide-y divide-border border-y border-border">
         {faqs.map((faq) => (
           <li key={faq._id}>
-            <details className="group py-3">
+            <details className="disclosure group py-3">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">
                 {faq.question}
-                <span
-                  aria-hidden="true"
-                  className="text-fg-secondary transition-transform group-open:rotate-45"
-                >
-                  +
-                </span>
+                <Chevron />
               </summary>
               <div className="pt-2 text-fg-secondary">
                 <PortableText value={faq.answer} />
