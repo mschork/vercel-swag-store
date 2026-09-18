@@ -24,6 +24,26 @@ _Avoid_: Dynamic section, island, client part
 Light or dark, taken from the visitor's operating-system preference. The store offers no control of its own and never learns the choice.
 _Avoid_: Mode, dark mode, colour scheme, theme selector
 
+**Product document**:
+The Sanity document for one product: its API fields mirrored read-only, plus the editorial fields an editor writes. Distinct from a Product, which is what the API returns and what the store renders (`docs/adr/0003-sanity-mirrors-api-products-and-categories.md`).
+_Avoid_: Sanity product, enrichment document, product entry
+
+**Enrichment**:
+The editorial fields on a product document: the longer description, the care text, extra gallery images and badges. Never commerce facts; the API wins for anything it owns.
+_Avoid_: Product content, extra content, overrides
+
+**Category document**:
+The Sanity mirror of one API category. It exists so an FAQ can point at a category and a product can be matched to it.
+_Avoid_: Sanity category, taxonomy term
+
+**Lookbook entry**:
+One photo of a person with the products they are wearing, plus their name, role and a quote. Shown on the page of each product it names.
+_Avoid_: Editorial photo, testimonial, story
+
+**FAQ**:
+One question and its answer, written once and shown on many products. It reaches a product through the categories it names, or because that product attaches it directly.
+_Avoid_: Help article, question entry
+
 **Cart**:
 The anonymous set of lines the API holds for one cart token. One per browser, and none until the first add.
 _Avoid_: Basket, bag, session cart

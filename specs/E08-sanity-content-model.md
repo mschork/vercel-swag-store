@@ -1,57 +1,59 @@
 # E08 Sanity content model and Studio
 
-Branch: `epic/E08-sanity-model`. Depends on: E01. Blocks: E09.
+Branch: `epic/E08-sanity`, shared with E09. Depends on: E01. Blocks: E09, which ships in the same pull request.
 
 ## Goal
 
-A Sanity Studio that lets an editor manage marketing content and product enrichment without ever touching the fields the API owns. Everything here is stretch relative to the brief; keep it clean rather than complete.
+A Studio where an editor manages marketing copy and product enrichment without touching a field the API owns, and where every link from editorial content to the catalogue is an ordinary Sanity reference.
 
-## Scope
+## Model
 
-### Schemas in `packages/sanity/src/schema/`
+Seven document types. Products and categories are mirrors of the API, written by a script and read only in the Studio (`docs/adr/0003-sanity-mirrors-api-products-and-categories.md`). The rest is editorial.
 
-All product references are the API `id` string (e.g. `tshirt_001`), never a Sanity reference, since products are not Sanity documents.
+### Mirrors
+
+- `category`: `apiSlug` (string, `_id` is `category.<apiSlug>`), `name`, `syncedAt`, `missing` (boolean). All read only.
+- `product`: mirrored and read only: `apiId` (string, `_id` is `product.<apiId>`), `slug`, `name`, `category` (reference to `category`), `price` (cents), `featured`, `image` (the API's first photo as a URL, for the document preview), `syncedAt`, `missing`. Editorial: `extendedDescription` (Portable Text), `care` (Portable Text), `gallery[]` (image with required alt, hotspot), `badges[]` (from New, Limited, Staff pick), `faqs[]` (references to `faq`).
+
+### Editorial
 
 - `siteSettings` (singleton): `storeName`, `seoTitle`, `seoDescription`, `ogImage` (image with alt), `socialLinks[]` `{ label, url }`, `footerText`.
-- `catalogProduct`: read-only mirror of one API product for picking and referencing: `apiId` (string, `_id` is `catalogProduct.<apiId>`), `slug`, `name`, `category`, `featured`, `price` (cents), `syncedAt`. Written by the seed script; E15 replaces the seed with a scheduled Sanity Function. Hidden from the desk's create menu.
-- `checkoutPage` (singleton): `title`, `body` (Portable Text, no images), `backToCartLabel`, `continueShoppingLabel`.
-- `homePage` (singleton): `hero { headline, description, image (image with alt, hotspot) }`, `sections[]` of `collectionSection { collection ref, title }` and `lookbookSection { title, entries[] refs }` [stretch].
-- `productEnrichment`: `apiId` (string, required, unique via validation against existing docs), `apiSlug` (string, denormalised for display), `title` (string, editor-facing only), `extendedDescription` (Portable Text with images), `gallery[]` (image with alt, hotspot), `badges[]` (string from a list: New, Limited, Staff pick), `care` (Portable Text, "How to use / care"), `collections[]` refs, `lookbook[]` refs, `guides[]` refs.
-- `lookbookEntry`: `person`, `role`, `photo` (image, alt, hotspot, required), `quote`, `productIds[]` (strings via the API picker), `consent` (boolean, must be true to publish, enforced by validation), `publishedAt`.
-- `collection`: `title`, `slug`, `description`, `cover` (image), `productIds[]` ordered.
-- `guide`: `title`, `slug`, `body` (Portable Text with images and a `productEmbed` block holding an `apiId`), `productIds[]`.
-- `searchGap` and `productIdea` are defined in E13.
+- `homePage` (singleton): `hero { headline, description, image (image with alt and hotspot) }`.
+- `checkoutPage` (singleton): `title`, `body` (Portable Text), `continueShoppingLabel`.
+- `lookbookEntry`: `person`, `role`, `photo` (image with required alt and hotspot), `quote`, `products[]` (references to `product`), `consent` (boolean, must be true to publish, enforced by validation), `publishedAt`.
+- `faq`: `question`, `answer` (Portable Text), `order` (number, lowest first), `categories[]` (references to `category`).
 
-Portable Text config: headings h2 and h3, bold, italic, links. No custom marks. Images (with alt) only in `guide.body`; `productEnrichment.extendedDescription` is text only, product imagery lives in the gallery.
+An FAQ with no categories appears only where a product attaches it; the field description says so. An FAQ that applies to everything names every category.
 
-### API product picker `packages/sanity/src/components/ProductPicker.tsx`
+Portable Text everywhere: paragraphs, bold, italic and links. No headings, lists, images or custom marks. Images live in the fields built for them.
 
-Custom input for string fields marked with `options.productPicker: true`. Reads `catalogProduct` documents from the dataset (GROQ, no network call outside Sanity) and offers a searchable list of name, category and slug; stores the API `id`. The Studio never talks to the Swag Store API, so it holds no API secret: remove `SANITY_STUDIO_API_BASE_URL` and `SANITY_STUDIO_API_BYPASS_TOKEN` from `apps/studio/.env.example` and from the Vercel studio project in this epic.
+## Studio `apps/studio`
 
-### Studio `apps/studio`
+- Desk: Site settings, Home page, Checkout page, then Products, FAQs, Lookbook, then Categories. Singletons open their document directly; the create menu offers only FAQ and Lookbook entry.
+- Previews: product shows its photo, name and category; lookbook shows the photo and person; FAQ shows the question and its categories.
+- Plugins: `structureTool`, `visionTool`, `sanity-plugin-media`.
+- `sanity typegen`: `sanity schema extract` then `sanity typegen generate` into `packages/sanity/src/generated/sanity.types.ts`, committed, script `pnpm --filter @repo/sanity typegen`.
 
-- Desk structure: Site settings (singleton), Home page (singleton), Products (enrichment list ordered by `apiSlug`), Lookbook, Collections, Guides, then a divider and "Demand signals" (E13).
-- Document actions: default. Enable `@sanity/vision`.
-- Preview config for each type (title, subtitle, media).
-- `sanity typegen`: `sanity.types.ts` generated into `packages/sanity/src/generated/` and committed; script `pnpm --filter @repo/sanity typegen` runs `sanity schema extract` and `sanity typegen generate`.
+## Sync script `packages/sanity/scripts/sync.ts`
 
-### Seed `packages/sanity/scripts/seed.ts`
+Reads the API through the store's own client, writes one `category` per API category and one `product` per API product, sets `syncedAt`, and flags anything the API no longer returns as `missing`. Idempotent through fixed `_id`s, never touches editorial fields, and runs with `SANITY_API_WRITE_TOKEN` from `working/` (local only, never in Vercel). E15 replaces the trigger with a scheduled Sanity Function.
 
-Creates `siteSettings` and `homePage` with the E03/E04 fallback values, one `collection` ("Conference kit": tote, lanyard, notebook, pen, cap), and two `productEnrichment` docs (hoodie, backpack) with placeholder care text. Idempotent via fixed `_id`s. Uses a write token from `SANITY_API_WRITE_TOKEN` (local only, never in Vercel).
+## Seed `packages/sanity/scripts/seed.ts`
 
-### Deployment
+Runs the sync, then writes demonstration content: the three singletons with the store's current fallback copy, two enriched products (hoodie and backpack) with a description, care text and a badge, two lookbook entries, and four FAQs. Placeholder copy, listed in `specs/improvements.md`. Idempotent.
 
-- `apps/studio` on Vercel (E01 project). Also `sanity deploy` to `<name>.sanity.studio`.
-- Sanity project CORS: add `http://localhost:3333`, the Vercel studio URL, and the store URLs (for E09 preview if ever used).
+## Deployment
+
+`apps/studio` on Vercel, plus `sanity deploy`. Sanity CORS allows `http://localhost:3333`, the Vercel studio URL and the store URLs.
 
 ## Acceptance criteria
 
-- [ ] Studio runs locally and on both deployed URLs; an editor can create every document type.
-- [ ] Product picker lists live API products and stores ids; a typo id is impossible through the UI.
+- [ ] Studio runs locally and on both deployed URLs; an editor can create an FAQ and a lookbook entry and enrich a product.
+- [ ] Mirrored fields are visible and not editable; editorial fields are editable.
 - [ ] `lookbookEntry` cannot be published without `consent`.
-- [ ] Typegen output committed and imported by the store (E09).
-- [ ] Seed script populates a fresh dataset in one run and is safe to re-run.
+- [ ] Typegen output committed and imported by the store.
+- [ ] Sync and seed populate a fresh dataset in one run and are safe to re-run.
 
 ## Out of scope
 
-Store-side rendering (E09), visual editing, localisation, roles beyond the default.
+Store rendering (E09), visual editing, localisation, roles, collections and guides (`specs/improvements.md`).

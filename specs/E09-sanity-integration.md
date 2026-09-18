@@ -1,77 +1,67 @@
 # E09 Sanity integration and revalidation
 
-Branch: `epic/E09-sanity-integration`. Depends on: E04, E05, E08. Blocks: E13 (uses the same fetch layer).
+Branch: `epic/E08-sanity`, shared with E08. Depends on: E04, E05, E08. Blocks: E13, which reuses the fetch layer.
 
 ## Goal
 
-Sanity content rendered through the same `"use cache"` discipline as the API, with tag-based revalidation on publish, merged with API data under the rule "API wins for what it owns".
+Sanity content rendered through the same `"use cache"` discipline as the API, revalidated when an editor publishes, and merged under one rule: the API wins for everything it owns.
 
-## Scope
-
-### Fetch layer `apps/store/lib/sanity/`
+## Fetch layer `apps/store/lib/sanity/`
 
 ```
-client.ts     next-sanity client from @repo/sanity factory; useCdn false; token from SANITY_API_READ_TOKEN (dataset may stay public; token kept for future private datasets)
-fetch.ts      sanityFetch<T>({ query, params, tags }) wrapped in "use cache", cacheTag('sanity', ...tags), cacheLife('catalog')
-queries.ts    GROQ with defineQuery for: siteSettings, homePage, productEnrichmentByApiId, collectionBySlug, collectionsList, guideBySlug, guidesForProduct, lookbookForProduct
-image.ts      urlFor() via @sanity/image-url, plus a helper returning next/image-friendly src and blurDataURL
-merge.ts      mergeProduct(apiProduct, enrichment | null): MergedProduct
+client.ts    next-sanity client from the @repo/sanity factory; useCdn false; no token, the dataset is public
+fetch.ts     sanityFetch<T>({ query, params, tags }) wrapped in "use cache", cacheTag('sanity', ...tags), cacheLife('content')
+queries.ts   GROQ with defineQuery: siteSettings, homePage, checkoutPage, productByApiId, faqsForProduct, lookbookForProduct
+image.ts     urlFor() via @sanity/image-url, plus a helper returning a next/image source and the blurred placeholder from Sanity's metadata
+merge.ts     mergeProduct(apiProduct, document | null): MergedProduct
 ```
 
-Tags: every query tags `sanity` and `sanity:<type>`; single-document queries also tag `sanity:<_id>`.
+Every query tags `sanity` and `sanity:<type>`; single-document queries also tag `sanity:<_id>`. The `content` cache profile is new in `next.config.ts`: stale 5 minutes, revalidate 1 day, expire 7 days. The webhook does the real work; the timer is the safety net.
 
-### Merge rules `merge.ts`
+## Merge rules `merge.ts`
 
-`MergedProduct` extends `Product` with optional `extendedDescription`, `gallery`, `badges`, `care`, `collections`, `lookbook`, `guides`. Rules, tested in `merge.test.ts`:
+`MergedProduct` extends `Product` with optional `extendedDescription`, `care`, `gallery`, `badges`. Proven in `merge.test.ts`:
 
-- `id, slug, name, price, currency, category, featured, images[0], tags, createdAt` always from the API.
-- `gallery` = `[api.images[0], ...enrichment.gallery]` de-duplicated.
-- Editorial fields copied only when non-empty.
-- `enrichment === null` returns the API product unchanged.
+- `id, slug, name, price, currency, category, featured, images, tags, createdAt` always from the API, whatever the document says.
+- `gallery` is the API's first image followed by the document's gallery, deduplicated.
+- Editorial fields are copied only when non-empty.
+- A missing document returns the API product unchanged.
 
-### Webhook `app/api/revalidate/route.ts`
+## FAQs on a product
 
-- POST handler validating the Sanity signature with `parseBody` from `next-sanity/webhook` and `SANITY_REVALIDATE_SECRET`.
-- Body projection configured in Sanity: `{ _type, _id, "apiId": apiId, "slug": slug.current }`.
-- Calls `revalidateTag('sanity:' + _type)` and `revalidateTag('sanity:' + _id)`; for `productEnrichment` also nothing API-related (the API cache is untouched by design).
-- Returns 200 with the tags revalidated; 401 on bad signature; 400 on bad body.
-- Register the webhook in Sanity Manage for the production dataset, on create, update, delete, pointing at the store's production URL.
+The union of the FAQs whose categories include the product's category and the FAQs the product attaches directly, deduplicated by `_id`, ordered by `order` then question. An FAQ with no categories reaches a product only through that product's own list. One GROQ query, tested for the union, the ordering and the empty case.
 
-### Site settings and metadata (E03 revisit)
+## Webhook `app/api/revalidate/sanity/route.ts`
 
-- Root `generateMetadata` reads `siteSettings` via `sanityFetch` and falls back to the API's `/store/config` `seo` block (E03) when the document is missing. Because both are cached, the root stays static.
-- Footer social links prefer `siteSettings.socialLinks`, then `/store/config`.
+- POST, signature verified with `parseBody` from `next-sanity/webhook` against `SANITY_REVALIDATE_SECRET`.
+- Projection configured in Sanity: `{ _type, _id }`.
+- Expires `sanity:<_type>` and `sanity:<_id>`. The API's own caches are untouched by design.
+- 200 with the tags expired, 401 on a bad signature, 400 on a body it cannot read.
+- Registered in Sanity Manage for the production dataset on create, update and delete, pointing at production.
 
-### Homepage (E04 revisit)
+## What each page reads
 
-- Hero reads `homePage.hero` with fallback; hero image from Sanity via `urlFor` when present, else `public/hero.jpg` (E10).
-- Optional sections: `collectionSection` renders the collection's products via cached `getProduct` calls in `Promise.all`; `lookbookSection` renders a horizontal strip of entries. Both only if present in the document; both stretch.
+- **Root metadata and footer** (E03 revisit): `siteSettings` for the title, description, Open Graph image and social links, falling back to the API's `/store/config`. Both cached, so the shell stays static.
+- **Home** (E04 revisit): `homePage.hero` for the headline, description and photo, falling back to the copy and file that ship today. The Sanity photo uses hotspot and its blurred placeholder.
+- **Product page** (E05 revisit), each block rendered only when it has content, in this order under the buy row: "About this item", "How to use and care", "Seen on" (lookbook entries naming this product), "Common questions" (the FAQ union). Badges sit on the gallery image; thumbnails appear when the merged gallery holds more than one photo.
+- **Checkout** (E06 revisit): the `checkoutPage` singleton, falling back to today's copy, body rendered as Portable Text.
 
-### PDP (E05 revisit)
+Every fallback stays. An empty dataset renders exactly what ships today, and a failed Sanity call renders the fallback rather than a gap.
 
-Below the description, in order and only when present: badges on the gallery image, "About this item" (extendedDescription), "How to use and care" (care), "Seen on" (lookbook entries with photo, person, quote), "Part of" (collection links), "Guides" (guide links). Gallery thumbnails appear when `gallery.length > 1`.
+## Tests
 
-### Thank-you page (E06 revisit)
-
-- `app/checkout/page.tsx` reads the `checkoutPage` singleton through `lib/sanity/fetch.ts` (`"use cache"`, `cacheTag('sanity', 'sanity:checkoutPage')`), falling back to the E06 copy when the document is missing. Body rendered with the Portable Text serializer.
-
-### Optional routes (stretch)
-
-- `app/collections/[slug]/page.tsx` and `app/guides/[slug]/page.tsx`, static via `generateStaticParams` from Sanity slugs, `"use cache"` throughout, `notFound()` on missing. Guides render Portable Text with `@portabletext/react` and a custom `productEmbed` component that renders a `ProductCard` from the cached API product.
-
-### Tests
-
-- Vitest for `merge.ts` and for the webhook handler (signature valid, invalid, wrong type).
-- Playwright: edit the hero headline in Studio, publish, and see the change on the site within 10 s (manual step in the checklist rather than automated).
+- Vitest: merge precedence, the FAQ union and ordering, the Portable Text serializer's allowed marks, and the webhook's three answers.
+- Playwright: a product with no document renders as it does today; the visual snapshots from E11 are regenerated only if enrichment changes a page that has it.
+- Manual, in the submission checklist: edit the hero headline in the Studio, publish, and see the site change without a deploy.
 
 ## Acceptance criteria
 
-- [ ] Home and PDP render enrichment when present and identically to E04/E05 when absent.
-- [ ] Publishing in Studio updates the site without a redeploy; API-derived fields never change from a Sanity publish.
-- [ ] Build output unchanged in static/dynamic terms compared with E07 (Sanity adds no dynamic holes).
-- [ ] `merge.test.ts` proves API precedence.
-- [ ] Webhook rejects unsigned requests.
+- [ ] Home, product page and checkout render Sanity content when present and exactly as before when absent.
+- [ ] Publishing in the Studio updates the site without a redeploy; API-owned fields never change from a Sanity publish.
+- [ ] Build output unchanged in static and dynamic terms: Sanity adds no dynamic hole.
+- [ ] `merge.test.ts` proves API precedence; the FAQ query proves the union.
+- [ ] The webhook rejects an unsigned request.
 
 ## Out of scope
 
-Visual editing and Presentation, draft previews, Live Content API, localisation.
+Visual editing and Presentation, draft previews, the Live Content API, localisation, collections and guides (`specs/improvements.md`).
