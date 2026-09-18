@@ -10,10 +10,12 @@ A Studio where an editor manages marketing copy and product enrichment without t
 
 Seven document types. Products and categories are mirrors of the API, written by a script and read only in the Studio (`docs/adr/0003-sanity-mirrors-api-products-and-categories.md`). The rest is editorial.
 
+Ids contain no dots. A dot makes everything before it a document path, which changes who may read the document: `product.hoodie_001` is invisible to an anonymous client, `product-hoodie_001` is not.
+
 ### Mirrors
 
-- `category`: `apiSlug` (string, `_id` is `category.<apiSlug>`), `name`, `syncedAt`, `missing` (boolean). All read only.
-- `product`: mirrored and read only: `apiId` (string, `_id` is `product.<apiId>`), `slug`, `name`, `category` (reference to `category`), `price` (cents), `featured`, `image` (the API's first photo as a URL, for the document preview), `syncedAt`, `missing`. Editorial: `extendedDescription` (Portable Text), `care` (Portable Text), `gallery[]` (image with required alt, hotspot), `badges[]` (from New, Limited, Staff pick), `faqs[]` (references to `faq`).
+- `category`: `apiSlug` (string, `_id` is `category-<apiSlug>`), `name`, `syncedAt`, `missing` (boolean). All read only.
+- `product`: mirrored and read only: `apiId` (string, `_id` is `product-<apiId>`), `slug`, `name`, `category` (reference to `category`), `price` (cents), `featured`, `image` (the API's first photo as a URL, for the document preview), `syncedAt`, `missing`. Editorial: `extendedDescription` (Portable Text), `care` (Portable Text), `gallery[]` (image with required alt, hotspot), `faqs[]` (references to `faq`).
 
 ### Editorial
 
@@ -40,7 +42,7 @@ Reads the API through the store's own client, writes one `category` per API cate
 
 ## Seed `packages/sanity/scripts/seed.ts`
 
-Runs the sync, then writes demonstration content: the three singletons with the store's current fallback copy, two enriched products (hoodie and backpack) with a description, care text and a badge, two lookbook entries, and four FAQs. Placeholder copy, listed in `specs/improvements.md`. Idempotent.
+Runs the sync, then writes demonstration content: the three singletons with the store's current fallback copy, two enriched products (hoodie and backpack) with a description and care text, two lookbook entries, and four FAQs. Placeholder copy, listed in `specs/improvements.md`. Idempotent.
 
 ## Deployment
 

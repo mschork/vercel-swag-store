@@ -20,7 +20,7 @@ Every query tags `sanity` and `sanity:<type>`; single-document queries also tag 
 
 ## Merge rules `merge.ts`
 
-`MergedProduct` extends `Product` with optional `extendedDescription`, `care`, `gallery`, `badges`. Proven in `merge.test.ts`:
+`MergedProduct` extends `Product` with optional `extendedDescription`, `care` and `gallery`. Proven in `merge.test.ts`:
 
 - `id, slug, name, price, currency, category, featured, images, tags, createdAt` always from the API, whatever the document says.
 - `gallery` is the API's first image followed by the document's gallery, deduplicated.
@@ -43,7 +43,7 @@ The union of the FAQs whose categories include the product's category and the FA
 
 - **Root metadata and footer** (E03 revisit): `siteSettings` for the title, description, Open Graph image and social links, falling back to the API's `/store/config`. Both cached, so the shell stays static.
 - **Home** (E04 revisit): `homePage.hero` for the headline, description and photo, falling back to the copy and file that ship today. The Sanity photo uses hotspot and its blurred placeholder.
-- **Product page** (E05 revisit), each block rendered only when it has content, in this order under the buy row: "About this item", "How to use and care", "Seen on" (lookbook entries naming this product), "Common questions" (the FAQ union). Badges sit on the gallery image; thumbnails appear when the merged gallery holds more than one photo.
+- **Product page** (E05 revisit), each block rendered only when it has content, in this order under the buy row: "About this item", "How to use and care", "Seen on" (lookbook entries naming this product), "Common questions" (the FAQ union). Thumbnails appear when the merged gallery holds more than one photo. The blocks share one readable column so no paragraph is narrower than the rule above it. One lookbook entry renders as a feature row with the photo on the right; two or more render as a grid.
 - **Checkout** (E06 revisit): the `checkoutPage` singleton, falling back to today's copy, body rendered as Portable Text.
 
 Every fallback stays. An empty dataset renders exactly what ships today, and a failed Sanity call renders the fallback rather than a gap.
