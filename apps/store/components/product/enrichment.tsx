@@ -8,15 +8,21 @@ import type { LookbookForProductQueryResult } from '@repo/sanity/generated'
 /**
  * What an editor adds to a product page (E09). Every block renders only when
  * it has content, so a product nobody has touched looks exactly as it did
- * before Sanity existed. The page gives this stack one readable column; the
- * blocks fill whatever width they are given.
+ * before Sanity existed. Each block lines up with the two columns above it:
+ * heading on the left, content on the right.
  */
 
+/**
+ * One block below the buy row. The rule spans the page and the content sits in
+ * the same two columns as the gallery and the buy panel above it: the heading
+ * on the left, the words on the right, so the text starts where the price does.
+ * Below the medium breakpoint it stacks, heading first.
+ */
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-3 border-t border-border pt-6">
+    <section className="grid gap-3 border-t border-border pt-6 md:grid-cols-2 md:gap-12">
       <h2 className="text-xl font-medium tracking-tight">{title}</h2>
-      {children}
+      <div className="flex flex-col gap-3">{children}</div>
     </section>
   )
 }
@@ -40,6 +46,18 @@ export function ProductStory({ product }: { product: MergedProduct }) {
 }
 
 type LookbookEntry = LookbookForProductQueryResult[number]
+
+/**
+ * What the person said, in guillemets rather than straight quotes, with a
+ * no-break space inside each mark as French typography sets them.
+ */
+function Quote({ children, className }: { children: string; className?: string }) {
+  return (
+    <blockquote className={`italic text-pretty ${className ?? ''}`}>
+      &laquo;&#8239;{children}&#8239;&raquo;
+    </blockquote>
+  )
+}
 
 /** Who is in the photo and what they do, under the quote in both layouts. */
 function Attribution({ entry }: { entry: LookbookEntry }) {
@@ -78,15 +96,13 @@ export function SeenOn({ entries }: { entries: LookbookForProductQueryResult }) 
   if (entries.length === 1 && only) {
     return (
       <Section title="Seen on">
-        <div className="flex flex-col gap-5 sm:flex-row-reverse sm:items-center sm:gap-8">
+        <div className="flex flex-col gap-5 sm:flex-row-reverse sm:items-center sm:gap-5">
           <div className="sm:w-2/5 sm:shrink-0">
-            <EntryPhoto entry={only} sizes="(min-width: 640px) 30vw, 90vw" />
+            <EntryPhoto entry={only} sizes="(min-width: 768px) 22vw, (min-width: 640px) 30vw, 90vw" />
           </div>
           <div className="flex flex-col gap-2">
             {only.quote ? (
-              <blockquote className="text-lg leading-8 text-pretty sm:text-xl sm:leading-9">
-                &ldquo;{only.quote}&rdquo;
-              </blockquote>
+              <Quote className="text-lg leading-8 sm:text-xl sm:leading-9">{only.quote}</Quote>
             ) : null}
             <Attribution entry={only} />
           </div>
@@ -96,14 +112,12 @@ export function SeenOn({ entries }: { entries: LookbookForProductQueryResult }) 
   }
   return (
     <Section title="Seen on">
-      <ul className="grid gap-6 sm:grid-cols-2">
+      <ul className="grid gap-6 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2">
         {entries.map((entry) => (
           <li key={entry._id} className="flex flex-col gap-3">
-            <EntryPhoto entry={entry} sizes="(min-width: 640px) 45vw, 90vw" />
+            <EntryPhoto entry={entry} sizes="(min-width: 1024px) 22vw, (min-width: 640px) 45vw, 90vw" />
             <div className="flex flex-col gap-1">
-              {entry.quote ? (
-                <blockquote className="text-pretty">&ldquo;{entry.quote}&rdquo;</blockquote>
-              ) : null}
+              {entry.quote ? <Quote>{entry.quote}</Quote> : null}
               <Attribution entry={entry} />
             </div>
           </li>
