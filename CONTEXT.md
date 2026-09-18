@@ -29,7 +29,7 @@ The Sanity document for one product: its API fields mirrored read-only, plus the
 _Avoid_: Sanity product, enrichment document, product entry
 
 **Enrichment**:
-The editorial fields on a product document: the longer description, the care text, extra gallery images and badges. Never commerce facts; the API wins for anything it owns.
+The editorial fields on a product document: the longer description, the care text, extra photos of the product and the questions it attaches. Never commerce facts; the API wins for anything it owns.
 _Avoid_: Product content, extra content, overrides
 
 **Category document**:

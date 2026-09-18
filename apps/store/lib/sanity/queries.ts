@@ -36,7 +36,7 @@ export const checkoutPageQuery = defineQuery(`
  */
 export const productQuery = defineQuery(`
   *[_type == "product" && apiId == $apiId][0]{
-    extendedDescription, care, badges,
+    extendedDescription, care,
     "gallery": gallery[]${IMAGE},
     "categoryFaqs": *[_type == "faq" && references(^.category._ref)]{ _id, question, answer, order },
     "attachedFaqs": faqs[]->{ _id, question, answer, order }

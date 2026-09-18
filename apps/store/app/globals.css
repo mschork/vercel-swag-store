@@ -93,3 +93,30 @@
     outline-offset: 2px;
   }
 }
+
+/*
+ * The FAQ disclosures on a product page (E09). `details` toggles instantly on
+ * its own; `::details-content` is what lets the closed state have a height to
+ * animate from. Browsers without it, and anyone who asks for less motion, get
+ * the plain toggle, which was always the fallback.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @supports selector(::details-content) {
+    .disclosure {
+      interpolate-size: allow-keywords;
+    }
+    .disclosure::details-content {
+      block-size: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition:
+        block-size 250ms ease,
+        content-visibility 250ms allow-discrete,
+        opacity 200ms ease;
+    }
+    .disclosure[open]::details-content {
+      block-size: auto;
+      opacity: 1;
+    }
+  }
+}
