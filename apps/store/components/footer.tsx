@@ -1,6 +1,7 @@
 import { cacheLife } from 'next/cache'
 import { getStoreConfig } from '@/lib/api/store'
 import { loadOptional } from '@/lib/load-optional'
+import { getSiteSettings } from '@/lib/sanity/content'
 import { socialLinks } from '@/lib/social-links'
 import { Container } from './container'
 
@@ -15,14 +16,22 @@ async function CopyrightYear() {
 }
 
 /**
- * Social links from the store config. `app/error.tsx` does not cover the root
- * layout, so a failing config call is caught here: the footer renders without
- * the link row rather than replacing the store with an error screen.
+ * Social links: the `siteSettings` document when an editor listed any, the
+ * store config otherwise (E09). `app/error.tsx` does not cover the root
+ * layout, so a failing call is caught here: the footer renders without the
+ * link row rather than replacing the store with an error screen.
  */
 async function SocialLinks() {
-  const config = await loadOptional('Footer: store config', getStoreConfig)
-  if (!config) return null
-  const links = socialLinks(config.socialLinks)
+  const [config, settings] = await Promise.all([
+    loadOptional('Footer: store config', getStoreConfig),
+    getSiteSettings(),
+  ])
+  const edited = (settings?.socialLinks ?? []).map((link) => ({
+    key: link.url,
+    label: link.label,
+    href: link.url,
+  }))
+  const links = edited.length > 0 ? edited : config ? socialLinks(config.socialLinks) : []
   if (links.length === 0) return null
   return (
     <ul className="flex flex-wrap gap-x-6 gap-y-2" aria-label="Social links">

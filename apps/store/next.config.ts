@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
     // Catalogue data: products, categories, store config. Served stale for
     // 5 min, refreshed in the background hourly, dropped after a day.
     catalog: { stale: 300, revalidate: 3600, expire: 86400 },
+    // Sanity content: the publish webhook expires the tags, so the timer only
+    // has to catch a webhook that never arrived.
+    content: { stale: 300, revalidate: 86400, expire: 604800 },
   },
   typedRoutes: true,
   experimental: {

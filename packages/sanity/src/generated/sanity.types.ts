@@ -35,14 +35,14 @@ export type LookbookEntry = {
   _createdAt: string
   _updatedAt: string
   _rev: string
-  person?: string
+  person: string
   role?: string
   photo?: {
     asset?: SanityImageAssetReference
     media?: unknown
     hotspot?: SanityImageHotspot
     crop?: SanityImageCrop
-    alt?: string
+    alt: string
     _type: 'image'
   }
   quote?: string
@@ -57,18 +57,18 @@ export type LookbookEntry = {
 
 export type SanityImageCrop = {
   _type: 'sanity.imageCrop'
-  top?: number
-  bottom?: number
-  left?: number
-  right?: number
+  top: number
+  bottom: number
+  left: number
+  right: number
 }
 
 export type SanityImageHotspot = {
   _type: 'sanity.imageHotspot'
-  x?: number
-  y?: number
-  height?: number
-  width?: number
+  x: number
+  y: number
+  height: number
+  width: number
 }
 
 export type CategoryReference = {
@@ -84,9 +84,9 @@ export type Faq = {
   _createdAt: string
   _updatedAt: string
   _rev: string
-  question?: string
-  answer?: RichText
-  order?: number
+  question: string
+  answer: RichText
+  order: number
   categories?: Array<
     {
       _key: string
@@ -104,7 +104,7 @@ export type RichText = Array<{
   style?: 'normal'
   listItem?: never
   markDefs?: Array<{
-    href?: string
+    href: string
     _type: 'link'
     _key: string
   }>
@@ -126,9 +126,9 @@ export type Product = {
   _createdAt: string
   _updatedAt: string
   _rev: string
-  name?: string
-  apiId?: string
-  slug?: string
+  name: string
+  apiId: string
+  slug: string
   category?: CategoryReference
   price?: number
   featured?: boolean
@@ -142,7 +142,7 @@ export type Product = {
     media?: unknown
     hotspot?: SanityImageHotspot
     crop?: SanityImageCrop
-    alt?: string
+    alt: string
     _type: 'photo'
     _key: string
   }>
@@ -160,8 +160,8 @@ export type Category = {
   _createdAt: string
   _updatedAt: string
   _rev: string
-  name?: string
-  apiSlug?: string
+  name: string
+  apiSlug: string
   syncedAt?: string
   missing?: boolean
 }
@@ -172,7 +172,7 @@ export type CheckoutPage = {
   _createdAt: string
   _updatedAt: string
   _rev: string
-  title?: string
+  title: string
   body?: RichText
   continueShoppingLabel?: string
 }
@@ -191,7 +191,7 @@ export type HomePage = {
       media?: unknown
       hotspot?: SanityImageHotspot
       crop?: SanityImageCrop
-      alt?: string
+      alt: string
       _type: 'image'
     }
   }
@@ -203,7 +203,7 @@ export type SiteSettings = {
   _createdAt: string
   _updatedAt: string
   _rev: string
-  storeName?: string
+  storeName: string
   seoTitle?: string
   seoDescription?: string
   ogImage?: {
@@ -211,12 +211,12 @@ export type SiteSettings = {
     media?: unknown
     hotspot?: SanityImageHotspot
     crop?: SanityImageCrop
-    alt?: string
+    alt: string
     _type: 'image'
   }
   socialLinks?: Array<{
-    label?: string
-    url?: string
+    label: string
+    url: string
     _type: 'socialLink'
     _key: string
   }>
@@ -251,7 +251,7 @@ export type MediaTag = {
 
 export type Slug = {
   _type: 'slug'
-  current?: string
+  current: string
   source?: string
 }
 
@@ -276,9 +276,9 @@ export type SanityImagePalette = {
 
 export type SanityImageDimensions = {
   _type: 'sanity.imageDimensions'
-  height?: number
-  width?: number
-  aspectRatio?: number
+  height: number
+  width: number
+  aspectRatio: number
 }
 
 export type SanityImageMetadata = {
@@ -304,14 +304,14 @@ export type SanityFileAsset = {
   title?: string
   description?: string
   altText?: string
-  sha1hash?: string
-  extension?: string
-  mimeType?: string
-  size?: number
-  assetId?: string
+  sha1hash: string
+  extension: string
+  mimeType: string
+  size: number
+  assetId: string
   uploadId?: string
-  path?: string
-  url?: string
+  path: string
+  url: string
   source?: SanityAssetSourceData
 }
 
@@ -333,14 +333,14 @@ export type SanityImageAsset = {
   title?: string
   description?: string
   altText?: string
-  sha1hash?: string
-  extension?: string
-  mimeType?: string
-  size?: number
-  assetId?: string
+  sha1hash: string
+  extension: string
+  mimeType: string
+  size: number
+  assetId: string
   uploadId?: string
-  path?: string
-  url?: string
+  path: string
+  url: string
   metadata?: SanityImageMetadata
   source?: SanityAssetSourceData
 }
@@ -379,3 +379,108 @@ export type AllSanitySchemaTypes =
   | SanityAssetSourceData
   | SanityImageAsset
   | Geopoint
+
+// Source: ../store/lib/sanity/queries.ts
+// Variable: siteSettingsQuery
+// Query: *[_type == "siteSettings"][0]{    storeName, seoTitle, seoDescription, footerText,    "ogImage": ogImage{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio },    socialLinks[]{ label, url }  }
+export type SiteSettingsQueryResult = {
+  storeName: string
+  seoTitle: string | null
+  seoDescription: string | null
+  footerText: string | null
+  ogImage: {
+    asset?: SanityImageAssetReference
+    media?: unknown
+    hotspot?: SanityImageHotspot
+    crop?: SanityImageCrop
+    alt: string
+    _type: 'image'
+    lqip: string | null
+    aspectRatio: number | null
+  } | null
+  socialLinks: Array<{
+    label: string
+    url: string
+  }> | null
+} | null
+
+// Source: ../store/lib/sanity/queries.ts
+// Variable: homePageQuery
+// Query: *[_type == "homePage"][0]{    hero{ headline, description, "image": image{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio } }  }
+export type HomePageQueryResult = {
+  hero: {
+    headline: string | null
+    description: string | null
+    image: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      alt: string
+      _type: 'image'
+      lqip: string | null
+      aspectRatio: number | null
+    } | null
+  } | null
+} | null
+
+// Source: ../store/lib/sanity/queries.ts
+// Variable: checkoutPageQuery
+// Query: *[_type == "checkoutPage"][0]{ title, body, continueShoppingLabel }
+export type CheckoutPageQueryResult = {
+  title: string
+  body: RichText | null
+  continueShoppingLabel: string | null
+} | null
+
+// Source: ../store/lib/sanity/queries.ts
+// Variable: productQuery
+// Query: *[_type == "product" && apiId == $apiId][0]{    extendedDescription, care, badges,    "gallery": gallery[]{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio },    "categoryFaqs": *[_type == "faq" && references(^.category._ref)]{ _id, question, answer, order },    "attachedFaqs": faqs[]->{ _id, question, answer, order }  }
+export type ProductQueryResult = {
+  extendedDescription: RichText | null
+  care: RichText | null
+  badges: Array<string> | null
+  gallery: Array<{
+    asset?: SanityImageAssetReference
+    media?: unknown
+    hotspot?: SanityImageHotspot
+    crop?: SanityImageCrop
+    alt: string
+    _type: 'photo'
+    _key: string
+    lqip: string | null
+    aspectRatio: number | null
+  }> | null
+  categoryFaqs: Array<{
+    _id: string
+    question: string
+    answer: RichText
+    order: number
+  }>
+  attachedFaqs: Array<{
+    _id: string
+    question: string
+    answer: RichText
+    order: number
+  }> | null
+} | null
+
+// Source: ../store/lib/sanity/queries.ts
+// Variable: lookbookForProductQuery
+// Query: *[_type == "lookbookEntry" && consent == true && references($productDocId)]    | order(publishedAt desc){      _id, person, role, quote,      "photo": photo{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio }    }
+export type LookbookForProductQueryResult = Array<{
+  _id: string
+  person: string
+  role: string | null
+  quote: string | null
+  photo: {
+    asset?: SanityImageAssetReference
+    media?: unknown
+    hotspot?: SanityImageHotspot
+    crop?: SanityImageCrop
+    alt: string
+    _type: 'image'
+    lqip: string | null
+    aspectRatio: number | null
+  } | null
+}>
