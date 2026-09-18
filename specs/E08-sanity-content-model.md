@@ -49,10 +49,10 @@ Runs the sync, then writes demonstration content: the three singletons with the 
 ## Acceptance criteria
 
 - [ ] Studio runs locally and on both deployed URLs; an editor can create an FAQ and a lookbook entry and enrich a product.
-- [ ] Mirrored fields are visible and not editable; editorial fields are editable.
+- [x] Mirrored fields are visible and not editable; editorial fields are editable.
 - [ ] `lookbookEntry` cannot be published without `consent`.
-- [ ] Typegen output committed and imported by the store.
-- [ ] Sync and seed populate a fresh dataset in one run and are safe to re-run.
+- [x] Typegen output committed and imported by the store.
+- [x] Sync and seed populate a fresh dataset in one run and are safe to re-run.
 
 ## Out of scope
 
