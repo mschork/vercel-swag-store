@@ -16,6 +16,9 @@ playwright-report
 test-results
 coverage
 
+# generated schema snapshot; the types next to it are committed
+packages/sanity/src/generated/schema.json
+
 # tooling
 .vercel
 .sanity

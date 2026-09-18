@@ -1,0 +1,36 @@
+# What `vercel deploy` must not upload.
+#
+# The CLI is linked at the repository root (`.vercel/repo.json`), so a deploy
+# run from `apps/store` or `apps/studio` still uploads from here. Without this
+# file it falls back to the `.gitignore` of the directory it was run in, and
+# those directories have none, so it packed the whole tree: 2.5 GB of Turbo
+# cache and a 723 MB Next build, which trips the 100 MB per-file limit.
+#
+# Vercel builds from the committed source, so none of this is needed there.
+
+# dependencies
+node_modules
+
+# build output and caches
+.next
+.turbo
+dist
+out
+*.tsbuildinfo
+
+# tests
+playwright-report
+test-results
+coverage
+
+# env files
+.env*
+!.env.example
+
+# local-only documents and notes
+working
+.scratch
+.sanity
+
+# os
+.DS_Store

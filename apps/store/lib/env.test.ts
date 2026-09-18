@@ -14,11 +14,18 @@ describe('serverEnv', () => {
     vi.stubEnv('API_BASE_URL', 'https://api.example.com/api')
     vi.stubEnv('API_BYPASS_TOKEN', 'secret')
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://store.example.com')
+    vi.stubEnv('NEXT_PUBLIC_SANITY_PROJECT_ID', 'project')
+    vi.stubEnv('NEXT_PUBLIC_SANITY_DATASET', 'production')
     const { serverEnv } = await loadEnv()
     expect(serverEnv).toEqual({
       API_BASE_URL: 'https://api.example.com/api',
       API_BYPASS_TOKEN: 'secret',
       NEXT_PUBLIC_SITE_URL: 'https://store.example.com',
+      NEXT_PUBLIC_SANITY_PROJECT_ID: 'project',
+      NEXT_PUBLIC_SANITY_DATASET: 'production',
+      // Both revalidation secrets are optional: unset, their routes refuse.
+      CATALOG_REVALIDATE_SECRET: undefined,
+      SANITY_REVALIDATE_SECRET: undefined,
     })
   })
 

@@ -1,8 +1,10 @@
 import { visionTool } from '@sanity/vision'
 import { defineConfig } from 'sanity'
+import { media } from 'sanity-plugin-media'
 import { structureTool } from 'sanity/structure'
-import { schemaTypes } from '@repo/sanity'
+import { CREATABLE_TYPES, schemaTypes } from '@repo/sanity'
 import { requireSanityEnv } from '@repo/sanity/env'
+import { structure } from './structure'
 
 const { projectId, dataset } = requireSanityEnv({
   projectId: {
@@ -20,8 +22,16 @@ export default defineConfig({
   title: 'Vercel Swag Store',
   projectId,
   dataset,
-  plugins: [structureTool(), visionTool()],
+  plugins: [structureTool({ structure }), media(), visionTool()],
   schema: {
     types: schemaTypes,
+  },
+  document: {
+    // Products and categories are written by the sync script, and the three
+    // pages exist once, so the create menu offers only what an editor makes.
+    newDocumentOptions: (previous) =>
+      previous.filter((item) =>
+        CREATABLE_TYPES.includes(item.templateId as (typeof CREATABLE_TYPES)[number]),
+      ),
   },
 })
