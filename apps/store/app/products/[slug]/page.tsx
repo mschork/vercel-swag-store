@@ -134,9 +134,7 @@ export default async function ProductPage({ params }: Props) {
         </div>
       </article>
       {enriched ? (
-        // One readable column for everything below the buy row, so a heading
-        // or a rule is never wider than the text under it.
-        <div className="flex max-w-[68ch] flex-col gap-8">
+        <div className="flex flex-col gap-8">
           <ProductStory product={merged} />
           <SeenOn entries={entries} />
           <CommonQuestions faqs={merged.faqs} />
