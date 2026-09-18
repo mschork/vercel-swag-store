@@ -85,29 +85,27 @@ function EntryPhoto({ entry, sizes }: { entry: LookbookEntry; sizes: string }) {
 }
 
 /**
- * Lookbook entries naming this product. One entry is a feature row, photo on
- * the right so it does not sit under the product photo, with the quote given
- * the room a single quote deserves. Two or more fall back to a grid, where
- * equal weight is the point.
+ * Lookbook entries naming this product. One entry takes the page's two columns
+ * head on: the heading and the quote on the left, the photo filling the right
+ * column, which puts it at the width of the buy panel above rather than at a
+ * fraction of a fraction. Two or more fall back to a grid, where equal weight
+ * is the point.
  */
 export function SeenOn({ entries }: { entries: LookbookForProductQueryResult }) {
   if (entries.length === 0) return null
   const [only] = entries
   if (entries.length === 1 && only) {
     return (
-      <Section title="Seen on">
-        <div className="flex flex-col gap-5 sm:flex-row-reverse sm:items-center sm:gap-5">
-          <div className="sm:w-2/5 sm:shrink-0">
-            <EntryPhoto entry={only} sizes="(min-width: 768px) 22vw, (min-width: 640px) 30vw, 90vw" />
-          </div>
-          <div className="flex flex-col gap-2">
-            {only.quote ? (
-              <Quote className="text-lg leading-8 sm:text-xl sm:leading-9">{only.quote}</Quote>
-            ) : null}
-            <Attribution entry={only} />
-          </div>
+      <section className="grid gap-5 border-t border-border pt-6 md:grid-cols-2 md:items-center md:gap-12">
+        <div className="flex flex-col gap-3 md:order-first md:self-center">
+          <h2 className="text-xl font-medium tracking-tight">Seen on</h2>
+          {only.quote ? (
+            <Quote className="text-lg leading-8 sm:text-xl sm:leading-9">{only.quote}</Quote>
+          ) : null}
+          <Attribution entry={only} />
         </div>
-      </Section>
+        <EntryPhoto entry={only} sizes="(min-width: 768px) 45vw, 90vw" />
+      </section>
     )
   }
   return (
