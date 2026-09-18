@@ -57,7 +57,7 @@ Every fallback stays. An empty dataset renders exactly what ships today, and a f
 ## Acceptance criteria
 
 - [x] Home, product page and checkout render Sanity content when present and exactly as before when absent.
-- [ ] Publishing in the Studio updates the site without a redeploy; API-owned fields never change from a Sanity publish.
+- [x] Publishing in the Studio updates the site without a redeploy; API-owned fields never change from a Sanity publish.
 - [x] Build output unchanged in static and dynamic terms: Sanity adds no dynamic hole.
 - [x] `merge.test.ts` proves API precedence; the FAQ query proves the union.
 - [x] The webhook rejects an unsigned request.
