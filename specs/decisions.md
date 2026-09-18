@@ -22,7 +22,7 @@ Settled choices that every epic spec inherits. Change here first, then in the sp
 ## UI and design
 
 - Components: shadcn/ui using Base UI primitives, minimal set (Button, Input, Select, Badge, Skeleton, Sheet or Dialog only if needed, Toast). Tokens overridden so the result does not look like stock shadcn.
-- Typography: Geist Sans and Geist Mono via `next/font`.
+- Typography: Geist Sans and Geist Mono via `next/font/google`, Latin subset (E11).
 - Colour: monochrome. Dark canvas `#000` with `#0a0a0a` secondary; light canvas `#fff` with `#fafafa` secondary; one accent (blue, Vercel family) reserved for the price pill's hover, focus, primary action and the promo strip. No gradients, glows or shadows.
 - Theme: light and dark follow the visitor's operating-system preference through `prefers-color-scheme`. No selector, no `next-themes`, no theme script; Tailwind's default media-query `dark:` variant.
 - Branding: page title "Vercel Swag Store"; header shows the Vercel triangle as an inline SVG in `currentColor` with the store name as Geist text, not the wordmark SVG. Root metadata (title, template, description, site name) comes from the API's `/store/config` `seo` block.
@@ -30,8 +30,8 @@ Settled choices that every epic spec inherits. Change here first, then in the sp
 
 ## Sanity
 
-- New Sanity project, dataset `production`. Store reads through `next-sanity` client wrapped in `"use cache"` with `cacheTag('sanity')` and per-document tags; publish webhook hits `/api/revalidate` and calls `revalidateTag`. No Live Content API.
-- Document types: `siteSettings`, `homePage`, `checkoutPage`, `productEnrichment`, `catalogProduct`, `lookbookEntry`, `collection`, `guide`. Product references use the API `id` string with a Studio picker fed from `catalogProduct` documents (seeded by script; E15 syncs them daily with a scheduled Sanity Function). The Studio holds no API secret.
+- New Sanity project, dataset `production` and public, so the store needs no read token. Store reads through a `next-sanity` client wrapped in `"use cache"` with `cacheTag('sanity')` and per-document tags, on a `content` profile (stale 5 min, revalidate 1 d, expire 7 d); the publish webhook hits `/api/revalidate/sanity`, verifies Sanity's signature and expires the type and id tags. No Live Content API.
+- Document types: `siteSettings`, `homePage`, `checkoutPage`, `product`, `category`, `lookbookEntry`, `faq`. Products and categories are mirrors of the API, written by a script and read only in the Studio, so every link from editorial content to the catalogue is an ordinary Sanity reference (`docs/adr/0003-sanity-mirrors-api-products-and-categories.md`); E15 replaces the script's trigger with a scheduled Sanity Function. The Studio holds no API secret. E08 and E09 ship in one pull request.
 - Studio deployed both as `apps/studio` on Vercel and via `sanity deploy`; both origins allowed in Sanity CORS.
 
 ## Platform signals
@@ -52,7 +52,7 @@ Settled choices that every epic spec inherits. Change here first, then in the sp
 
 ## Environment variables
 
-Store: `API_BASE_URL`, `API_BYPASS_TOKEN` (server only), `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`, `SANITY_API_READ_TOKEN`, `SANITY_REVALIDATE_SECRET`, `NEXT_PUBLIC_SITE_URL`.
+Store: `API_BASE_URL`, `API_BYPASS_TOKEN` (server only), `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`, `SANITY_REVALIDATE_SECRET`, `NEXT_PUBLIC_SITE_URL`. No Sanity read token: the dataset is public.
 Store, E11: `CATALOG_REVALIDATE_SECRET`.
 Store, E13 only: `SANITY_API_WRITE_TOKEN` (server only), `DEMAND_ANALYSE_SECRET`, `AI_GATEWAY_API_KEY`.
 Studio: `SANITY_STUDIO_PROJECT_ID`, `SANITY_STUDIO_DATASET`. No API variables: the product picker reads `catalogProduct` documents.
@@ -60,4 +60,23 @@ Local scripts only: `SANITY_API_WRITE_TOKEN` for the seed script.
 
 ## Epic index
 
-E01 foundation, E02 API client, E03 shell and metadata, E04 home, E05 PDP, E06 cart, E07 search, E08 Sanity model, E09 Sanity integration, E10 design, E11 performance, E12 delivery, E13 search-gap loop (stretch), E14 Eve agent (stretch, after E13), E15 catalogue sync (stretch, after E09), E16 cart API improvements. Order: E01 to E07, E10, E16, E11, E08, E09, E12, then E13, E14 and E15 if time remains.
+E01 foundation, E02 API client, E03 shell and metadata, E04 home, E05 PDP, E06 cart, E07 search, E08 Sanity model, E09 Sanity integration, E10 design, E11 performance, E12 delivery, E13 search-gap loop (stretch), E14 Eve agent (stretch, after E13), E15 catalogue sync (stretch, after E09), E16 cart API improvements. Order: E01 to E07, E10, E16, E11, E08 and E09 together, E12, then E13, E14 and E15 if time remains.
+
+| Epic | State |
+|---|---|
+| E01 foundation | done |
+| E02 API client | done |
+| E03 shell and metadata | done |
+| E04 home | done |
+| E05 PDP | done |
+| E06 cart | done |
+| E07 search | done |
+| E10 design | done but for Lighthouse on every production route |
+| E16 cart API improvements | done |
+| E11 performance | done |
+| E08 Sanity model | next, with E09 |
+| E09 Sanity integration | next, with E08 |
+| E12 delivery | last before release |
+| E13, E14, E15 | stretch, only if time remains |
+
+Each epic's own spec holds the acceptance criteria; this table says which epic is finished.
