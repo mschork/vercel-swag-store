@@ -7,16 +7,21 @@
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
     "./env": "./src/env.ts",
-    "./schemas": "./src/schemas/index.ts"
+    "./schemas": "./src/schemas/index.ts",
+    "./generated": "./src/generated/sanity.types.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "sync": "node --experimental-strip-types scripts/sync.ts",
+    "seed": "node --experimental-strip-types scripts/seed.ts",
+    "typegen": "pnpm --filter studio typegen"
   },
   "dependencies": {
     "@sanity/client": "^8.6.1"
   },
   "devDependencies": {
     "@repo/config": "workspace:*",
+    "@types/node": "^26.6.1",
     "sanity": "^6.13.2",
     "typescript": "^5"
   },
