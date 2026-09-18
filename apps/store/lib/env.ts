@@ -16,6 +16,8 @@ const ServerEnvSchema = PublicEnvSchema.extend({
   API_BYPASS_TOKEN: z.string().min(1),
   // Optional: without it the catalogue revalidation route refuses every call.
   CATALOG_REVALIDATE_SECRET: z.string().min(32).optional(),
+  // Optional: without it the Sanity webhook route refuses every call.
+  SANITY_REVALIDATE_SECRET: z.string().min(16).optional(),
 })
 
 export type ServerEnv = z.infer<typeof ServerEnvSchema>
@@ -26,6 +28,7 @@ function parseServerEnv(): ServerEnv {
     API_BASE_URL: process.env.API_BASE_URL,
     API_BYPASS_TOKEN: process.env.API_BYPASS_TOKEN,
     CATALOG_REVALIDATE_SECRET: process.env.CATALOG_REVALIDATE_SECRET || undefined,
+    SANITY_REVALIDATE_SECRET: process.env.SANITY_REVALIDATE_SECRET || undefined,
   })
   if (!result.success) {
     // prettifyError lists paths and messages only; values are never echoed.

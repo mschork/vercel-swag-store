@@ -56,11 +56,11 @@ Every fallback stays. An empty dataset renders exactly what ships today, and a f
 
 ## Acceptance criteria
 
-- [ ] Home, product page and checkout render Sanity content when present and exactly as before when absent.
+- [x] Home, product page and checkout render Sanity content when present and exactly as before when absent.
 - [ ] Publishing in the Studio updates the site without a redeploy; API-owned fields never change from a Sanity publish.
-- [ ] Build output unchanged in static and dynamic terms: Sanity adds no dynamic hole.
-- [ ] `merge.test.ts` proves API precedence; the FAQ query proves the union.
-- [ ] The webhook rejects an unsigned request.
+- [x] Build output unchanged in static and dynamic terms: Sanity adds no dynamic hole.
+- [x] `merge.test.ts` proves API precedence; the FAQ query proves the union.
+- [x] The webhook rejects an unsigned request.
 
 ## Out of scope
 

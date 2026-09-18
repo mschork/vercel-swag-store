@@ -7,7 +7,8 @@
     "build": "sanity build",
     "deploy": "sanity deploy",
     "lint": "eslint --max-warnings 0 .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typegen": "sanity schema extract --path ../../packages/sanity/src/generated/schema.json --enforce-required-fields --force && sanity typegen generate"
   },
   "dependencies": {
     "@repo/sanity": "workspace:*",
@@ -15,6 +16,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "sanity": "^6.13.2",
+    "sanity-plugin-media": "^6.2.0",
     "styled-components": "^6.1.15"
   },
   "devDependencies": {

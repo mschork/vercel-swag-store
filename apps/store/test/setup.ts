@@ -15,3 +15,5 @@ vi.mock('next/cache', () => ({
 // none is loaded from .env.local; the opt-in integration test needs the real one.
 process.env.API_BASE_URL ??= 'https://api.test/api'
 process.env.API_BYPASS_TOKEN ??= 'test-bypass-token'
+process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ??= 'test-project'
+process.env.NEXT_PUBLIC_SANITY_DATASET ??= 'test-dataset'

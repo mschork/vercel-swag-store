@@ -1,4 +1,10 @@
 {
   "extends": "@repo/config/tsconfig/react-library.json",
-  "include": ["src"]
+  "include": [
+    "src",
+    "scripts"
+  ],
+  "compilerOptions": {
+    "allowImportingTsExtensions": true
+  }
 }

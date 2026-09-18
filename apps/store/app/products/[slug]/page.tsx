@@ -8,6 +8,12 @@ import {
   Breadcrumb,
   type BreadcrumbLink,
 } from '@/components/product/breadcrumb'
+import {
+  CommonQuestions,
+  ProductBadges,
+  ProductStory,
+  SeenOn,
+} from '@/components/product/enrichment'
 import { ProductGallery } from '@/components/product/gallery'
 import {
   StockAndCart,
@@ -18,6 +24,9 @@ import { findProduct, getAllProductSlugs } from '@/lib/api/products'
 import { getStoreConfig } from '@/lib/api/store'
 import { publicEnv } from '@/lib/env.public'
 import { openGraphDefaults } from '@/lib/metadata'
+import { getLookbookForProduct, getProductDocument } from '@/lib/sanity/content'
+import { photoUrls } from '@/lib/sanity/image'
+import { mergeProduct } from '@/lib/sanity/merge'
 import { breadcrumbJsonLd } from '@/lib/structured-data'
 import { truncate } from '@/lib/text'
 
@@ -72,7 +81,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  */
 export default async function ProductPage({ params }: Props) {
   const product = await productFor(params)
-  const category = await findCategory(product.category)
+  // Enrichment and lookbook are cached like the catalogue, so the page stays
+  // prerendered; a missing document or a failed call renders the page as it
+  // was before Sanity existed (specs/E09-sanity-integration.md).
+  const [category, document, lookbook] = await Promise.all([
+    findCategory(product.category),
+    getProductDocument(product.id),
+    getLookbookForProduct(product.id),
+  ])
+  const merged = mergeProduct(product, document)
+  const entries = lookbook ?? []
+  // Nothing editorial: the page must be exactly the page E05 shipped, down to
+  // the spacing, so the wrapper is not rendered at all rather than left empty.
+  const enriched =
+    Boolean(merged.extendedDescription) ||
+    Boolean(merged.care) ||
+    entries.length > 0 ||
+    merged.faqs.length > 0
   const categoryName = category?.name ?? product.category
   const trail: BreadcrumbLink[] = [
     { name: 'Home', href: '/' },
@@ -91,7 +116,10 @@ export default async function ProductPage({ params }: Props) {
       <Breadcrumb trail={trail} current={product.name} />
       <JsonLd data={breadcrumbJsonLd(crumbs, publicEnv.NEXT_PUBLIC_SITE_URL)} />
       <article className="grid gap-8 md:grid-cols-2 md:gap-12">
-        <ProductGallery product={product} />
+        <div className="relative">
+          <ProductBadges badges={merged.badges} />
+          <ProductGallery images={photoUrls(merged.gallery)} name={product.name} />
+        </div>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <h1 className="text-3xl font-medium tracking-tight text-balance">
@@ -107,6 +135,13 @@ export default async function ProductPage({ params }: Props) {
           </Suspense>
         </div>
       </article>
+      {enriched ? (
+        <div className="flex flex-col gap-8">
+          <ProductStory product={merged} />
+          <SeenOn entries={entries} />
+          <CommonQuestions faqs={merged.faqs} />
+        </div>
+      ) : null}
     </Container>
   )
 }

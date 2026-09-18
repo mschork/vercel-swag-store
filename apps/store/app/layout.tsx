@@ -8,13 +8,16 @@ import { Footer } from '@/components/footer'
 import { Header } from '@/components/header'
 import { PromoBanner, PromoBannerSkeleton } from '@/components/promo-banner'
 import { getStoreConfig } from '@/lib/api/store'
+import { getSiteSettings } from '@/lib/sanity/content'
+import { hasImage, sanityImageProps } from '@/lib/sanity/image'
 import { publicEnv } from '@/lib/env.public'
 import { openGraphDefaults } from '@/lib/metadata'
 import './globals.css'
 
 /**
- * Root metadata comes from the API's `/store/config` `seo` block. The call is
- * cached, so the metadata is resolved at build and the shell stays prerendered.
+ * Root metadata prefers the `siteSettings` document and falls back to the
+ * API's `/store/config` `seo` block (E03). Both reads are cached, so the
+ * metadata is resolved at build and the shell stays prerendered.
  */
 const geistSans = Geist({
   subsets: ['latin'],
@@ -29,12 +32,24 @@ const geistMono = Geist_Mono({
 })
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { storeName, seo } = await getStoreConfig()
+  const [{ storeName, seo }, settings] = await Promise.all([
+    getStoreConfig(),
+    getSiteSettings(),
+  ])
+  const name = settings?.storeName || storeName
   return {
     metadataBase: new URL(publicEnv.NEXT_PUBLIC_SITE_URL),
-    title: { default: seo.defaultTitle, template: seo.titleTemplate },
-    description: seo.defaultDescription,
-    openGraph: openGraphDefaults(storeName),
+    title: {
+      default: settings?.seoTitle || seo.defaultTitle,
+      template: seo.titleTemplate,
+    },
+    description: settings?.seoDescription || seo.defaultDescription,
+    openGraph: {
+      ...openGraphDefaults(name),
+      ...(hasImage(settings?.ogImage)
+        ? { images: [{ url: sanityImageProps(settings.ogImage, { width: 1200 }).src }] }
+        : {}),
+    },
     twitter: { card: 'summary_large_image' },
   }
 }
