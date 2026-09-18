@@ -146,7 +146,6 @@ export type Product = {
     _type: 'photo'
     _key: string
   }>
-  badges?: Array<string>
   faqs?: Array<
     {
       _key: string
@@ -435,11 +434,10 @@ export type CheckoutPageQueryResult = {
 
 // Source: ../store/lib/sanity/queries.ts
 // Variable: productQuery
-// Query: *[_type == "product" && apiId == $apiId][0]{    extendedDescription, care, badges,    "gallery": gallery[]{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio },    "categoryFaqs": *[_type == "faq" && references(^.category._ref)]{ _id, question, answer, order },    "attachedFaqs": faqs[]->{ _id, question, answer, order }  }
+// Query: *[_type == "product" && apiId == $apiId][0]{    extendedDescription, care,    "gallery": gallery[]{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio },    "categoryFaqs": *[_type == "faq" && references(^.category._ref)]{ _id, question, answer, order },    "attachedFaqs": faqs[]->{ _id, question, answer, order }  }
 export type ProductQueryResult = {
   extendedDescription: RichText | null
   care: RichText | null
-  badges: Array<string> | null
   gallery: Array<{
     asset?: SanityImageAssetReference
     media?: unknown

@@ -96,20 +96,6 @@ export const product = defineType({
       group: 'editorial',
     }),
     defineField({
-      name: 'badges',
-      title: 'Badges',
-      type: 'array',
-      of: [defineArrayMember({ type: 'string' })],
-      options: {
-        list: [
-          { title: 'New', value: 'New' },
-          { title: 'Limited', value: 'Limited' },
-          { title: 'Staff pick', value: 'Staff pick' },
-        ],
-      },
-      group: 'editorial',
-    }),
-    defineField({
       name: 'faqs',
       title: 'Questions for this product',
       type: 'array',
