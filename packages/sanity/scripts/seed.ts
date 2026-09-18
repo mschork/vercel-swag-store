@@ -74,7 +74,7 @@ async function seed() {
     categories: string[],
   ) =>
     faqs.createIfNotExists({
-      _id: `faq.${id}`,
+      _id: `faq-${id}`,
       _type: 'faq',
       question,
       answer: text(answer),
@@ -82,7 +82,7 @@ async function seed() {
       categories: categories.map((slug) => ({
         _type: 'reference' as const,
         _key: slug,
-        _ref: `category.${slug}`,
+        _ref: `category-${slug}`,
       })),
     })
 
@@ -118,12 +118,12 @@ async function seed() {
 
   const editorial = client.transaction()
   editorial.createIfNotExists({
-    _id: `product.${HOODIE}`,
+    _id: `product-${HOODIE}`,
     _type: 'product',
     apiId: HOODIE,
     name: 'Hoodie',
   })
-  editorial.patch(`product.${HOODIE}`, {
+  editorial.patch(`product-${HOODIE}`, {
     setIfMissing: {
       extendedDescription: text(
         'Heavyweight cotton with a brushed inside, cut a little long in the body so it sits right over a t-shirt.',
@@ -134,19 +134,19 @@ async function seed() {
     },
   })
   editorial.createIfNotExists({
-    _id: `product.${BACKPACK}`,
+    _id: `product-${BACKPACK}`,
     _type: 'product',
     apiId: BACKPACK,
     name: 'Backpack',
   })
-  editorial.patch(`product.${BACKPACK}`, {
+  editorial.patch(`product-${BACKPACK}`, {
     setIfMissing: {
       extendedDescription: text(
         'Twenty litres, a padded sleeve for a 16 inch laptop, and a pocket at the top for the things you reach for on a train.',
       ),
       care: text('Wipe clean with a damp cloth. Air dry.'),
       badges: ['New'],
-      faqs: [{ _type: 'reference', _key: 'laptop-fit', _ref: 'faq.laptop-fit' }],
+      faqs: [{ _type: 'reference', _key: 'laptop-fit', _ref: 'faq-laptop-fit' }],
     },
   })
   await editorial.commit()

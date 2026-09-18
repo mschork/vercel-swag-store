@@ -28,8 +28,13 @@ interface ApiProduct {
   images: string[]
 }
 
-const categoryId = (slug: string) => `category.${slug}`
-const productId = (apiId: string) => `product.${apiId}`
+/**
+ * No dots in an id: Sanity reads everything before a dot as a document path,
+ * the way `drafts.` works, and a document on a path is invisible to an
+ * unauthenticated reader. The store reads this dataset without a token.
+ */
+const categoryId = (slug: string) => `category-${slug}`
+const productId = (apiId: string) => `product-${apiId}`
 
 interface Pagination {
   hasNextPage: boolean
