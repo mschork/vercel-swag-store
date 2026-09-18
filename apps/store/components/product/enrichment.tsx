@@ -95,16 +95,21 @@ export function SeenOn({ entries }: { entries: LookbookForProductQueryResult }) 
   if (entries.length === 0) return null
   const [only] = entries
   if (entries.length === 1 && only) {
+    // The heading runs across the top of the section; the pair below it is the
+    // photo with the quote beside it, set at the foot of the photo and ranged
+    // right, so quote and picture meet in the middle of the page.
     return (
-      <section className="grid gap-5 border-t border-border pt-6 md:grid-cols-2 md:items-center md:gap-12">
-        <div className="flex flex-col gap-3 md:order-first md:self-center">
-          <h2 className="text-xl font-medium tracking-tight">Seen on</h2>
-          {only.quote ? (
-            <Quote className="text-lg leading-8 sm:text-xl sm:leading-9">{only.quote}</Quote>
-          ) : null}
-          <Attribution entry={only} />
+      <section className="flex flex-col gap-5 border-t border-border pt-6">
+        <h2 className="text-xl font-medium tracking-tight">Seen on</h2>
+        <div className="grid gap-5 md:grid-cols-2 md:gap-12">
+          <div className="flex flex-col gap-2 md:justify-end md:text-right">
+            {only.quote ? (
+              <Quote className="text-xl leading-9 sm:text-2xl sm:leading-10">{only.quote}</Quote>
+            ) : null}
+            <Attribution entry={only} />
+          </div>
+          <EntryPhoto entry={only} sizes="(min-width: 768px) 45vw, 90vw" />
         </div>
-        <EntryPhoto entry={only} sizes="(min-width: 768px) 45vw, 90vw" />
       </section>
     )
   }
