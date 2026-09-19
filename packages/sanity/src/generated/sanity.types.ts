@@ -81,9 +81,9 @@ export type ProductReference = {
   [internalGroqTypeReferenceTo]?: 'product'
 }
 
-export type LookbookEntry = {
+export type Testimonial = {
   _id: string
-  _type: 'lookbookEntry'
+  _type: 'testimonial'
   _createdAt: string
   _updatedAt: string
   _rev: string
@@ -275,7 +275,7 @@ export type SiteSettings = {
   productPage?: {
     aboutHeading?: string
     careHeading?: string
-    lookbookHeading?: string
+    testimonialsHeading?: string
     faqHeading?: string
   }
 }
@@ -416,7 +416,7 @@ export type AllSanitySchemaTypes =
   | SearchGap
   | SanityImageAssetReference
   | ProductReference
-  | LookbookEntry
+  | Testimonial
   | SanityImageCrop
   | SanityImageHotspot
   | Faq
@@ -442,7 +442,7 @@ export type AllSanitySchemaTypes =
 
 // Source: ../store/lib/sanity/queries.ts
 // Variable: siteSettingsQuery
-// Query: *[_type == "siteSettings"][0]{    storeName, seoTitle, seoDescription, footerText,    productPage{ aboutHeading, careHeading, lookbookHeading, faqHeading },    "ogImage": ogImage{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio },    socialLinks[]{ label, url }  }
+// Query: *[_type == "siteSettings"][0]{    storeName, seoTitle, seoDescription, footerText,    productPage{ aboutHeading, careHeading, testimonialsHeading, faqHeading },    "ogImage": ogImage{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio },    socialLinks[]{ label, url }  }
 export type SiteSettingsQueryResult = {
   storeName: string
   seoTitle: string | null
@@ -451,7 +451,7 @@ export type SiteSettingsQueryResult = {
   productPage: {
     aboutHeading: string | null
     careHeading: string | null
-    lookbookHeading: string | null
+    testimonialsHeading: string | null
     faqHeading: string | null
   } | null
   ogImage: {
@@ -538,9 +538,9 @@ export type ProductQueryResult = {
 } | null
 
 // Source: ../store/lib/sanity/queries.ts
-// Variable: lookbookForProductQuery
-// Query: *[_type == "lookbookEntry" && consent == true && references($productDocId)]    | order(publishedAt desc){      _id, person, role, quote,      "photo": photo{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio }    }
-export type LookbookForProductQueryResult = Array<{
+// Variable: testimonialsForProductQuery
+// Query: *[_type == "testimonial" && consent == true && references($productDocId)]    | order(publishedAt desc){      _id, person, role, quote,      "photo": photo{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio }    }
+export type TestimonialsForProductQueryResult = Array<{
   _id: string
   person: string
   role: string | null
@@ -559,7 +559,7 @@ export type LookbookForProductQueryResult = Array<{
 
 // Source: ../store/lib/sanity/queries.ts
 // Variable: favouriteProductsQuery
-// Query: *[_type == "product" && missing != true && count(*[_type == "lookbookEntry" && references(^._id)]) > 0]{    apiId,    "mentions": count(*[_type == "lookbookEntry" && references(^._id)]),    "newest": *[_type == "lookbookEntry" && references(^._id)] | order(publishedAt desc)[0].publishedAt  } | order(mentions desc, newest desc, apiId asc)[0...$limit]
+// Query: *[_type == "product" && missing != true && count(*[_type == "testimonial" && references(^._id)]) > 0]{    apiId,    "mentions": count(*[_type == "testimonial" && references(^._id)]),    "newest": *[_type == "testimonial" && references(^._id)] | order(publishedAt desc)[0].publishedAt  } | order(mentions desc, newest desc, apiId asc)[0...$limit]
 export type FavouriteProductsQueryResult = Array<{
   apiId: string
   mentions: number

@@ -3,7 +3,7 @@ import { PortableText } from '@/components/portable-text'
 import type { ProductFaq } from '@/lib/sanity/faqs'
 import { sanityImageProps } from '@/lib/sanity/image'
 import type { MergedProduct } from '@/lib/sanity/merge'
-import type { LookbookForProductQueryResult } from '@repo/sanity/generated'
+import type { TestimonialsForProductQueryResult } from '@repo/sanity/generated'
 
 /**
  * What an editor adds to a product page (E09). Every block renders only when
@@ -49,7 +49,7 @@ export function Care(props: { text: RichText | null | undefined; heading: string
   return <RichTextSection {...props} />
 }
 
-type LookbookEntry = LookbookForProductQueryResult[number]
+type Testimonial = TestimonialsForProductQueryResult[number]
 
 /**
  * What the person said, in guillemets rather than straight quotes, with a
@@ -64,7 +64,7 @@ function Quote({ children, className }: { children: string; className?: string }
 }
 
 /** Who is in the photo and what they do, under the quote in both layouts. */
-function Attribution({ entry }: { entry: LookbookEntry }) {
+function Attribution({ entry }: { entry: Testimonial }) {
   return (
     <p className="text-sm text-fg-secondary">
       {entry.person}
@@ -73,7 +73,7 @@ function Attribution({ entry }: { entry: LookbookEntry }) {
   )
 }
 
-function EntryPhoto({ entry, sizes }: { entry: LookbookEntry; sizes: string }) {
+function EntryPhoto({ entry, sizes }: { entry: Testimonial; sizes: string }) {
   if (!entry.photo) return null
   return (
     <div className="relative aspect-[4/5] overflow-hidden rounded-lg border border-border bg-bg-secondary">
@@ -89,7 +89,7 @@ function EntryPhoto({ entry, sizes }: { entry: LookbookEntry; sizes: string }) {
 }
 
 /** How many entries follow the feature. Five on the page at most, newest first. */
-const MAX_LOOKBOOK_ROW = 4
+const MAX_TESTIMONIAL_ROW = 4
 
 /**
  * One entry across the full width: a photo filling one column, the quote at
@@ -97,7 +97,7 @@ const MAX_LOOKBOOK_ROW = 4
  * ranged right against it; mirrored, the photo leads and the words stay ranged
  * left, so either way the quote sits against the picture it belongs to.
  */
-function WideEntry({ entry, mirrored = false }: { entry: LookbookEntry; mirrored?: boolean }) {
+function WideEntry({ entry, mirrored = false }: { entry: Testimonial; mirrored?: boolean }) {
   return (
     <div className="grid gap-5 md:grid-cols-2 md:gap-12">
       <div className={`flex flex-col gap-2 md:justify-end ${mirrored ? '' : 'md:text-right'}`}>
@@ -119,7 +119,7 @@ function WideEntry({ entry, mirrored = false }: { entry: LookbookEntry; mirrored
  * card's photo has, the words beside it at its foot. The gaps match the card
  * grid's, which is what makes the photos come out the same size.
  */
-function EntryPair({ entries }: { entries: readonly LookbookEntry[] }) {
+function EntryPair({ entries }: { entries: readonly Testimonial[] }) {
   return (
     <ul className="mt-3 grid gap-6 md:grid-cols-2">
       {entries.map((entry) => (
@@ -136,7 +136,7 @@ function EntryPair({ entries }: { entries: readonly LookbookEntry[] }) {
 }
 
 /** Three or four entries: cards, the photo with the words underneath. */
-function EntryCards({ entries }: { entries: readonly LookbookEntry[] }) {
+function EntryCards({ entries }: { entries: readonly Testimonial[] }) {
   return (
     <ul className="mt-3 grid gap-6 sm:grid-cols-2 md:grid-cols-4">
       {entries.map((entry) => (
@@ -153,24 +153,24 @@ function EntryCards({ entries }: { entries: readonly LookbookEntry[] }) {
 }
 
 /**
- * Lookbook entries naming this product, newest first, under a heading the site
- * settings own (`siteSettings.productPage.lookbookHeading`).
+ * Testimonials naming this product, newest first, under a heading the site
+ * settings own (`siteSettings.productPage.testimonialsHeading`).
  *
  * The newest entry is the feature. What follows depends on how many there are,
  * so the second row always spans the page instead of trailing off to the left:
  * one is the feature mirrored, two take a half each, three or four are cards.
  * Beyond five, the rest wait for their turn as newer entries push them along.
  */
-export function Lookbook({
+export function Testimonials({
   entries,
   heading,
 }: {
-  entries: LookbookForProductQueryResult
+  entries: TestimonialsForProductQueryResult
   heading: string
 }) {
   const [feature, ...rest] = entries
   if (!feature) return null
-  const row = rest.slice(0, MAX_LOOKBOOK_ROW)
+  const row = rest.slice(0, MAX_TESTIMONIAL_ROW)
   const [second] = row
   return (
     <section className="flex flex-col gap-5 border-t border-border pt-6">

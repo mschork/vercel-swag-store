@@ -36,12 +36,12 @@ _Avoid_: Product content, extra content, overrides
 The Sanity mirror of one API category. It exists so an FAQ can point at a category and a product can be matched to it.
 _Avoid_: Sanity category, taxonomy term
 
-**Lookbook entry**:
-One photo of a person with the products they are wearing, plus their name, role and a quote. Shown on the page of each product it names.
-_Avoid_: Editorial photo, testimonial, story
+**Testimonial**:
+What one person says about the products they are photographed with: a quote, their name and role, and the photo. Shown on the page of each product it names, under "What people say about it".
+_Avoid_: Lookbook entry (the term until 19 Sep 2026), editorial photo, story, review (nobody rates anything)
 
-**Lookbook mention**:
-One published lookbook entry naming one product. It records that an editor photographed the product with someone, not that anyone bought, rated or clicked it. The count of mentions is what orders the favourites on the home page.
+**Testimonial mention**:
+One published testimonial naming one product. It records that an editor photographed the product with someone, not that anyone bought, rated or clicked it. The count of mentions is what orders the favourites on the home page.
 _Avoid_: Popularity, rating, vote, like
 
 **FAQ**:

@@ -2,13 +2,14 @@ import { defineArrayMember, defineField, defineType } from 'sanity'
 import { imageField } from './shared'
 
 /**
- * One photo of a person with the products they are wearing (CONTEXT.md),
- * shown on the page of each product it names. Publishing needs consent on
- * record: the photo is of a real person, and nothing enforces that but this.
+ * What one person says about the products they are photographed with
+ * (CONTEXT.md): a name, a photo and a quote, shown on the page of each product
+ * it names. Publishing needs consent on record: the photo is of a real person,
+ * and nothing enforces that but this.
  */
-export const lookbookEntry = defineType({
-  name: 'lookbookEntry',
-  title: 'Lookbook entry',
+export const testimonial = defineType({
+  name: 'testimonial',
+  title: 'Testimonial',
   type: 'document',
   fields: [
     defineField({

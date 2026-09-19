@@ -31,7 +31,7 @@ Portable Text everywhere: paragraphs, bold, italic and links. No headings, lists
 
 ## Studio `apps/studio`
 
-- Desk: Site settings, Home page, Checkout page, then Products, FAQs, Lookbook, then Categories. Singletons open their document directly; the create menu offers only FAQ and Lookbook entry.
+- Desk, in the order an editor works, each item with its own icon. Under the list's "Content" title: Products, FAQs, Lookbook. Under a "Website" heading: Home page, Checkout page, Site settings. Under "Taxonomies": Categories. Under "Demand signals" (E13): Search gaps, All gaps, and a Product ideas folder. The headings are titled dividers. Singletons open their document directly; the create menu offers only FAQ and Lookbook entry.
 - Previews: product shows its photo, name and category; lookbook shows the photo and person; FAQ shows the question and its categories.
 - Plugins: `structureTool`, `visionTool`, `sanity-plugin-media`.
 - `sanity typegen`: `sanity schema extract` then `sanity typegen generate` into `packages/sanity/src/generated/sanity.types.ts`, committed, script `pnpm --filter @repo/sanity typegen`.

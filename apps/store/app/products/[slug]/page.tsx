@@ -12,7 +12,7 @@ import {
   About,
   Care,
   Faqs,
-  Lookbook,
+  Testimonials,
 } from '@/components/product/enrichment'
 import { ProductGallery } from '@/components/product/gallery'
 import {
@@ -26,7 +26,7 @@ import { PRODUCT_HEADINGS_FALLBACK, type ProductHeadings } from '@/lib/content/f
 import { publicEnv } from '@/lib/env.public'
 import { openGraphDefaults } from '@/lib/metadata'
 import {
-  getLookbookForProduct,
+  getTestimonialsForProduct,
   getProductDocument,
   getSiteSettings,
 } from '@/lib/sanity/content'
@@ -86,17 +86,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  */
 export default async function ProductPage({ params }: Props) {
   const product = await productFor(params)
-  // Enrichment and lookbook are cached like the catalogue, so the page stays
+  // Enrichment and testimonials are cached like the catalogue, so the page stays
   // prerendered; a missing document or a failed call renders the page as it
   // was before Sanity existed (specs/E09-sanity-integration.md).
-  const [category, document, lookbook, settings] = await Promise.all([
+  const [category, document, testimonials, settings] = await Promise.all([
     findCategory(product.category),
     getProductDocument(product.id),
-    getLookbookForProduct(product.id),
+    getTestimonialsForProduct(product.id),
     getSiteSettings(),
   ])
   const merged = mergeProduct(product, document)
-  const entries = lookbook ?? []
+  const entries = testimonials ?? []
   // Nothing editorial: the page must be exactly the page E05 shipped, down to
   // the spacing, so the wrapper is not rendered at all rather than left empty.
   const enriched =
@@ -110,7 +110,7 @@ export default async function ProductPage({ params }: Props) {
   const headings: ProductHeadings = {
     about: copy?.aboutHeading || PRODUCT_HEADINGS_FALLBACK.about,
     care: copy?.careHeading || PRODUCT_HEADINGS_FALLBACK.care,
-    lookbook: copy?.lookbookHeading || PRODUCT_HEADINGS_FALLBACK.lookbook,
+    testimonials: copy?.testimonialsHeading || PRODUCT_HEADINGS_FALLBACK.testimonials,
     faq: copy?.faqHeading || PRODUCT_HEADINGS_FALLBACK.faq,
   }
   const categoryName = category?.name ?? product.category
@@ -153,7 +153,7 @@ export default async function ProductPage({ params }: Props) {
         <div className="flex flex-col gap-8">
           {/* People first: the buy panel already carries the short description,
               so the photo and quote follow it and the reference text comes after. */}
-          <Lookbook entries={entries} heading={headings.lookbook} />
+          <Testimonials entries={entries} heading={headings.testimonials} />
           <About text={merged.extendedDescription} heading={headings.about} />
           <Care text={merged.care} heading={headings.care} />
           <Faqs faqs={merged.faqs} heading={headings.faq} />

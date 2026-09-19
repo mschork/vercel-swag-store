@@ -29,7 +29,7 @@ describe('favouriteProducts', () => {
     expect(ranked.map((p) => p.id)).toEqual(['mug_001'])
   })
 
-  it('returns nothing when the lookbook names nothing', () => {
+  it('returns nothing when no testimonial names a product', () => {
     expect(favouriteProducts([], catalogue)).toEqual([])
   })
 

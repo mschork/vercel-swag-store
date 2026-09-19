@@ -76,8 +76,8 @@ export const siteSettings = defineType({
           description: 'Default: “How to use and care”.',
         }),
         defineField({
-          name: 'lookbookHeading',
-          title: 'Lookbook entries',
+          name: 'testimonialsHeading',
+          title: 'Testimonials',
           type: 'string',
           description: 'Default: “What people say about it”.',
         }),
@@ -130,7 +130,7 @@ export const homePage = defineType({
       title: 'People’s favourites',
       type: 'object',
       description:
-        'The products named most often by published lookbook entries. Ordered by how many entries name them; nothing to show means no section.',
+        'The products named most often by published testimonials. Ordered by how many name them; nothing to show means no section.',
       options: { collapsible: true, collapsed: true },
       fields: [
         defineField({
