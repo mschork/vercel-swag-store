@@ -194,6 +194,9 @@ export type HomePage = {
       _type: 'image'
     }
   }
+  favourites?: {
+    heading?: string
+  }
   featured?: {
     heading?: string
     linkLabel?: string
@@ -421,7 +424,7 @@ export type SiteSettingsQueryResult = {
 
 // Source: ../store/lib/sanity/queries.ts
 // Variable: homePageQuery
-// Query: *[_type == "homePage"][0]{    hero{ headline, description, "image": image{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio } },    featured{ heading, linkLabel }  }
+// Query: *[_type == "homePage"][0]{    hero{ headline, description, "image": image{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio } },    featured{ heading, linkLabel },    favourites{ heading }  }
 export type HomePageQueryResult = {
   hero: {
     headline: string | null
@@ -440,6 +443,9 @@ export type HomePageQueryResult = {
   featured: {
     heading: string | null
     linkLabel: string | null
+  } | null
+  favourites: {
+    heading: string | null
   } | null
 } | null
 
@@ -501,4 +507,13 @@ export type LookbookForProductQueryResult = Array<{
     lqip: string | null
     aspectRatio: number | null
   } | null
+}>
+
+// Source: ../store/lib/sanity/queries.ts
+// Variable: favouriteProductsQuery
+// Query: *[_type == "product" && missing != true && count(*[_type == "lookbookEntry" && references(^._id)]) > 0]{    apiId,    "mentions": count(*[_type == "lookbookEntry" && references(^._id)]),    "newest": *[_type == "lookbookEntry" && references(^._id)] | order(publishedAt desc)[0].publishedAt  } | order(mentions desc, newest desc, apiId asc)[0...$limit]
+export type FavouriteProductsQueryResult = Array<{
+  apiId: string
+  mentions: number
+  newest: string | null
 }>
