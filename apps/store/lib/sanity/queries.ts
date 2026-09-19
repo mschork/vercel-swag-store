@@ -22,7 +22,8 @@ export const siteSettingsQuery = defineQuery(`
 export const homePageQuery = defineQuery(`
   *[_type == "homePage"][0]{
     hero{ headline, description, "image": image${IMAGE} },
-    featured{ heading, linkLabel }
+    featured{ heading, linkLabel },
+    favourites{ heading }
   }
 `)
 
@@ -52,4 +53,18 @@ export const lookbookForProductQuery = defineQuery(`
       _id, person, role, quote,
       "photo": photo${IMAGE}
     }
+`)
+
+/**
+ * The products published lookbook entries name most: the count first, then the
+ * newest entry, then the id so the order never shuffles between two builds.
+ * Mirrors the API no longer returns are skipped, and the store looks every
+ * `apiId` up in the API before rendering anything.
+ */
+export const favouriteProductsQuery = defineQuery(`
+  *[_type == "product" && missing != true && count(*[_type == "lookbookEntry" && references(^._id)]) > 0]{
+    apiId,
+    "mentions": count(*[_type == "lookbookEntry" && references(^._id)]),
+    "newest": *[_type == "lookbookEntry" && references(^._id)] | order(publishedAt desc)[0].publishedAt
+  } | order(mentions desc, newest desc, apiId asc)[0...$limit]
 `)

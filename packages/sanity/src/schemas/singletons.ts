@@ -126,6 +126,22 @@ export const homePage = defineType({
       ],
     }),
     defineField({
+      name: 'favourites',
+      title: 'People’s favourites',
+      type: 'object',
+      description:
+        'The products named most often by published lookbook entries. Ordered by how many entries name them; nothing to show means no section.',
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({
+          name: 'heading',
+          title: 'Heading',
+          type: 'string',
+          description: 'Default: “People’s favourites”.',
+        }),
+      ],
+    }),
+    defineField({
       name: 'featured',
       title: 'Featured grid',
       type: 'object',

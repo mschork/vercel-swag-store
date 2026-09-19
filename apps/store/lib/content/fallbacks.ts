@@ -59,3 +59,8 @@ export const FEATURED_FALLBACK = {
   heading: 'Featured',
   linkLabel: 'View all',
 } as const
+
+/** The heading over the lookbook-ranked grid, matching `homePage.favourites`. */
+export const FAVOURITES_FALLBACK = {
+  heading: 'People’s favourites',
+} as const
