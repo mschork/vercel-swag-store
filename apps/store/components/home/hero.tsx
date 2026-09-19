@@ -26,7 +26,7 @@ export async function Hero() {
     : { src: HERO_IMAGE.src, alt: HERO_IMAGE.alt, placeholder: undefined, blurDataURL: undefined }
   return (
     <section aria-labelledby="hero-heading" className="relative">
-      <div className="relative aspect-[4/3] w-full md:aspect-[2/1] lg:aspect-auto lg:h-[min(60svh,640px)]">
+      <div className="relative aspect-4/3 w-full md:aspect-2/1 lg:aspect-auto lg:h-[min(60svh,640px)]">
         <Image
           {...photo}
           alt={photo.alt || HERO_IMAGE.alt}
