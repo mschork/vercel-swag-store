@@ -55,6 +55,13 @@ export const siteSettings = defineType({
       ],
     }),
     defineField({ name: 'footerText', title: 'Footer text', type: 'string' }),
+    defineField({
+      name: 'lookbookHeading',
+      title: 'Lookbook heading',
+      type: 'string',
+      description:
+        'Heading above the lookbook entries on a product page. Left empty, the page says “What people say about it”.',
+    }),
   ],
   preview: { select: { title: 'storeName' } },
 })

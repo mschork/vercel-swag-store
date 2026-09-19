@@ -85,12 +85,19 @@ function EntryPhoto({ entry, sizes }: { entry: LookbookEntry; sizes: string }) {
 }
 
 /**
- * Lookbook entries naming this product, under a heading that spans the section.
+ * Lookbook entries naming this product, under a heading the site settings own
+ * (`siteSettings.lookbookHeading`) so an editor can rename the section.
  * One entry is a feature row: the quote on the left, the photo filling the
  * right column at the width of the buy panel above. Two or more fall back to a
  * grid, where equal weight is the point.
  */
-export function SeenOn({ entries }: { entries: LookbookForProductQueryResult }) {
+export function SeenOn({
+  entries,
+  heading,
+}: {
+  entries: LookbookForProductQueryResult
+  heading: string
+}) {
   if (entries.length === 0) return null
   const [only] = entries
   if (entries.length === 1 && only) {
@@ -99,7 +106,7 @@ export function SeenOn({ entries }: { entries: LookbookForProductQueryResult }) 
     // right, so quote and picture meet in the middle of the page.
     return (
       <section className="flex flex-col gap-5 border-t border-border pt-6">
-        <h2 className="text-xl font-medium tracking-tight">What people say about it</h2>
+        <h2 className="text-xl font-medium tracking-tight">{heading}</h2>
         <div className="grid gap-5 md:grid-cols-2 md:gap-12">
           <div className="flex flex-col gap-2 md:justify-end md:text-right">
             {only.quote ? (
@@ -113,7 +120,7 @@ export function SeenOn({ entries }: { entries: LookbookForProductQueryResult }) 
     )
   }
   return (
-    <Section title="What people say about it">
+    <Section title={heading}>
       <ul className="grid gap-6 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2">
         {entries.map((entry) => (
           <li key={entry._id} className="flex flex-col gap-3">

@@ -21,9 +21,14 @@ import {
 import { findCategory } from '@/lib/api/categories'
 import { findProduct, getAllProductSlugs } from '@/lib/api/products'
 import { getStoreConfig } from '@/lib/api/store'
+import { LOOKBOOK_HEADING_FALLBACK } from '@/lib/content/fallbacks'
 import { publicEnv } from '@/lib/env.public'
 import { openGraphDefaults } from '@/lib/metadata'
-import { getLookbookForProduct, getProductDocument } from '@/lib/sanity/content'
+import {
+  getLookbookForProduct,
+  getProductDocument,
+  getSiteSettings,
+} from '@/lib/sanity/content'
 import { photoUrls } from '@/lib/sanity/image'
 import { mergeProduct } from '@/lib/sanity/merge'
 import { breadcrumbJsonLd } from '@/lib/structured-data'
@@ -83,10 +88,11 @@ export default async function ProductPage({ params }: Props) {
   // Enrichment and lookbook are cached like the catalogue, so the page stays
   // prerendered; a missing document or a failed call renders the page as it
   // was before Sanity existed (specs/E09-sanity-integration.md).
-  const [category, document, lookbook] = await Promise.all([
+  const [category, document, lookbook, settings] = await Promise.all([
     findCategory(product.category),
     getProductDocument(product.id),
     getLookbookForProduct(product.id),
+    getSiteSettings(),
   ])
   const merged = mergeProduct(product, document)
   const entries = lookbook ?? []
@@ -136,7 +142,7 @@ export default async function ProductPage({ params }: Props) {
       {enriched ? (
         <div className="flex flex-col gap-8">
           <ProductStory product={merged} />
-          <SeenOn entries={entries} />
+          <SeenOn entries={entries} heading={settings?.lookbookHeading || LOOKBOOK_HEADING_FALLBACK} />
           <CommonQuestions faqs={merged.faqs} />
         </div>
       ) : null}

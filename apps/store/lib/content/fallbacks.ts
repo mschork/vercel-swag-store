@@ -39,3 +39,10 @@ export const CHECKOUT_FALLBACK: CheckoutContent = {
   body: 'This is a demo store, so nothing has been charged, shipped or sent.',
   continueShoppingLabel: 'Continue shopping',
 }
+
+/**
+ * The heading above the lookbook entries on a product page, matching
+ * `siteSettings.lookbookHeading` (E08). An editor can rename the section
+ * without a deploy; empty or missing, the page says this.
+ */
+export const LOOKBOOK_HEADING_FALLBACK = 'What people say about it'
