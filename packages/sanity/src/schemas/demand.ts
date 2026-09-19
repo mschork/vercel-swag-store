@@ -67,12 +67,16 @@ export const productIdea = defineType({
       type: 'string',
       options: { list: titled(IDEA_STATUSES), layout: 'radio' },
       initialValue: 'proposed',
+      // Set by the Accept and Reject actions in the Studio, never by hand, so
+      // a rejection always carries its reason and a decision its date.
+      readOnly: true,
       validation: (rule) => rule.required(),
     }),
     defineField({
       name: 'rejectionReason',
       title: 'Reason for rejecting',
       type: 'string',
+      readOnly: true,
       hidden: ({ document }) => document?.status !== 'rejected',
     }),
     defineField({

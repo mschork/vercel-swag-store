@@ -44,5 +44,19 @@ export default defineBlueprint({
         projection: '{_id}',
       },
     }),
+    // An editor accepted or rejected an idea in the Studio: stamp the date and
+    // move its gaps. Its own write leaves `status` alone, so it cannot re-fire.
+    defineDocumentFunction({
+      name: 'idea-decided',
+      src: './apps/functions/idea-decided',
+      project,
+      timeout: 15,
+      event: {
+        on: ['update'],
+        resource: production,
+        filter: `_type == 'productIdea' && status in ['accepted', 'rejected'] && delta::changedAny(status)`,
+        projection: '{_id, status}',
+      },
+    }),
   ],
 })
