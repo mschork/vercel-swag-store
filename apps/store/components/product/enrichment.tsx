@@ -91,12 +91,18 @@ function EntryPhoto({ entry, sizes }: { entry: LookbookEntry; sizes: string }) {
   )
 }
 
+/** How many entries share the row under the feature, filling from the left. */
+const MAX_LOOKBOOK_ROW = 4
+
 /**
- * Lookbook entries naming this product, under a heading the site settings own
- * (`siteSettings.lookbookHeading`) so an editor can rename the section.
- * One entry is a feature row: the quote on the left, the photo filling the
- * right column at the width of the buy panel above. Two or more fall back to a
- * grid, where equal weight is the point.
+ * Lookbook entries naming this product, newest first, under a heading the site
+ * settings own (`siteSettings.productPage.lookbookHeading`).
+ *
+ * The newest entry is the feature: quote on the left, ranged right at the foot
+ * of a photo that fills the right column. Any others follow in a row of up to
+ * four, filling from the left, so two entries read as one big picture and one
+ * small rather than as a cluster. Beyond five, the rest wait for their turn as
+ * newer entries push them along.
  */
 export function SeenOn({
   entries,
@@ -105,41 +111,38 @@ export function SeenOn({
   entries: LookbookForProductQueryResult
   heading: string
 }) {
-  if (entries.length === 0) return null
-  const [only] = entries
-  if (entries.length === 1 && only) {
-    // The heading runs across the top of the section; the pair below it is the
-    // photo with the quote beside it, set at the foot of the photo and ranged
-    // right, so quote and picture meet in the middle of the page.
-    return (
-      <section className="flex flex-col gap-5 border-t border-border pt-6">
-        <h2 className="text-xl font-medium tracking-tight">{heading}</h2>
-        <div className="grid gap-5 md:grid-cols-2 md:gap-12">
-          <div className="flex flex-col gap-2 md:justify-end md:text-right">
-            {only.quote ? (
-              <Quote className="text-xl leading-9 sm:text-2xl sm:leading-10">{only.quote}</Quote>
-            ) : null}
-            <Attribution entry={only} />
-          </div>
-          <EntryPhoto entry={only} sizes="(min-width: 768px) 45vw, 90vw" />
-        </div>
-      </section>
-    )
-  }
+  const [feature, ...rest] = entries
+  if (!feature) return null
+  const row = rest.slice(0, MAX_LOOKBOOK_ROW)
   return (
-    <Section title={heading}>
-      <ul className="grid gap-6 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2">
-        {entries.map((entry) => (
-          <li key={entry._id} className="flex flex-col gap-3">
-            <EntryPhoto entry={entry} sizes="(min-width: 1024px) 22vw, (min-width: 640px) 45vw, 90vw" />
-            <div className="flex flex-col gap-1">
-              {entry.quote ? <Quote>{entry.quote}</Quote> : null}
-              <Attribution entry={entry} />
-            </div>
-          </li>
-        ))}
-      </ul>
-    </Section>
+    <section className="flex flex-col gap-5 border-t border-border pt-6">
+      <h2 className="text-xl font-medium tracking-tight">{heading}</h2>
+      <div className="grid gap-5 md:grid-cols-2 md:gap-12">
+        <div className="flex flex-col gap-2 md:justify-end md:text-right">
+          {feature.quote ? (
+            <Quote className="text-xl leading-9 sm:text-2xl sm:leading-10">{feature.quote}</Quote>
+          ) : null}
+          <Attribution entry={feature} />
+        </div>
+        <EntryPhoto entry={feature} sizes="(min-width: 768px) 45vw, 90vw" />
+      </div>
+      {row.length > 0 ? (
+        <ul className="mt-3 grid gap-6 sm:grid-cols-2 md:grid-cols-4">
+          {row.map((entry) => (
+            <li key={entry._id} className="flex flex-col gap-3">
+              <EntryPhoto
+                entry={entry}
+                sizes="(min-width: 768px) 22vw, (min-width: 640px) 45vw, 90vw"
+              />
+              <div className="flex flex-col gap-1">
+                {entry.quote ? <Quote className="text-sm">{entry.quote}</Quote> : null}
+                <Attribution entry={entry} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
   )
 }
 
