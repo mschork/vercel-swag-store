@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Container } from '@/components/container'
-import { FavouriteProducts } from '@/components/home/favourite-products'
+import { FavouriteProducts } from '@/components/favourite-products'
 import { FeaturedProducts } from '@/components/home/featured-products'
 import { Hero } from '@/components/home/hero'
 import { getStoreConfig } from '@/lib/api/store'

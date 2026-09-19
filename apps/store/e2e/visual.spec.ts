@@ -15,9 +15,9 @@ import { expect, test, type BrowserContext, type Page } from '@playwright/test'
  * on Linux and needs its own set, generated there with `--update-snapshots`
  * (E12 wires the job).
  *
- * The home shot includes the favourites row, which the lookbook decides. Adding
- * or removing a lookbook entry can change which products it holds, so these
- * four files are regenerated when the lookbook changes (E09).
+ * The home and cart shots include the favourites row, which the lookbook
+ * decides. Adding or removing a lookbook entry can change which products it
+ * holds, so those eight files are regenerated when the lookbook changes (E09).
  */
 test.describe.configure({ timeout: 180_000 })
 

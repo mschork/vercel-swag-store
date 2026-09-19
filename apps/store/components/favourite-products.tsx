@@ -14,14 +14,22 @@ const MAX_FAVOURITES = 4
  * refreshes it.
  *
  * Nothing in the lookbook means no section at all: the page then looks exactly
- * as it did before this existed.
+ * as it did before this existed. The cart page renders the same row and passes
+ * the products already in the cart as `exclude`.
  */
-export async function FavouriteProducts({ heading }: { heading: string }) {
+export async function FavouriteProducts({
+  heading,
+  exclude = [],
+}: {
+  heading: string
+  exclude?: readonly string[]
+}) {
   const [rows, catalogue] = await Promise.all([
-    getFavouriteProducts(MAX_FAVOURITES),
+    // Deep enough that dropping what the page already shows still fills a row.
+    getFavouriteProducts(MAX_FAVOURITES + exclude.length),
     getAllProducts(),
   ])
-  const products = favouriteProducts(rows ?? [], catalogue)
+  const products = favouriteProducts(rows ?? [], catalogue, exclude).slice(0, MAX_FAVOURITES)
   if (products.length === 0) return null
   return (
     <section
