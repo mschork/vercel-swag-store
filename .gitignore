@@ -3,6 +3,9 @@ node_modules
 
 # build output
 .next
+# Next's SWC plugin cache, and what Vercel Workflow generates at build time (E13)
+.swc
+apps/store/app/.well-known/workflow
 .turbo
 dist
 out
