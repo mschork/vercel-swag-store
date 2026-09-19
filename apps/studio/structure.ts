@@ -24,8 +24,8 @@ const API_VERSION = '2026-09-01'
  * comes first, under the list's own "Content" title: products, questions and
  * testimonials. "Website" holds the three pages that exist once. "Taxonomies"
  * holds categories, which mirror the API and which nobody edits. "Demand
- * signals" closes the list: what the search-gap loop (E13) recorded and
- * proposed, for reading and deciding.
+ * signals" closes the list: what the search-gap loop (E13) proposed, which is
+ * where an editor has something to decide, then what it recorded.
  */
 export const structure: StructureResolver = (S) =>
   S.list()
@@ -44,6 +44,19 @@ export const structure: StructureResolver = (S) =>
       S.documentTypeListItem('category').title('Categories').icon(TagIcon),
 
       S.divider().title('Demand signals'),
+      S.listItem()
+        .title('Product ideas')
+        .id('productIdeas')
+        .icon(BulbOutlineIcon)
+        .child(
+          S.list()
+            .title('Product ideas')
+            .items([
+              ideas(S, 'proposed', 'Open ideas', ClockIcon, 'estimatedDemand'),
+              ideas(S, 'accepted', 'Accepted ideas', CheckmarkCircleIcon, 'decidedAt'),
+              ideas(S, 'rejected', 'Rejected ideas', CloseCircleIcon, 'decidedAt'),
+            ]),
+        ),
       S.listItem()
         .title('Search gaps')
         .id('searchGapsOpen')
@@ -66,19 +79,6 @@ export const structure: StructureResolver = (S) =>
             .apiVersion(API_VERSION)
             .filter('_type == "searchGap"')
             .defaultOrdering([{ field: 'lastSeen', direction: 'desc' }]),
-        ),
-      S.listItem()
-        .title('Product ideas')
-        .id('productIdeas')
-        .icon(BulbOutlineIcon)
-        .child(
-          S.list()
-            .title('Product ideas')
-            .items([
-              ideas(S, 'proposed', 'Open ideas', ClockIcon, 'estimatedDemand'),
-              ideas(S, 'accepted', 'Accepted ideas', CheckmarkCircleIcon, 'decidedAt'),
-              ideas(S, 'rejected', 'Rejected ideas', CloseCircleIcon, 'decidedAt'),
-            ]),
         ),
     ])
 
