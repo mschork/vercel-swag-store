@@ -16,7 +16,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['**/*.test.ts', '**/*.test.tsx'],
-    exclude: ['node_modules/**', '.next/**'],
+    // Workflow integration tests have their own config (vitest.integration.config.mts).
+    exclude: ['node_modules/**', '.next/**', '**/*.integration.test.ts'],
     setupFiles: ['./test/setup.ts'],
     // Loads .env and .env.local so `API_INTEGRATION=1 pnpm test` can hit the
     // live API; unit tests never read them because fetch is mocked.
