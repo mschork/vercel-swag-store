@@ -1,10 +1,12 @@
 import { visionTool } from '@sanity/vision'
 import { defineConfig } from 'sanity'
 import { media } from 'sanity-plugin-media'
+import { presentationTool } from 'sanity/presentation'
 import { structureTool } from 'sanity/structure'
 import { CREATABLE_TYPES, schemaTypes } from '@repo/sanity'
 import { requireSanityEnv } from '@repo/sanity/env'
 import { AcceptIdea, RejectIdea } from './actions/idea-decision'
+import { resolve } from './presentation/resolve'
 import { structure } from './structure'
 
 const { projectId, dataset } = requireSanityEnv({
@@ -18,12 +20,29 @@ const { projectId, dataset } = requireSanityEnv({
   },
 })
 
+/**
+ * The store the Presentation tool frames (E17). Always the production store,
+ * or `http://localhost:3000` for a local run: a Vercel preview deployment
+ * answers with a login redirect and cannot be framed.
+ */
+const previewOrigin =
+  process.env.SANITY_STUDIO_PREVIEW_ORIGIN || 'https://vercel-swag-store-ms.vercel.app'
+
 export default defineConfig({
   name: 'default',
   title: 'Vercel Swag Store',
   projectId,
   dataset,
-  plugins: [structureTool({ structure }), media(), visionTool()],
+  plugins: [
+    structureTool({ structure }),
+    // Live editing beside the desk, which stays as it is (E08).
+    presentationTool({
+      previewUrl: { origin: previewOrigin, previewMode: { enable: '/api/draft-mode/enable' } },
+      resolve,
+    }),
+    media(),
+    visionTool(),
+  ],
   schema: {
     types: schemaTypes,
   },
