@@ -158,7 +158,7 @@ An editor decides in the Studio with two buttons; a Function finishes the decisi
 - [x] A gap reaching the threshold starts exactly one analysis run however many Function calls arrive, and a failed run leaves no gap in `analysing`.
 - [x] The run writes sensible ideas for the seeded gaps: one umbrella idea, "hodie" `matched` to hoodies, "umb" and the gibberish `ignored`, no idea for a product that exists. A second run over the same gaps writes nothing new.
 - [x] After a deploy, `sanity blueprints plan` lists nothing but an update per Function (a Function's source is uploaded again on every deploy, so it always plans as an update); no secret is in `sanity.blueprint.ts` or anywhere in git.
-- [ ] An editor accepts or rejects an idea in the Studio with the two actions, and the idea's date and its gaps follow within seconds.
+- [x] An editor accepts or rejects an idea in the Studio with the two actions, and the idea's date and its gaps follow within seconds.
 - [x] No route other than `/api/demand/analyse` and Workflow's own `/.well-known/workflow/*` was added; the build's route table is otherwise identical to `main`.
 - [x] README, `AGENTS.md` and ADR 0004 written.
 
