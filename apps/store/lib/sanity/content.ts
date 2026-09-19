@@ -3,7 +3,7 @@ import type {
   CheckoutPageQueryResult,
   FavouriteProductsQueryResult,
   HomePageQueryResult,
-  LookbookForProductQueryResult,
+  TestimonialsForProductQueryResult,
   ProductQueryResult,
   SiteSettingsQueryResult,
 } from '@repo/sanity/generated'
@@ -13,7 +13,7 @@ import {
   checkoutPageQuery,
   favouriteProductsQuery,
   homePageQuery,
-  lookbookForProductQuery,
+  testimonialsForProductQuery,
   productQuery,
   siteSettingsQuery,
 } from './queries'
@@ -63,27 +63,27 @@ export function getProductDocument(apiId: string) {
   )
 }
 
-/** Lookbook entries naming this product; the document id is derived from the API id. */
-export function getLookbookForProduct(apiId: string) {
-  return loadOptional(`Lookbook for ${apiId}`, () =>
-    sanityFetch<LookbookForProductQueryResult>({
-      query: lookbookForProductQuery,
+/** Testimonials naming this product; the document id is derived from the API id. */
+export function getTestimonialsForProduct(apiId: string) {
+  return loadOptional(`Testimonials for ${apiId}`, () =>
+    sanityFetch<TestimonialsForProductQueryResult>({
+      query: testimonialsForProductQuery,
       params: { productDocId: `product-${apiId}` },
-      tags: ['sanity:lookbookEntry'],
+      tags: ['sanity:testimonial'],
     }),
   )
 }
 
 /**
- * The products lookbook entries name most, ranked in GROQ. Tagged for both
+ * The products testimonials name most, ranked in GROQ. Tagged for both
  * document types because either a new entry or a re-sync can change the answer.
  */
 export function getFavouriteProducts(limit: number) {
-  return loadOptional('Lookbook favourites', () =>
+  return loadOptional('Testimonial favourites', () =>
     sanityFetch<FavouriteProductsQueryResult>({
       query: favouriteProductsQuery,
       params: { limit },
-      tags: ['sanity:lookbookEntry', 'sanity:product'],
+      tags: ['sanity:testimonial', 'sanity:product'],
     }),
   )
 }
