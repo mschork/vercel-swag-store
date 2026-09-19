@@ -11,9 +11,9 @@ Duplicating data that another system owns is the kind of thing this project othe
 
 ## Why
 
-Editors work with the catalogue constantly: they enrich a product, attach an FAQ to a category, name the products in a lookbook photo. Every one of those is a link from editorial content to a catalogue item. Sanity can only validate, search and reverse-look-up links between its own documents. Without mirrors, each link is a bare string that has to be typed or picked through a custom input built against a foreign API, and nothing stops it from pointing at a product that never existed.
+Editors work with the catalogue constantly: they enrich a product, attach an FAQ to a category, name the products in a testimonial's photo. Every one of those is a link from editorial content to a catalogue item. Sanity can only validate, search and reverse-look-up links between its own documents. Without mirrors, each link is a bare string that has to be typed or picked through a custom input built against a foreign API, and nothing stops it from pointing at a product that never existed.
 
-With mirrors, every link is an ordinary Sanity reference. The Studio gets search, previews, the "used by" panel and validation for free, the store answers "which lookbook entries show this product" with `references($id)`, and no custom picker component exists to maintain.
+With mirrors, every link is an ordinary Sanity reference. The Studio gets search, previews, the "used by" panel and validation for free, the store answers "which testimonials show this product" with `references($id)`, and no custom picker component exists to maintain.
 
 ## Considered options
 
