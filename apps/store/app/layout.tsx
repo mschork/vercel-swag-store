@@ -4,11 +4,12 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import type { Metadata, Viewport } from 'next'
 import { Suspense } from 'react'
 import { CartCountProvider } from '@/components/cart/cart-count'
+import { DraftMode } from '@/components/draft-mode'
 import { Footer } from '@/components/footer'
 import { Header } from '@/components/header'
 import { PromoBanner, PromoBannerSkeleton } from '@/components/promo-banner'
 import { getStoreConfig } from '@/lib/api/store'
-import { getSiteSettings } from '@/lib/sanity/content'
+import { getSiteSettingsForMetadata } from '@/lib/sanity/content'
 import { hasImage, sanityImageProps } from '@/lib/sanity/image'
 import { publicEnv } from '@/lib/env.public'
 import { openGraphDefaults } from '@/lib/metadata'
@@ -34,7 +35,7 @@ const geistMono = Geist_Mono({
 export async function generateMetadata(): Promise<Metadata> {
   const [{ storeName, seo }, settings] = await Promise.all([
     getStoreConfig(),
-    getSiteSettings(),
+    getSiteSettingsForMetadata(),
   ])
   const name = settings?.storeName || storeName
   return {
@@ -88,6 +89,10 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
           </main>
           <Footer />
         </CartCountProvider>
+        {/* Draft mode only (E17): nothing for a visitor, not even the script. */}
+        <Suspense fallback={null}>
+          <DraftMode />
+        </Suspense>
         <SpeedInsights />
         <Analytics />
       </body>

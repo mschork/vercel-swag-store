@@ -64,3 +64,6 @@ export const FEATURED_FALLBACK = {
 export const FAVOURITES_FALLBACK = {
   heading: 'People’s favourites',
 } as const
+
+/** The words after the year in the footer, until `siteSettings.footerText` says otherwise. */
+export const FOOTER_FALLBACK = { text: 'Vercel Swag Store' }
