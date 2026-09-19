@@ -59,4 +59,4 @@ Branch: `epic/E05-pdp`. Depends on: E02, E03. Blocks: E06 (needs the Add to Cart
 
 ## Out of scope
 
-Cart persistence (E06), Sanity enrichment sections (E09), lookbook strip (stretch).
+Cart persistence (E06), Sanity enrichment sections (E09), testimonials strip (stretch).
