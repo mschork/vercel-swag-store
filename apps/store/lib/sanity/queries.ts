@@ -12,7 +12,7 @@ const IMAGE = `{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metada
 
 export const siteSettingsQuery = defineQuery(`
   *[_type == "siteSettings"][0]{
-    storeName, seoTitle, seoDescription, footerText,
+    storeName, seoTitle, seoDescription, footerText, lookbookHeading,
     "ogImage": ogImage${IMAGE},
     socialLinks[]{ label, url }
   }

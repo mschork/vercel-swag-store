@@ -220,6 +220,7 @@ export type SiteSettings = {
     _key: string
   }>
   footerText?: string
+  lookbookHeading?: string
 }
 
 export type MediaFolderReference = {
@@ -381,12 +382,13 @@ export type AllSanitySchemaTypes =
 
 // Source: ../store/lib/sanity/queries.ts
 // Variable: siteSettingsQuery
-// Query: *[_type == "siteSettings"][0]{    storeName, seoTitle, seoDescription, footerText,    "ogImage": ogImage{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio },    socialLinks[]{ label, url }  }
+// Query: *[_type == "siteSettings"][0]{    storeName, seoTitle, seoDescription, footerText, lookbookHeading,    "ogImage": ogImage{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio },    socialLinks[]{ label, url }  }
 export type SiteSettingsQueryResult = {
   storeName: string
   seoTitle: string | null
   seoDescription: string | null
   footerText: string | null
+  lookbookHeading: string | null
   ogImage: {
     asset?: SanityImageAssetReference
     media?: unknown
