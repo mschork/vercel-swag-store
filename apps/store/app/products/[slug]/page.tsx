@@ -150,8 +150,10 @@ export default async function ProductPage({ params }: Props) {
       </article>
       {enriched ? (
         <div className="flex flex-col gap-8">
-          <ProductStory product={merged} headings={headings} />
+          {/* People first: the buy panel already carries the short description,
+              so the photo and quote follow it and the reference text comes after. */}
           <SeenOn entries={entries} heading={headings.lookbook} />
+          <ProductStory product={merged} headings={headings} />
           <CommonQuestions faqs={merged.faqs} heading={headings.faq} />
         </div>
       ) : null}
