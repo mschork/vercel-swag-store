@@ -4,12 +4,13 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**", "app/.well-known/workflow/**"],
       "env": [
         "API_BASE_URL",
         "API_BYPASS_TOKEN",
         "NEXT_PUBLIC_SANITY_*",
         "SANITY_*",
+        "DEMAND_*",
         "NEXT_PUBLIC_SITE_URL"
       ]
     },
@@ -21,6 +22,7 @@
         "API_BYPASS_TOKEN",
         "NEXT_PUBLIC_SANITY_*",
         "SANITY_*",
+        "DEMAND_*",
         "NEXT_PUBLIC_SITE_URL"
       ]
     },

@@ -1,0 +1,10 @@
+{
+  "extends": "@repo/config/tsconfig/base.json",
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"],
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "types": ["node"]
+  }
+}

@@ -15,9 +15,11 @@
     "sync": "node --experimental-strip-types scripts/sync.ts",
     "seed": "node --experimental-strip-types scripts/seed.ts",
     "draft-care": "node --experimental-strip-types scripts/draft-care.ts",
+    "seed-demand": "node --experimental-strip-types scripts/seed-demand.ts",
     "typegen": "pnpm --filter studio typegen"
   },
   "dependencies": {
+    "@repo/demand": "workspace:*",
     "@sanity/client": "^8.6.1"
   },
   "devDependencies": {

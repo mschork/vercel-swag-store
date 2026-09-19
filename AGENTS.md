@@ -27,6 +27,7 @@ A take-home assignment for Vercel: a "Vercel Swag Store" storefront in Next.js 1
 | Cart (all operations) | `lib/api/cart.ts`, `app/cart/actions.ts` | never cached; reads `cookies()`; Server Actions call `refresh()` from `next/cache`; nothing carries a cart tag, so `updateTag` / `revalidateTag` do not apply |
 | Sanity documents | `lib/sanity/fetch.ts` | `"use cache"`, `cacheTag('sanity', 'sanity:<type>', 'sanity:<id>')`; webhook revalidates |
 | Search results | `app/search/page.tsx` | dynamic via `searchParams`; the underlying `getProducts` call is still cached per argument set |
+| Search gaps | `lib/search/record-gap.ts` | never cached; written in `after()` with the store's only write credential; the analysis (`lib/demand/steps.ts`, `workflows/`) is never reachable from a page's request path |
 
 Rule of thumb: if a page reads `cookies()`, `headers()` or `searchParams`, the component doing so must be inside a Suspense boundary so the shell stays static. Build output must show the shell as prerendered.
 
@@ -35,7 +36,10 @@ Rule of thumb: if a page reads `cookies()`, `headers()` or `searchParams`, the c
 ```
 apps/store            Next.js 16 storefront
 apps/studio           Sanity Studio
+apps/functions        Sanity Functions, one folder each (E13)
 packages/sanity       schemas, client factory, GROQ queries, generated types
+packages/demand       the search-gap loop's shared logic: filters, ids, prompt, schema, validation, Sanity queries (E13)
+sanity.blueprint.ts   everything Sanity runs for this repo, declared in code; at the root, beside the lockfile
 packages/config       shared tsconfig and eslint config
 specs/                one spec per epic (E01 to E14), decisions.md, assignment.md, openapi.json (token redacted), improvements.md, callout.md
 working/              local-only documents (unredacted API reference, notes); git-ignored, never committed

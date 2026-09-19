@@ -65,7 +65,7 @@ Three questions decide details below. Answer them on a throwaway branch first an
 
 **`packages/demand` (`@repo/demand`)**: everything the store, the Functions and E14's agent share. Source exports like `@repo/sanity`, no build step. No Next imports, no `server-only`.
 
-- `constants.ts`: `ANALYSE_THRESHOLD = 2`, `DEDUPE_MINUTES = 10`, `SETTLE = '10m'`, `MAX_OPEN_GAPS = 500`, `RETENTION_DAYS = 30`, `MAX_GAPS_PER_RUN = 100`, `MODEL = 'anthropic/claude-haiku-4.5'` (the Gateway's catalogue spells versions with a dot).
+- `constants.ts`: `ANALYSE_THRESHOLD = 2`, `DEDUPE_MINUTES = 10`, `SETTLE = '10m'`, `MAX_OPEN_GAPS = 500`, `RETENTION_DAYS = 30`, `MAX_GAPS_PER_RUN = 100`, `MODEL = 'openai/gpt-5-nano'`. The task is easy, so the smallest model AI Gateway's free tier serves does it; the free tier refuses Anthropic models. The schema and the prompt hold for every provider, so changing model is this one line.
 - `normalise.ts`: `normaliseGap(raw): string | null`. Lowercase, NFKC, strip everything but letters, digits, spaces and hyphens, collapse whitespace, trim, cut to 64 characters, then the filters under "Privacy and abuse". `null` means do not record.
 - `ids.ts`: `gapId(normalised)` is `searchGap.` plus the first 16 hex characters of its SHA-256 (`node:crypto`); `ideaId(gapIds)` is `productIdea.` plus the same over the sorted, joined gap ids, so a re-run over the same gaps cannot create a second idea.
 - `fragments.ts`: `typingFragments(gaps)`. The search form navigates on a 300 ms debounce, so someone typing "umbrella" slowly also searches "umb" and "umbre". A gap is a typing fragment when another gap in the set starts with its text followed by more letters and has at least its count. Returns the fragment ids.
@@ -154,16 +154,16 @@ Sanity Workflows is early access and versioned 0.x, so this slice is last, pinne
 
 ## Acceptance criteria
 
-- [ ] Slice 0's three answers are in the PR description.
-- [ ] A zero-result search creates or increments one `searchGap` within seconds; `/search` is still a partial prerender and its response time is unchanged within noise (ten runs each way, median).
-- [ ] With `SANITY_API_WRITE_TOKEN` unset the store builds, runs and records nothing; removing the one call in `SearchResults` restores E07.
-- [ ] Nothing personal is stored: the filter tests pass, the documents hold only what the schema lists, and an anonymous query returns neither type.
-- [ ] A gap reaching the threshold starts exactly one analysis run however many Function calls arrive, and a failed run leaves no gap in `analysing`.
-- [ ] The run writes sensible ideas for the seeded gaps: one umbrella idea, "hodie" `matched` to hoodies, "umb" and the gibberish `ignored`, no idea for a product that exists. A second run over the same gaps writes nothing new.
-- [ ] `sanity blueprints plan` is clean after deploy; no secret is in `sanity.blueprint.ts` or anywhere in git.
+- [x] Slice 0's three answers are in the PR description.
+- [x] A zero-result search creates or increments one `searchGap` within seconds; `/search` is still a partial prerender and its response time is unchanged within noise (ten runs each way, median).
+- [x] With `SANITY_API_WRITE_TOKEN` unset the store builds, runs and records nothing; removing the one call in `SearchResults` restores E07.
+- [x] Nothing personal is stored: the filter tests pass, the documents hold only what the schema lists, and an anonymous query returns neither type.
+- [x] A gap reaching the threshold starts exactly one analysis run however many Function calls arrive, and a failed run leaves no gap in `analysing`.
+- [x] The run writes sensible ideas for the seeded gaps: one umbrella idea, "hodie" `matched` to hoodies, "umb" and the gibberish `ignored`, no idea for a product that exists. A second run over the same gaps writes nothing new.
+- [x] After a deploy, `sanity blueprints plan` lists nothing but an update per Function (a Function's source is uploaded again on every deploy, so it always plans as an update); no secret is in `sanity.blueprint.ts` or anywhere in git.
 - [ ] An editor accepts or rejects an idea in the Studio and the idea and its gaps follow (slice 5; with the slice dropped, via the radio field and no gap change).
-- [ ] No route other than `/api/demand/analyse` and Workflow's own `/.well-known/workflow/*` was added; the build's route table is otherwise identical to `main`.
-- [ ] README, `AGENTS.md` and ADR 0004 written.
+- [x] No route other than `/api/demand/analyse` and Workflow's own `/.well-known/workflow/*` was added; the build's route table is otherwise identical to `main`.
+- [x] README, `AGENTS.md` and ADR 0004 written.
 
 ## Set up by hand
 

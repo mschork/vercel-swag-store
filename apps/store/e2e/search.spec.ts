@@ -122,6 +122,10 @@ test('the category select filters, and combined with text it narrows', async ({
 test('a query with no matches offers the categories', async ({ page }) => {
   await gotoLive(page, 'umbrella')
   await expect(results(page)).toContainText('No products match "umbrella"')
+  // E13 counts the miss, and the page says so.
+  await expect(results(page)).toContainText(
+    "We keep track of what people look for and don't find.",
+  )
   await expect(
     results(page).getByRole('link', { name: 'Hats', exact: true }),
   ).toHaveAttribute('href', '/search?category=hats')
