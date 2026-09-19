@@ -55,7 +55,6 @@ Only `.env.example` files are committed. Copy them and fill in the values.
 | `API_BYPASS_TOKEN` | server | Deployment Protection bypass token for the API. Never `NEXT_PUBLIC_`, never logged |
 | `NEXT_PUBLIC_SANITY_PROJECT_ID` | public | Sanity project id |
 | `NEXT_PUBLIC_SANITY_DATASET` | public | Sanity dataset, `production` |
-| `SANITY_API_READ_TOKEN` | server | Read token for server-side Sanity fetches |
 | `SANITY_REVALIDATE_SECRET` | server | Shared secret for the Sanity publish webhook hitting `/api/revalidate` |
 | `NEXT_PUBLIC_SITE_URL` | public | Canonical site URL for metadata and OG images |
 | `CATALOG_REVALIDATE_SECRET` | server | Optional, at least 32 characters. Bearer secret for `POST /api/revalidate/catalog`; unset, the route refuses every call |
@@ -67,6 +66,13 @@ Store, search-gap loop only, both optional and server only:
 | `SANITY_API_WRITE_TOKEN` | Sanity token with the Editor role, used only to write search gaps and product ideas. Unset, nothing is recorded |
 | `DEMAND_ANALYSE_SECRET` | At least 32 characters. Bearer secret for `POST /api/demand/analyse`; unset, the route refuses every call |
 
+Store, live editing only, both optional and server only:
+
+| Variable | Purpose |
+|---|---|
+| `SANITY_API_READ_TOKEN` | Sanity token with the Viewer role, read only in draft mode. Never `NEXT_PUBLIC_`, never logged. Unset, `/api/draft-mode/enable` answers 404 and the store never reads a draft |
+| `PRESENTATION_STUDIO_ORIGINS` | The Studios that may frame the store: comma-separated exact origins, no wildcards. Read at build time. Unset, the header stays `frame-ancestors 'none'` |
+
 There is no AI Gateway key. On Vercel the AI SDK authenticates with the deployment's OIDC token; locally, `vercel env pull` provides one for twelve hours.
 
 `apps/studio` (`.env`):
@@ -77,6 +83,7 @@ There is no AI Gateway key. On Vercel the AI SDK authenticates with the deployme
 | `SANITY_STUDIO_DATASET` | Sanity dataset, `production` |
 | `SANITY_STUDIO_API_BASE_URL` | Swag Store API base URL for the product picker |
 | `SANITY_STUDIO_API_BYPASS_TOKEN` | API bypass token for the product picker; the Studio is behind Sanity auth |
+| `SANITY_STUDIO_PREVIEW_ORIGIN` | Optional. The store the Presentation tool frames; defaults to the production store |
 
 The store fails at startup with a clear message if `API_BASE_URL` or `API_BYPASS_TOKEN` is missing (`apps/store/lib/env.ts`, called from `instrumentation.ts`). The Studio fails at build or dev time if its project id or dataset is missing.
 
@@ -152,6 +159,31 @@ pnpm --filter store test:integration
 `{"settle":false}` skips the ten-minute wait. Local run data is under `apps/store/.next/workflow-data`.
 
 Where to look: Vercel's Observability, Workflows view for the runs; `pnpm exec sanity functions logs gap-threshold` for the trigger; the Studio's "Demand signals" for the gaps and the ideas.
+
+## Live editing
+
+An editor opens **Presentation** in the Studio, next to the desk. The store loads inside the Studio, in draft mode. Clicking a piece of text or a photo opens the field that holds it, and an edit shows in the page as it is typed, before anything is published. Publishing still goes through the webhook and the cache tags, so a visitor sees the change on their next request.
+
+What is editable is what Sanity owns: the home hero (headline, description, photo), the featured and favourites headings, a product's extended description, care text and questions, testimonials, the four product-page headings, the checkout page and the footer text. Names, prices, stock, categories and the cart belong to the API and are not editable here.
+
+Visitors get none of it. Outside draft mode the pages, the cache and the JavaScript are the same as before: no overlay script, no invisible edit markers, no token. Draft mode can only be switched on by the Studio, through `/api/draft-mode/enable`, which checks a short-lived secret with Sanity. "Draft preview · Exit" at the foot of the page leaves it when the store is open on its own.
+
+The Studio frames the production store. A Vercel preview deployment answers with a login redirect and cannot be framed. Both store variables must be set on Vercel, and `PRESENTATION_STUDIO_ORIGINS` is read when the store is built, so changing it needs a redeploy:
+
+```
+PRESENTATION_STUDIO_ORIGINS=https://vercel-swag-studio.vercel.app,https://swagstore-ms.sanity.studio,https://www.sanity.io
+```
+
+`https://www.sanity.io` is there because Sanity's dashboard frames the Studio, and a browser checks every ancestor of a frame.
+
+To run it locally against `localhost:3000`:
+
+```sh
+# apps/store/.env.local: SANITY_API_READ_TOKEN=<viewer token>, PRESENTATION_STUDIO_ORIGINS=http://localhost:3333
+pnpm --filter store build && pnpm --filter store start
+# apps/studio/.env: SANITY_STUDIO_PREVIEW_ORIGIN=http://localhost:3000, then restart the Studio
+pnpm --filter studio dev
+```
 
 ## Sanity Functions and the Blueprint
 
