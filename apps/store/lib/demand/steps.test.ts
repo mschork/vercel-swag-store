@@ -1,3 +1,4 @@
+import { MODEL } from '@repo/demand/constants'
 import { MockLanguageModelV4 } from 'ai/test'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -97,7 +98,7 @@ describe('write and release', () => {
     mocks.writeOutcome.mockResolvedValue({ ideas: 1, matched: 0, ignored: 0, released: 0 })
     const outcome = { runId: 'run1', gaps, clusters: [], unmentioned: [] }
     await write(outcome)
-    expect(mocks.writeOutcome).toHaveBeenCalledWith(mocks.client, { ...outcome, model: 'anthropic/claude-haiku-4.5' })
+    expect(mocks.writeOutcome).toHaveBeenCalledWith(mocks.client, { ...outcome, model: MODEL })
   })
 
   it("releases the run's gaps", async () => {
