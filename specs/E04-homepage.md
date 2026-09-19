@@ -75,4 +75,4 @@ Featured section heading "Featured" with a text link "View all" to `/search`.
 
 ## Out of scope
 
-Sanity-driven hero (E09), lookbook or collection sections (E08/E09 stretch), design token polish and the remaining shadcn components (E10).
+Sanity-driven hero (E09), testimonial or collection sections (E08/E09 stretch), design token polish and the remaining shadcn components (E10).
