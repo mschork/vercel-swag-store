@@ -20,7 +20,7 @@ Ids contain no dots. A dot makes everything before it a document path, which cha
 ### Editorial
 
 - `siteSettings` (singleton): `storeName`, `seoTitle`, `seoDescription`, `ogImage` (image with alt), `socialLinks[]` `{ label, url }`, `footerText`, `productPage { aboutHeading, careHeading, lookbookHeading, faqHeading }` (the headings on a product page; each empty field falls back to the wording the store ships).
-- `homePage` (singleton): `hero { headline, description, image (image with alt and hotspot) }`, `featured { heading, linkLabel }` (the copy over the featured grid; empty fields fall back to “Featured” and “View all”).
+- `homePage` (singleton): `hero { headline, description, image (image with alt and hotspot) }`, `featured { heading, linkLabel }` (the copy over the featured grid; empty fields fall back to “Featured” and “View all”), `favourites { heading }` (the copy over the lookbook-ranked row; empty, it says “People’s favourites”).
 - `checkoutPage` (singleton): `title`, `body` (Portable Text), `continueShoppingLabel`.
 - `lookbookEntry`: `person`, `role`, `photo` (image with required alt and hotspot), `quote`, `products[]` (references to `product`), `consent` (boolean, must be true to publish, enforced by validation), `publishedAt`.
 - `faq`: `question`, `answer` (Portable Text), `order` (number, lowest first), `categories[]` (references to `category`).
