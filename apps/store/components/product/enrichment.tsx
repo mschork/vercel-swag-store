@@ -2,7 +2,6 @@ import Image from 'next/image'
 import { PortableText } from '@/components/portable-text'
 import type { ProductFaq } from '@/lib/sanity/faqs'
 import { sanityImageProps } from '@/lib/sanity/image'
-import type { ProductHeadings } from '@/lib/content/fallbacks'
 import type { MergedProduct } from '@/lib/sanity/merge'
 import type { LookbookForProductQueryResult } from '@repo/sanity/generated'
 
@@ -28,28 +27,26 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-/** The two rich text blocks, in the order they belong: what it is, then how to keep it. */
-export function ProductStory({
-  product,
-  headings,
-}: {
-  product: MergedProduct
-  headings: ProductHeadings
-}) {
+type RichText = NonNullable<MergedProduct['extendedDescription']>
+
+/** A heading beside an editor's rich text; nothing at all when there is no text. */
+function RichTextSection({ text, heading }: { text: RichText | null | undefined; heading: string }) {
+  if (!text) return null
   return (
-    <>
-      {product.extendedDescription ? (
-        <Section title={headings.about}>
-          <PortableText value={product.extendedDescription} />
-        </Section>
-      ) : null}
-      {product.care ? (
-        <Section title={headings.care}>
-          <PortableText value={product.care} />
-        </Section>
-      ) : null}
-    </>
+    <Section title={heading}>
+      <PortableText value={text} />
+    </Section>
   )
+}
+
+/** What the product is, in the editor's words (`product.extendedDescription`). */
+export function About(props: { text: RichText | null | undefined; heading: string }) {
+  return <RichTextSection {...props} />
+}
+
+/** How to use it and keep it (`product.care`). */
+export function Care(props: { text: RichText | null | undefined; heading: string }) {
+  return <RichTextSection {...props} />
 }
 
 type LookbookEntry = LookbookForProductQueryResult[number]
@@ -164,7 +161,7 @@ function EntryCards({ entries }: { entries: readonly LookbookEntry[] }) {
  * one is the feature mirrored, two take a half each, three or four are cards.
  * Beyond five, the rest wait for their turn as newer entries push them along.
  */
-export function SeenOn({
+export function Lookbook({
   entries,
   heading,
 }: {
@@ -217,7 +214,7 @@ function Chevron() {
  * (`app/globals.css`), where a browser without `::details-content` and anyone
  * asking for less motion simply gets the instant toggle.
  */
-export function CommonQuestions({
+export function Faqs({
   faqs,
   heading,
 }: {
