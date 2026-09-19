@@ -216,17 +216,19 @@ export interface Decision {
 }
 
 /**
- * An editor's decision. Delivery is at least once, so a decision that is
- * already on the idea writes nothing. Accepting promotes the source gaps;
- * rejecting leaves them `reviewed`.
+ * An editor's decision, applied once. The Studio's Accept and Reject actions
+ * set the status; the `idea-decided` Function then calls this to stamp the
+ * date and move the gaps: accepting promotes them, rejecting leaves them
+ * `reviewed`. Function delivery is at least once, so an idea that already
+ * carries a decision date writes nothing.
  */
 export async function applyDecision(client: DemandClient, decision: Decision): Promise<'applied' | 'already'> {
-  const idea = await client.fetch<{ status: IdeaStatus; gapIds: string[] } | null>(
-    `*[_id == $id][0]{ status, "gapIds": sourceGaps[]._ref }`,
+  const idea = await client.fetch<{ decidedAt?: string; gapIds: string[] | null } | null>(
+    `*[_id == $id][0]{ decidedAt, "gapIds": sourceGaps[]._ref }`,
     { id: decision.ideaId },
   )
   if (!idea) throw new Error(`No product idea ${decision.ideaId}`)
-  if (idea.status !== 'proposed') return 'already'
+  if (idea.decidedAt) return 'already'
 
   const transaction = client.transaction().patch(decision.ideaId, (patch) =>
     patch.set({

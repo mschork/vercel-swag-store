@@ -178,7 +178,7 @@ describe('writeOutcome', () => {
 
 describe('applyDecision', () => {
   it('accepts an idea and promotes the gaps that still exist', async () => {
-    const { client, commits } = fakeClient([{ status: 'proposed', gapIds: ['g1', 'g2'] }, ['g1']])
+    const { client, commits } = fakeClient([{ gapIds: ['g1', 'g2'] }, ['g1']])
     expect(await applyDecision(client, { ideaId: 'productIdea.x', decision: 'accepted', now: NOW })).toBe('applied')
     expect(commits[0]).toEqual([
       { op: 'patch', id: 'productIdea.x', set: { status: 'accepted', decidedAt: NOW.toISOString() } },
@@ -187,7 +187,7 @@ describe('applyDecision', () => {
   })
 
   it('rejects with a reason and leaves the gaps reviewed', async () => {
-    const { client, commits } = fakeClient([{ status: 'proposed', gapIds: ['g1'] }])
+    const { client, commits } = fakeClient([{ gapIds: ['g1'] }])
     await applyDecision(client, { ideaId: 'productIdea.x', decision: 'rejected', reason: 'Too seasonal.', now: NOW })
     expect(commits[0]).toEqual([
       {
@@ -199,7 +199,7 @@ describe('applyDecision', () => {
   })
 
   it('writes once when the same decision is delivered twice', async () => {
-    const { client, commits } = fakeClient([{ status: 'proposed', gapIds: [] }, [], { status: 'accepted', gapIds: [] }])
+    const { client, commits } = fakeClient([{ gapIds: null }, [], { decidedAt: NOW.toISOString(), gapIds: null }])
     expect(await applyDecision(client, { ideaId: 'productIdea.x', decision: 'accepted' })).toBe('applied')
     expect(await applyDecision(client, { ideaId: 'productIdea.x', decision: 'accepted' })).toBe('already')
     expect(commits).toHaveLength(1)
