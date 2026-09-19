@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit",
     "sync": "node --experimental-strip-types scripts/sync.ts",
     "seed": "node --experimental-strip-types scripts/seed.ts",
+    "draft-care": "node --experimental-strip-types scripts/draft-care.ts",
     "typegen": "pnpm --filter studio typegen"
   },
   "dependencies": {
