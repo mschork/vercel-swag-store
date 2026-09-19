@@ -32,7 +32,7 @@ Presentation frames the store in an iframe. A Vercel preview deployment answers 
 
 - **The token never leaves the server.** `SANITY_API_READ_TOKEN` is server-only like `API_BYPASS_TOKEN`: never `NEXT_PUBLIC_`, never sent to a client component, never logged. It is a Viewer token: a write with it is refused. It can read the private demand documents of E13, and no query in the store asks for them, in or out of draft mode.
 - **Draft mode cannot be switched on by a stranger.** `/api/draft-mode/enable` is `defineEnableDraftMode` from `next-sanity/draft-mode`: it accepts only a short-lived secret the Studio mints and Sanity verifies with the token. Without the token the route answers 404 and the feature is off, so previews, CI and forks are unaffected.
-- **Framing is opened to the Studio and nobody else.** `frame-ancestors 'none'` becomes `frame-ancestors 'self' <studio origins>`, from `PRESENTATION_STUDIO_ORIGINS` (comma-separated, exact origins, no wildcards): the production Studio on Vercel, its `sanity.studio` host, and `http://localhost:3333` in development. A wildcard for preview Studios is refused on purpose: `https://*.vercel.app` would let any Vercel site frame the store. Unset, the header stays `'none'`.
+- **Framing is opened to the Studio and nobody else.** `frame-ancestors 'none'` becomes `frame-ancestors 'self' <studio origins>`, from `PRESENTATION_STUDIO_ORIGINS` (comma-separated, exact origins, no wildcards): `https://vercel-swag-studio.vercel.app` (the Studio on Vercel), `https://swagstore-ms.sanity.studio` (the Studio on Sanity's hosting), `https://www.sanity.io` (Sanity's dashboard, which frames a Studio that in turn frames the store; the browser checks every ancestor, not only the nearest), and `http://localhost:3333` in development. A wildcard for preview Studios is refused on purpose: `https://*.vercel.app` would let any Vercel site frame the store. Unset, the header stays `'none'`.
 - **Stega never reaches a machine reader.** Encoded strings are invisible characters appended to text. They are cleaned with `stegaClean` wherever text is compared, parsed or exported: `alt` text, `<title>` and meta descriptions, Open Graph images, JSON-LD, `aria-*` values. Visitors never receive stega at all.
 
 ## Slices
@@ -99,7 +99,7 @@ Answer on a throwaway branch and record the answers in the PR description.
 ## Set up by hand
 
 - `SANITY_API_READ_TOKEN` (Sanity token, Viewer role) on the store's Vercel project for Production and Preview.
-- `PRESENTATION_STUDIO_ORIGINS` on the store's Vercel project: the production Studio's origins.
+- `PRESENTATION_STUDIO_ORIGINS` on the store's Vercel project: `https://vercel-swag-studio.vercel.app,https://swagstore-ms.sanity.studio,https://www.sanity.io`. Spike 2 confirms the dashboard entry is needed.
 - `SANITY_STUDIO_PREVIEW_ORIGIN` on the Studio's Vercel project, if the production store's address ever differs from the default.
 - In Sanity's API settings, the production store's origin as a CORS origin with credentials allowed: the overlay runs in the editor's browser on that origin and talks to Sanity with the editor's session. Spike 2 confirms whether it is needed.
 
