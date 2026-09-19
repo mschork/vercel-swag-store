@@ -3,6 +3,8 @@ import { Container } from '@/components/container'
 import { FeaturedProducts } from '@/components/home/featured-products'
 import { Hero } from '@/components/home/hero'
 import { getStoreConfig } from '@/lib/api/store'
+import { FEATURED_FALLBACK } from '@/lib/content/fallbacks'
+import { getHomePage } from '@/lib/sanity/content'
 
 /**
  * The home title is the store name without the template. Next never applies
@@ -19,12 +21,18 @@ export async function generateMetadata(): Promise<Metadata> {
  * Static hero and featured grid from the prerender. The promo banner, the
  * page's only dynamic hole, lives in the root layout above the hero (E10).
  */
-export default function HomePage() {
+export default async function HomePage() {
+  // The grid's heading and link label are the editor's; both reads are cached,
+  // so the shell stays prerendered.
+  const content = await getHomePage()
   return (
     <>
       <Hero />
       <Container>
-        <FeaturedProducts />
+        <FeaturedProducts
+          heading={content?.featured?.heading || FEATURED_FALLBACK.heading}
+          linkLabel={content?.featured?.linkLabel || FEATURED_FALLBACK.linkLabel}
+        />
       </Container>
     </>
   )

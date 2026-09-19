@@ -41,8 +41,21 @@ export const CHECKOUT_FALLBACK: CheckoutContent = {
 }
 
 /**
- * The heading above the lookbook entries on a product page, matching
- * `siteSettings.lookbookHeading` (E08). An editor can rename the section
- * without a deploy; empty or missing, the page says this.
+ * The headings over the editorial blocks on a product page, matching
+ * `siteSettings.productPage` (E08), and the pair over the home page grid,
+ * matching `homePage.featured`. An editor can rename any of them in the Studio;
+ * empty or missing, the page uses the wording here.
  */
-export const LOOKBOOK_HEADING_FALLBACK = 'What people say about it'
+export const PRODUCT_HEADINGS_FALLBACK = {
+  about: 'About this item',
+  care: 'How to use and care',
+  lookbook: 'What people say about it',
+  faq: 'Common questions',
+} as const
+
+export type ProductHeadings = { [K in keyof typeof PRODUCT_HEADINGS_FALLBACK]: string }
+
+export const FEATURED_FALLBACK = {
+  heading: 'Featured',
+  linkLabel: 'View all',
+} as const

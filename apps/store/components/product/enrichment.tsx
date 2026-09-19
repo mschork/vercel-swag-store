@@ -2,6 +2,7 @@ import Image from 'next/image'
 import { PortableText } from '@/components/portable-text'
 import type { ProductFaq } from '@/lib/sanity/faqs'
 import { sanityImageProps } from '@/lib/sanity/image'
+import type { ProductHeadings } from '@/lib/content/fallbacks'
 import type { MergedProduct } from '@/lib/sanity/merge'
 import type { LookbookForProductQueryResult } from '@repo/sanity/generated'
 
@@ -28,16 +29,22 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 /** The two rich text blocks, in the order they belong: what it is, then how to keep it. */
-export function ProductStory({ product }: { product: MergedProduct }) {
+export function ProductStory({
+  product,
+  headings,
+}: {
+  product: MergedProduct
+  headings: ProductHeadings
+}) {
   return (
     <>
       {product.extendedDescription ? (
-        <Section title="About this item">
+        <Section title={headings.about}>
           <PortableText value={product.extendedDescription} />
         </Section>
       ) : null}
       {product.care ? (
-        <Section title="How to use and care">
+        <Section title={headings.care}>
           <PortableText value={product.care} />
         </Section>
       ) : null}
@@ -161,10 +168,16 @@ function Chevron() {
  * (`app/globals.css`), where a browser without `::details-content` and anyone
  * asking for less motion simply gets the instant toggle.
  */
-export function CommonQuestions({ faqs }: { faqs: readonly ProductFaq[] }) {
+export function CommonQuestions({
+  faqs,
+  heading,
+}: {
+  faqs: readonly ProductFaq[]
+  heading: string
+}) {
   if (faqs.length === 0) return null
   return (
-    <Section title="Common questions">
+    <Section title={heading}>
       <ul className="flex flex-col divide-y divide-border border-y border-border">
         {faqs.map((faq) => (
           <li key={faq._id}>

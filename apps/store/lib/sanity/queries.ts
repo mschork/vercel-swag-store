@@ -12,7 +12,8 @@ const IMAGE = `{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metada
 
 export const siteSettingsQuery = defineQuery(`
   *[_type == "siteSettings"][0]{
-    storeName, seoTitle, seoDescription, footerText, lookbookHeading,
+    storeName, seoTitle, seoDescription, footerText,
+    productPage{ aboutHeading, careHeading, lookbookHeading, faqHeading },
     "ogImage": ogImage${IMAGE},
     socialLinks[]{ label, url }
   }
@@ -20,7 +21,8 @@ export const siteSettingsQuery = defineQuery(`
 
 export const homePageQuery = defineQuery(`
   *[_type == "homePage"][0]{
-    hero{ headline, description, "image": image${IMAGE} }
+    hero{ headline, description, "image": image${IMAGE} },
+    featured{ heading, linkLabel }
   }
 `)
 

@@ -21,7 +21,7 @@ import {
 import { findCategory } from '@/lib/api/categories'
 import { findProduct, getAllProductSlugs } from '@/lib/api/products'
 import { getStoreConfig } from '@/lib/api/store'
-import { LOOKBOOK_HEADING_FALLBACK } from '@/lib/content/fallbacks'
+import { PRODUCT_HEADINGS_FALLBACK, type ProductHeadings } from '@/lib/content/fallbacks'
 import { publicEnv } from '@/lib/env.public'
 import { openGraphDefaults } from '@/lib/metadata'
 import {
@@ -103,6 +103,15 @@ export default async function ProductPage({ params }: Props) {
     Boolean(merged.care) ||
     entries.length > 0 ||
     merged.faqs.length > 0
+  // Every heading below the buy row is the editor's to rename; each falls back
+  // to the wording the store shipped with (specs/E08-sanity-content-model.md).
+  const copy = settings?.productPage
+  const headings: ProductHeadings = {
+    about: copy?.aboutHeading || PRODUCT_HEADINGS_FALLBACK.about,
+    care: copy?.careHeading || PRODUCT_HEADINGS_FALLBACK.care,
+    lookbook: copy?.lookbookHeading || PRODUCT_HEADINGS_FALLBACK.lookbook,
+    faq: copy?.faqHeading || PRODUCT_HEADINGS_FALLBACK.faq,
+  }
   const categoryName = category?.name ?? product.category
   const trail: BreadcrumbLink[] = [
     { name: 'Home', href: '/' },
@@ -141,9 +150,9 @@ export default async function ProductPage({ params }: Props) {
       </article>
       {enriched ? (
         <div className="flex flex-col gap-8">
-          <ProductStory product={merged} />
-          <SeenOn entries={entries} heading={settings?.lookbookHeading || LOOKBOOK_HEADING_FALLBACK} />
-          <CommonQuestions faqs={merged.faqs} />
+          <ProductStory product={merged} headings={headings} />
+          <SeenOn entries={entries} heading={headings.lookbook} />
+          <CommonQuestions faqs={merged.faqs} heading={headings.faq} />
         </div>
       ) : null}
     </Container>
