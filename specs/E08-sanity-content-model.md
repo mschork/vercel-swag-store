@@ -19,7 +19,7 @@ Ids contain no dots. A dot makes everything before it a document path, which cha
 
 ### Editorial
 
-- `siteSettings` (singleton): `storeName`, `seoTitle`, `seoDescription`, `ogImage` (image with alt), `socialLinks[]` `{ label, url }`, `footerText`.
+- `siteSettings` (singleton): `storeName`, `seoTitle`, `seoDescription`, `ogImage` (image with alt), `socialLinks[]` `{ label, url }`, `footerText`, `lookbookHeading` (names the lookbook section on a product page; empty, the page says “What people say about it”).
 - `homePage` (singleton): `hero { headline, description, image (image with alt and hotspot) }`.
 - `checkoutPage` (singleton): `title`, `body` (Portable Text), `continueShoppingLabel`.
 - `lookbookEntry`: `person`, `role`, `photo` (image with required alt and hotspot), `quote`, `products[]` (references to `product`), `consent` (boolean, must be true to publish, enforced by validation), `publishedAt`.
