@@ -11,6 +11,7 @@
         "NEXT_PUBLIC_SANITY_*",
         "SANITY_*",
         "DEMAND_*",
+        "PRESENTATION_STUDIO_ORIGINS",
         "NEXT_PUBLIC_SITE_URL"
       ]
     },
@@ -23,6 +24,7 @@
         "NEXT_PUBLIC_SANITY_*",
         "SANITY_*",
         "DEMAND_*",
+        "PRESENTATION_STUDIO_ORIGINS",
         "NEXT_PUBLIC_SITE_URL"
       ]
     },
