@@ -11,6 +11,7 @@
     "typegen": "sanity schema extract --path ../../packages/sanity/src/generated/schema.json --enforce-required-fields --force && sanity typegen generate"
   },
   "dependencies": {
+    "@repo/demand": "workspace:*",
     "@repo/sanity": "workspace:*",
     "@sanity/vision": "^6.13.2",
     "react": "19.2.8",
