@@ -49,7 +49,7 @@ export const CHECKOUT_FALLBACK: CheckoutContent = {
 export const PRODUCT_HEADINGS_FALLBACK = {
   about: 'About this item',
   care: 'How to use and care',
-  lookbook: 'What people say about it',
+  testimonials: 'What people say about it',
   faq: 'Common questions',
 } as const
 
@@ -60,7 +60,7 @@ export const FEATURED_FALLBACK = {
   linkLabel: 'View all',
 } as const
 
-/** The heading over the lookbook-ranked grid, matching `homePage.favourites`. */
+/** The heading over the grid that testimonials rank, matching `homePage.favourites`. */
 export const FAVOURITES_FALLBACK = {
   heading: 'People’s favourites',
 } as const

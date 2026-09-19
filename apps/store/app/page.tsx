@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * Static hero and grids from the prerender. The promo banner, the page's only
  * dynamic hole, lives in the root layout above the hero (E10). The favourites
- * row renders only when the lookbook names a product the API still sells.
+ * row renders only when a testimonial names a product the API still sells.
  */
 export default async function HomePage() {
   // The grid's heading and link label are the editor's; both reads are cached,

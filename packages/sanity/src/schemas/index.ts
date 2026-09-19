@@ -2,7 +2,7 @@ import type { SchemaTypeDefinition } from 'sanity'
 import { category } from './category'
 import { productIdea, searchGap } from './demand'
 import { faq } from './faq'
-import { lookbookEntry } from './lookbook-entry'
+import { testimonial } from './testimonial'
 import { product } from './product'
 import { portableText } from './shared'
 import { checkoutPage, homePage, siteSettings } from './singletons'
@@ -20,7 +20,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   product,
   category,
   faq,
-  lookbookEntry,
+  testimonial,
   searchGap,
   productIdea,
 ]
@@ -35,4 +35,4 @@ export const SINGLETON_IDS = {
 export type SingletonType = keyof typeof SINGLETON_IDS
 
 /** The types an editor may create from the desk's menu. */
-export const CREATABLE_TYPES = ['faq', 'lookbookEntry'] as const
+export const CREATABLE_TYPES = ['faq', 'testimonial'] as const

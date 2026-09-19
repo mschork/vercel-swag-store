@@ -151,7 +151,7 @@ async function seed() {
 
   console.log(
     `Seeded: ${catalogue.categories} categories, ${catalogue.products} products, ` +
-      '3 pages, 4 questions, 2 enriched products. Lookbook entries need a photo, so add those in the Studio.',
+      '3 pages, 4 questions, 2 enriched products. Testimonials need a photo, so add those in the Studio.',
   )
 }
 

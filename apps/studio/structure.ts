@@ -4,10 +4,10 @@ import { CheckmarkCircleIcon } from '@sanity/icons/CheckmarkCircle'
 import { ClockIcon } from '@sanity/icons/Clock'
 import { CloseCircleIcon } from '@sanity/icons/CloseCircle'
 import { CogIcon } from '@sanity/icons/Cog'
+import { CommentIcon } from '@sanity/icons/Comment'
 import { CreditCardIcon } from '@sanity/icons/CreditCard'
 import { HelpCircleIcon } from '@sanity/icons/HelpCircle'
 import { HomeIcon } from '@sanity/icons/Home'
-import { ImagesIcon } from '@sanity/icons/Images'
 import { PackageIcon } from '@sanity/icons/Package'
 import { SearchIcon } from '@sanity/icons/Search'
 import { TagIcon } from '@sanity/icons/Tag'
@@ -22,7 +22,7 @@ const API_VERSION = '2026-09-01'
 /**
  * The desk (E08), in the order an editor works. What they write every day
  * comes first, under the list's own "Content" title: products, questions and
- * the lookbook. "Website" holds the three pages that exist once. "Taxonomies"
+ * testimonials. "Website" holds the three pages that exist once. "Taxonomies"
  * holds categories, which mirror the API and which nobody edits. "Demand
  * signals" closes the list: what the search-gap loop (E13) recorded and
  * proposed, for reading and deciding.
@@ -33,7 +33,7 @@ export const structure: StructureResolver = (S) =>
     .items([
       S.documentTypeListItem('product').title('Products').icon(PackageIcon),
       S.documentTypeListItem('faq').title('FAQs').icon(HelpCircleIcon),
-      S.documentTypeListItem('lookbookEntry').title('Lookbook').icon(ImagesIcon),
+      S.documentTypeListItem('testimonial').title('Testimonials').icon(CommentIcon),
 
       S.divider().title('Website'),
       singleton(S, 'homePage', 'Home page', HomeIcon),
