@@ -91,18 +91,78 @@ function EntryPhoto({ entry, sizes }: { entry: LookbookEntry; sizes: string }) {
   )
 }
 
-/** How many entries share the row under the feature, filling from the left. */
+/** How many entries follow the feature. Five on the page at most, newest first. */
 const MAX_LOOKBOOK_ROW = 4
+
+/**
+ * One entry across the full width: a photo filling one column, the quote at
+ * the foot of the other. The feature has its photo on the right and its words
+ * ranged right against it; mirrored, the photo leads and the words stay ranged
+ * left, so either way the quote sits against the picture it belongs to.
+ */
+function WideEntry({ entry, mirrored = false }: { entry: LookbookEntry; mirrored?: boolean }) {
+  return (
+    <div className="grid gap-5 md:grid-cols-2 md:gap-12">
+      <div className={`flex flex-col gap-2 md:justify-end ${mirrored ? '' : 'md:text-right'}`}>
+        {entry.quote ? (
+          <Quote className="text-xl leading-9 sm:text-2xl sm:leading-10">{entry.quote}</Quote>
+        ) : null}
+        <Attribution entry={entry} />
+      </div>
+      {/* Stacked, every entry reads words then photo; only the columns swap. */}
+      <div className={mirrored ? 'md:order-first' : undefined}>
+        <EntryPhoto entry={entry} sizes="(min-width: 768px) 45vw, 90vw" />
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Two entries, one per half of the page: the photo on the left at the size a
+ * card's photo has, the words beside it at its foot. The gaps match the card
+ * grid's, which is what makes the photos come out the same size.
+ */
+function EntryPair({ entries }: { entries: readonly LookbookEntry[] }) {
+  return (
+    <ul className="mt-3 grid gap-6 md:grid-cols-2">
+      {entries.map((entry) => (
+        <li key={entry._id} className="grid grid-cols-2 gap-6">
+          <EntryPhoto entry={entry} sizes="(min-width: 768px) 22vw, 45vw" />
+          <div className="flex flex-col justify-end gap-1">
+            {entry.quote ? <Quote>{entry.quote}</Quote> : null}
+            <Attribution entry={entry} />
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** Three or four entries: cards, the photo with the words underneath. */
+function EntryCards({ entries }: { entries: readonly LookbookEntry[] }) {
+  return (
+    <ul className="mt-3 grid gap-6 sm:grid-cols-2 md:grid-cols-4">
+      {entries.map((entry) => (
+        <li key={entry._id} className="flex flex-col gap-3">
+          <EntryPhoto entry={entry} sizes="(min-width: 768px) 22vw, (min-width: 640px) 45vw, 90vw" />
+          <div className="flex flex-col gap-1">
+            {entry.quote ? <Quote className="text-sm">{entry.quote}</Quote> : null}
+            <Attribution entry={entry} />
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+}
 
 /**
  * Lookbook entries naming this product, newest first, under a heading the site
  * settings own (`siteSettings.productPage.lookbookHeading`).
  *
- * The newest entry is the feature: quote on the left, ranged right at the foot
- * of a photo that fills the right column. Any others follow in a row of up to
- * four, filling from the left, so two entries read as one big picture and one
- * small rather than as a cluster. Beyond five, the rest wait for their turn as
- * newer entries push them along.
+ * The newest entry is the feature. What follows depends on how many there are,
+ * so the second row always spans the page instead of trailing off to the left:
+ * one is the feature mirrored, two take a half each, three or four are cards.
+ * Beyond five, the rest wait for their turn as newer entries push them along.
  */
 export function SeenOn({
   entries,
@@ -114,33 +174,19 @@ export function SeenOn({
   const [feature, ...rest] = entries
   if (!feature) return null
   const row = rest.slice(0, MAX_LOOKBOOK_ROW)
+  const [second] = row
   return (
     <section className="flex flex-col gap-5 border-t border-border pt-6">
       <h2 className="text-xl font-medium tracking-tight">{heading}</h2>
-      <div className="grid gap-5 md:grid-cols-2 md:gap-12">
-        <div className="flex flex-col gap-2 md:justify-end md:text-right">
-          {feature.quote ? (
-            <Quote className="text-xl leading-9 sm:text-2xl sm:leading-10">{feature.quote}</Quote>
-          ) : null}
-          <Attribution entry={feature} />
+      <WideEntry entry={feature} />
+      {row.length === 1 && second ? (
+        <div className="mt-3">
+          <WideEntry entry={second} mirrored />
         </div>
-        <EntryPhoto entry={feature} sizes="(min-width: 768px) 45vw, 90vw" />
-      </div>
-      {row.length > 0 ? (
-        <ul className="mt-3 grid gap-6 sm:grid-cols-2 md:grid-cols-4">
-          {row.map((entry) => (
-            <li key={entry._id} className="flex flex-col gap-3">
-              <EntryPhoto
-                entry={entry}
-                sizes="(min-width: 768px) 22vw, (min-width: 640px) 45vw, 90vw"
-              />
-              <div className="flex flex-col gap-1">
-                {entry.quote ? <Quote className="text-sm">{entry.quote}</Quote> : null}
-                <Attribution entry={entry} />
-              </div>
-            </li>
-          ))}
-        </ul>
+      ) : row.length === 2 ? (
+        <EntryPair entries={row} />
+      ) : row.length > 2 ? (
+        <EntryCards entries={row} />
       ) : null}
     </section>
   )
