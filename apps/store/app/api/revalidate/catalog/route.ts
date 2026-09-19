@@ -1,6 +1,6 @@
-import { timingSafeEqual } from 'node:crypto'
 import { revalidateTag } from 'next/cache'
 import { TAGS } from '@/lib/api/cache'
+import { authorised } from '@/lib/bearer'
 import { serverEnv } from '@/lib/env'
 
 /**
@@ -18,18 +18,9 @@ import { serverEnv } from '@/lib/env'
 const CATALOG_TAGS = [TAGS.products, TAGS.categories, TAGS.store] as const
 
 export async function POST(request: Request): Promise<Response> {
-  const secret = serverEnv.CATALOG_REVALIDATE_SECRET
-  if (!secret || !authorised(request.headers.get('authorization'), secret)) {
+  if (!authorised(request.headers.get('authorization'), serverEnv.CATALOG_REVALIDATE_SECRET)) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
   for (const tag of CATALOG_TAGS) revalidateTag(tag, { expire: 0 })
   return Response.json({ revalidated: CATALOG_TAGS, at: new Date().toISOString() })
-}
-
-/** Constant-time comparison of an `Authorization: Bearer` header with the secret. */
-function authorised(header: string | null, secret: string): boolean {
-  if (!header?.startsWith('Bearer ')) return false
-  const presented = Buffer.from(header.slice('Bearer '.length))
-  const expected = Buffer.from(secret)
-  return presented.length === expected.length && timingSafeEqual(presented, expected)
 }

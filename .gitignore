@@ -3,6 +3,9 @@ node_modules
 
 # build output
 .next
+# Next's SWC plugin cache, and what Vercel Workflow generates at build time (E13)
+.swc
+apps/store/app/.well-known/workflow
 .turbo
 dist
 out
@@ -21,7 +24,11 @@ packages/sanity/src/generated/schema.json
 
 # tooling
 .vercel
-.sanity
+**/.sanity/*
+# The Blueprint's stack and scope ids: no secrets, and deploys need them.
+!/.sanity/blueprint.config.json
+# Sanity Functions' local build output
+apps/functions/**/.build
 *.tsbuildinfo
 next-env.d.ts
 
