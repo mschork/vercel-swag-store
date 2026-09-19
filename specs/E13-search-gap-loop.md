@@ -65,7 +65,7 @@ Three questions decide details below. Answer them on a throwaway branch first an
 
 **`packages/demand` (`@repo/demand`)**: everything the store, the Functions and E14's agent share. Source exports like `@repo/sanity`, no build step. No Next imports, no `server-only`.
 
-- `constants.ts`: `ANALYSE_THRESHOLD = 2`, `DEDUPE_MINUTES = 10`, `SETTLE = '10m'`, `MAX_OPEN_GAPS = 500`, `RETENTION_DAYS = 30`, `MAX_GAPS_PER_RUN = 100`, `MODEL = 'anthropic/claude-haiku-4.5'` (the Gateway's catalogue spells versions with a dot).
+- `constants.ts`: `ANALYSE_THRESHOLD = 2`, `DEDUPE_MINUTES = 10`, `SETTLE = '10m'`, `MAX_OPEN_GAPS = 500`, `RETENTION_DAYS = 30`, `MAX_GAPS_PER_RUN = 100`, `MODEL = 'openai/gpt-5-nano'`. The task is easy, so the smallest model AI Gateway's free tier serves does it; the free tier refuses Anthropic models. The schema and the prompt hold for every provider, so changing model is this one line.
 - `normalise.ts`: `normaliseGap(raw): string | null`. Lowercase, NFKC, strip everything but letters, digits, spaces and hyphens, collapse whitespace, trim, cut to 64 characters, then the filters under "Privacy and abuse". `null` means do not record.
 - `ids.ts`: `gapId(normalised)` is `searchGap.` plus the first 16 hex characters of its SHA-256 (`node:crypto`); `ideaId(gapIds)` is `productIdea.` plus the same over the sorted, joined gap ids, so a re-run over the same gaps cannot create a second idea.
 - `fragments.ts`: `typingFragments(gaps)`. The search form navigates on a 300 ms debounce, so someone typing "umbrella" slowly also searches "umb" and "umbre". A gap is a typing fragment when another gap in the set starts with its text followed by more letters and has at least its count. Returns the fragment ids.
