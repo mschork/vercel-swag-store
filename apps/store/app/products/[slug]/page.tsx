@@ -9,9 +9,10 @@ import {
   type BreadcrumbLink,
 } from '@/components/product/breadcrumb'
 import {
-  CommonQuestions,
-  ProductStory,
-  SeenOn,
+  About,
+  Care,
+  Faqs,
+  Lookbook,
 } from '@/components/product/enrichment'
 import { ProductGallery } from '@/components/product/gallery'
 import {
@@ -152,9 +153,10 @@ export default async function ProductPage({ params }: Props) {
         <div className="flex flex-col gap-8">
           {/* People first: the buy panel already carries the short description,
               so the photo and quote follow it and the reference text comes after. */}
-          <SeenOn entries={entries} heading={headings.lookbook} />
-          <ProductStory product={merged} headings={headings} />
-          <CommonQuestions faqs={merged.faqs} heading={headings.faq} />
+          <Lookbook entries={entries} heading={headings.lookbook} />
+          <About text={merged.extendedDescription} heading={headings.about} />
+          <Care text={merged.care} heading={headings.care} />
+          <Faqs faqs={merged.faqs} heading={headings.faq} />
         </div>
       ) : null}
     </Container>
