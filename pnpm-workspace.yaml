@@ -6,5 +6,7 @@ packages:
 # esbuild verifies its platform binary; unrs-resolver only installs a fallback
 # when the platform package is missing, so it is not needed.
 allowBuilds:
+  '@swc/core': false
+  cbor-extract: false
   esbuild: true
   unrs-resolver: false

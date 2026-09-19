@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import { withWorkflow } from 'workflow/next'
 import { IMAGE_HOSTS, securityHeaders } from './lib/security-headers'
 
 const GEIST_TTF = './node_modules/geist/dist/fonts/geist-sans/Geist-Regular.ttf'
@@ -41,4 +42,6 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default nextConfig
+// Vercel Workflow compiles `workflows/` and adds its own routes under
+// /.well-known/workflow (E13). Every other route keeps its rendering mode.
+export default withWorkflow(nextConfig)

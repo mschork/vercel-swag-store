@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
+import type { Cluster } from './model-schema.ts'
 import { validateClusters } from './validate.ts'
+
+/** A cluster as the model returns it: every field present, null where unused. */
+const cluster = (fields: Partial<Cluster> & Pick<Cluster, 'kind' | 'gapIds'>): Cluster => ({
+  title: null,
+  suggestedCategory: null,
+  match: null,
+  rationale: 'r',
+  ...fields,
+})
 
 const context = {
   gapIds: ['g1', 'g2', 'g3', 'g4'],
@@ -12,19 +22,19 @@ describe('validateClusters', () => {
     const { clusters, unmentioned } = validateClusters(
       {
         clusters: [
-          { kind: 'newProduct', gapIds: ['g1', 'other'], title: 'Umbrella', rationale: 'r' },
-          { kind: 'noise', gapIds: ['nope'], rationale: 'r' },
+          cluster({ kind: 'newProduct', gapIds: ['g1', 'other'], title: 'Umbrella', rationale: 'r' }),
+          cluster({ kind: 'noise', gapIds: ['nope'], rationale: 'r' }),
         ],
       },
       context,
     )
-    expect(clusters).toEqual([{ kind: 'newProduct', gapIds: ['g1'], title: 'Umbrella', rationale: 'r' }])
+    expect(clusters).toEqual([cluster({ kind: 'newProduct', gapIds: ['g1'], title: 'Umbrella' })])
     expect(unmentioned).toEqual(['g2', 'g3', 'g4'])
   })
 
   it('drops an idea named like an existing product, freeing its gaps', () => {
     const { clusters, unmentioned } = validateClusters(
-      { clusters: [{ kind: 'newProduct', gapIds: ['g1'], title: ' black hoodie ', rationale: 'r' }] },
+      { clusters: [cluster({ kind: 'newProduct', gapIds: ['g1'], title: ' black hoodie ', rationale: 'r' })] },
       context,
     )
     expect(clusters).toEqual([])
@@ -35,13 +45,13 @@ describe('validateClusters', () => {
     const { clusters } = validateClusters(
       {
         clusters: [
-          { kind: 'newProduct', gapIds: ['g1'], title: 'Umbrella', rationale: 'r', suggestedCategory: 'weather' },
-          { kind: 'newProduct', gapIds: ['g2'], title: 'Scarf', rationale: 'r', suggestedCategory: 'accessories' },
+          cluster({ kind: 'newProduct', gapIds: ['g1'], title: 'Umbrella', rationale: 'r', suggestedCategory: 'weather' }),
+          cluster({ kind: 'newProduct', gapIds: ['g2'], title: 'Scarf', rationale: 'r', suggestedCategory: 'accessories' }),
         ],
       },
       context,
     )
-    expect(clusters[0]).not.toHaveProperty('suggestedCategory')
+    expect(clusters[0]?.suggestedCategory).toBeNull()
     expect(clusters[1]?.suggestedCategory).toBe('accessories')
   })
 
@@ -49,8 +59,8 @@ describe('validateClusters', () => {
     const { clusters } = validateClusters(
       {
         clusters: [
-          { kind: 'noise', gapIds: ['g1'], rationale: 'r' },
-          { kind: 'newProduct', gapIds: ['g1', 'g2'], title: 'Umbrella', rationale: 'r' },
+          cluster({ kind: 'noise', gapIds: ['g1'], rationale: 'r' }),
+          cluster({ kind: 'newProduct', gapIds: ['g1', 'g2'], title: 'Umbrella', rationale: 'r' }),
         ],
       },
       context,
@@ -62,9 +72,9 @@ describe('validateClusters', () => {
     const { clusters } = validateClusters(
       {
         clusters: [
-          { kind: 'alreadySold', gapIds: ['g1'], rationale: 'typo', match: 'hoodies' },
-          { kind: 'alreadySold', gapIds: ['g2'], rationale: 'typo', match: 'black-hoodie' },
-          { kind: 'alreadySold', gapIds: ['g3'], rationale: 'typo', match: 'jumpers' },
+          cluster({ kind: 'alreadySold', gapIds: ['g1'], rationale: 'typo', match: 'hoodies' }),
+          cluster({ kind: 'alreadySold', gapIds: ['g2'], rationale: 'typo', match: 'black-hoodie' }),
+          cluster({ kind: 'alreadySold', gapIds: ['g3'], rationale: 'typo', match: 'jumpers' }),
         ],
       },
       context,
@@ -72,7 +82,7 @@ describe('validateClusters', () => {
     expect(clusters.map((c) => [c.kind, c.match])).toEqual([
       ['alreadySold', 'hoodies'],
       ['alreadySold', 'black-hoodie'],
-      ['noise', undefined],
+      ['noise', null],
     ])
   })
 })

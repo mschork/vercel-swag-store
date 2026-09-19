@@ -34,9 +34,16 @@ export function validateClusters(output: ModelOutput, context: ValidationContext
     if (gapIds.length === 0) continue
     for (const id of gapIds) used.add(id)
 
-    const clean: Cluster = { kind: cluster.kind, gapIds, rationale: cluster.rationale }
+    const clean: Cluster = {
+      kind: cluster.kind,
+      gapIds,
+      rationale: cluster.rationale,
+      title: null,
+      suggestedCategory: null,
+      match: null,
+    }
     if (cluster.kind === 'newProduct') {
-      clean.title = cluster.title?.trim()
+      clean.title = cluster.title?.trim() ?? null
       if (cluster.suggestedCategory && categorySlugs.has(cluster.suggestedCategory)) {
         clean.suggestedCategory = cluster.suggestedCategory
       }
