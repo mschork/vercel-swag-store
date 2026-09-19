@@ -106,7 +106,10 @@ A search that finds nothing is a demand signal. The store counts it after the re
                                                                   |
                           productIdea.<hash> (proposed)      gaps: reviewed | matched | ignored
                                                                   |
-                                            an editor sets accepted or rejected in the Studio
+                                            an editor clicks Accept or Reject in the Studio
+                                                                  | status changes
+                                            Sanity Function idea-decided
+                          idea: decidedAt stamped        gaps: promoted (accepted) | reviewed (rejected)
 ```
 
 | Piece | Job | Where |
@@ -115,7 +118,9 @@ A search that finds nothing is a demand signal. The store counts it after the re
 | Sanity Function | notice a gap reaching the threshold and wake the analysis | `apps/functions/gap-threshold` |
 | Vercel Workflow | the analysis as durable steps, with a lock so bursts collapse into one run | `apps/store/workflows/analyse-demand.ts` |
 | Vercel AI SDK through AI Gateway | one structured-output call, no chat, no tools | `apps/store/lib/demand/steps.ts` |
-| Sanity Blueprint | the Function, declared in code | `sanity.blueprint.ts` |
+| Studio document actions | Accept and Reject on a product idea, Reject with a reason | `apps/studio/actions/idea-decision.tsx` |
+| Sanity Function | finish the decision: stamp the date, promote the gaps | `apps/functions/idea-decided` |
+| Sanity Blueprint | both Functions, declared in code | `sanity.blueprint.ts` |
 | `@repo/demand` | filters, ids, prompt, schema, validation and every Sanity query of the loop | `packages/demand` |
 
 Privacy, in five lines:
@@ -155,7 +160,7 @@ pnpm exec sanity functions test gap-threshold --event update \
   --data-after '{"_id":"searchGap.test","_type":"searchGap","status":"new","count":2}'
 ```
 
-`gap-threshold` wakes the demand analysis when a search gap reaches two searches. Its two variables are set once after the first deploy, never in the blueprint, which is in git:
+`gap-threshold` wakes the demand analysis when a search gap reaches two searches. `idea-decided` finishes an editor's decision on a product idea; it needs no variables. `gap-threshold`'s two variables are set once after the first deploy, never in the blueprint, which is in git:
 
 ```sh
 pnpm exec sanity functions env add gap-threshold STORE_URL https://<production-host>

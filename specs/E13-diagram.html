@@ -98,7 +98,7 @@
   <div class="scroll">
     <svg viewBox="0 0 980 470" role="img" aria-labelledby="t d">
       <title id="t">The search-gap loop</title>
-      <desc id="d">Three rows. Capture: a visitor's failed search is recorded in Sanity after the response. Analysis: a Sanity Function wakes a Vercel Workflow, which asks a model once and writes product ideas. Review: an editor accepts or rejects each idea.</desc>
+      <desc id="d">Three rows. Capture: a visitor's failed search is recorded in Sanity after the response. Analysis: a Sanity Function wakes a Vercel Workflow, which asks a model once and writes product ideas. Review: an editor accepts or rejects each idea, and a Function finishes the decision.</desc>
       <defs>
         <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0 0 L10 5 L0 10 z" style="fill: var(--muted)"/>
@@ -160,21 +160,20 @@
         <text x="370" y="370" text-anchor="middle">productIdea.&lt;hash&gt;</text>
         <text x="370" y="390" text-anchor="middle" class="small">proposed; gaps settled</text>
 
-        <rect x="520" y="340" width="200" height="70" rx="10" style="fill: var(--fn-bg); stroke: var(--fn)"/>
-        <text x="620" y="364" text-anchor="middle">Function idea-start-review</text>
-        <text x="620" y="382" text-anchor="middle" class="small">starts Sanity Workflows</text>
-        <text x="620" y="398" text-anchor="middle" class="small">instance "idea-review"</text>
+        <rect x="520" y="340" width="200" height="70" rx="10" style="fill: var(--ed-bg); stroke: var(--ed)"/>
+        <text x="620" y="370" text-anchor="middle">Editor decides</text>
+        <text x="620" y="390" text-anchor="middle" class="small">Accept, or Reject + reason</text>
 
-        <rect x="770" y="340" width="190" height="70" rx="10" style="fill: var(--ed-bg); stroke: var(--ed)"/>
-        <text x="865" y="370" text-anchor="middle">Editor decides</text>
-        <text x="865" y="390" text-anchor="middle" class="small">Accept, or Reject + reason</text>
+        <rect x="770" y="340" width="190" height="70" rx="10" style="fill: var(--fn-bg); stroke: var(--fn)"/>
+        <text x="865" y="370" text-anchor="middle">Function idea-decided</text>
+        <text x="865" y="390" text-anchor="middle" class="small">date stamped, gaps follow</text>
 
         <path class="edge" marker-end="url(#a)" d="M370 260 V338"/>
         <text x="378" y="302" class="label">one transaction</text>
         <path class="edge" marker-end="url(#a)" d="M470 375 H518"/>
         <path class="edge" marker-end="url(#a)" d="M720 375 H768"/>
         <path class="edge" marker-end="url(#a)" d="M865 410 V440 H370 V412"/>
-        <text x="617" y="458" text-anchor="middle" class="label">Function wf-drain-effects applies the decision to the idea and its gaps</text>
+        <text x="617" y="458" text-anchor="middle" class="label">accepted: gaps promoted · rejected: gaps stay reviewed</text>
       </g>
     </svg>
   </div>
@@ -293,25 +292,21 @@
     </div></li>
 
     <li><div class="card">
-      <div class="meta"><span class="chip fn">Sanity Function</span><span class="chip slice">Slice 5</span></div>
-      <h3><code>idea-start-review</code> opens a review</h3>
-      <p>Fires when a <code>productIdea</code> is created and starts a Sanity Workflows instance of <code>idea-review</code> for it.</p>
-    </div></li>
-
-    <li><div class="card">
       <div class="meta"><span class="chip ed">Editor</span><span class="chip slice">Slice 5</span></div>
       <h3>A person decides</h3>
-      <p>In the Studio, under "Demand signals", the editor opens the idea and chooses Accept, or Reject with a reason. Without slice 5 the same decision is a radio field on the idea.</p>
+      <p>In the Studio, under "Demand signals", the editor opens an idea from "Open ideas" and clicks <strong>Accept</strong>, or <strong>Reject</strong> and gives a reason. These two buttons replace publish on a product idea, and the status field itself is read only, so they are the only way to decide.</p>
+      <p><strong>Written to:</strong> the idea's <code>status</code>, and <code>rejectionReason</code> on a rejection, directly on the published document with the editor's own login.</p>
     </div></li>
 
     <li><div class="card">
       <div class="meta"><span class="chip fn">Sanity Function</span><span class="chip data">Sanity dataset</span><span class="chip slice">Slice 5</span></div>
-      <h3><code>wf-drain-effects</code> applies the decision</h3>
+      <h3><code>idea-decided</code> finishes the decision</h3>
+      <p>Fires when an idea's status changes to <code>accepted</code> or <code>rejected</code>. Within a couple of seconds it stamps <code>decidedAt</code> and moves the gaps:</p>
       <ul>
-        <li>Accepted: the idea becomes <code>accepted</code> and its gaps <code>promoted</code>.</li>
-        <li>Rejected: the idea becomes <code>rejected</code> with the reason, and its gaps stay <code>reviewed</code>.</li>
+        <li>Accepted: the idea's gaps become <code>promoted</code>.</li>
+        <li>Rejected: its gaps stay <code>reviewed</code>.</li>
       </ul>
-      <p>Delivery is at least once, so a decision already on the idea writes nothing. <code>wf-heartbeat</code> runs daily to sweep stale work.</p>
+      <p>Its own write does not touch the status, so it cannot trigger itself, and an idea that already has a date writes nothing. The idea moves from "Open ideas" to "Accepted ideas" or "Rejected ideas" in the desk.</p>
       <p class="next">The loop ends here. "Accepted" is a signal to whoever owns the catalogue. The API has no way to create a product, and nothing downstream trusts the flag.</p>
     </div></li>
   </ol>
