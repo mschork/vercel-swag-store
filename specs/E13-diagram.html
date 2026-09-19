@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E13 Search-gap loop</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #111418; --muted: #5b6470; --line: #d9dee5; --card: #f6f8fa;
+    --store: #1d5fd1; --store-bg: #e8f0fe;
+    --data: #b4371c; --data-bg: #fdece7;
+    --fn: #8a5a00; --fn-bg: #fdf3d9;
+    --wf: #6b3fc4; --wf-bg: #f0eafc;
+    --ai: #1f7a3d; --ai-bg: #e5f5ea;
+    --ed: #0f6f78; --ed-bg: #e2f4f6;
+    --stop: #9a1b2f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1116; --fg: #e8ecf1; --muted: #9aa5b3; --line: #2a313b; --card: #161b22;
+      --store: #8ab4ff; --store-bg: #16233d;
+      --data: #ff9d85; --data-bg: #3a1c15;
+      --fn: #f2c260; --fn-bg: #33280f;
+      --wf: #c1a4ff; --wf-bg: #261b40;
+      --ai: #7ddb9a; --ai-bg: #12301c;
+      --ed: #7fd6de; --ed-bg: #0f2e32;
+      --stop: #ff8fa1;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.01em; }
+  h2 { font-size: 1.3rem; margin: 48px 0 12px; letter-spacing: -0.01em; }
+  p { margin: 0 0 12px; }
+  .lede { color: var(--muted); max-width: 70ch; }
+  code { font: 0.88em ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 0; padding: 0; list-style: none; }
+  .chip { display: inline-block; font-size: 0.78rem; font-weight: 600; border-radius: 999px;
+    padding: 2px 10px; border: 1px solid currentColor; white-space: nowrap; }
+  .store { color: var(--store); background: var(--store-bg); }
+  .data { color: var(--data); background: var(--data-bg); }
+  .fn { color: var(--fn); background: var(--fn-bg); }
+  .wf { color: var(--wf); background: var(--wf-bg); }
+  .ai { color: var(--ai); background: var(--ai-bg); }
+  .ed { color: var(--ed); background: var(--ed-bg); }
+  .slice { color: var(--muted); background: transparent; font-weight: 500; }
+
+  .scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+  .scroll svg { display: block; min-width: 860px; width: 100%; height: auto; }
+  svg text { fill: var(--fg); font: 13px ui-sans-serif, system-ui, sans-serif; }
+  svg .small { font-size: 11px; fill: var(--muted); }
+  svg .edge { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+  svg .label { font-size: 11px; fill: var(--muted); }
+
+  .steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+  .steps > li { counter-increment: step; position: relative; padding: 0 0 20px 52px; }
+  .steps > li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 34px; height: 34px;
+    border-radius: 50%; border: 1px solid var(--line); background: var(--card);
+    display: grid; place-items: center; font-weight: 700; font-size: 0.9rem; }
+  .steps > li::after { content: ""; position: absolute; left: 17px; top: 38px; bottom: 2px; width: 1px; background: var(--line); }
+  .steps > li:last-child::after { display: none; }
+  .card { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: var(--card); }
+  .card h3 { margin: 0 0 6px; font-size: 1.02rem; }
+  .card .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .card p:last-child, .card ul:last-child { margin-bottom: 0; }
+  .card ul { margin: 0 0 10px; padding-left: 20px; }
+  .stop { color: var(--stop); font-weight: 600; }
+  .next { color: var(--muted); font-size: 0.92rem; }
+
+  .states { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0 16px; }
+  .state { border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; background: var(--card);
+    font: 0.88rem ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .arrow { color: var(--muted); }
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.94rem; min-width: 560px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.04em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>E13 Search-gap loop</h1>
+  <p class="lede">A search that finds nothing is counted after the page has been sent. When the same thing is missed often enough, a model groups the misses into product ideas, and a person accepts or rejects each idea in the Studio. Nothing here touches the catalogue or slows a page. This page is the picture; <a href="E13-search-gap-loop.md">the spec</a> is the contract.</p>
+
+  <ul class="legend" aria-label="Where each step runs">
+    <li><span class="chip store">Store on Vercel</span></li>
+    <li><span class="chip data">Sanity dataset</span></li>
+    <li><span class="chip fn">Sanity Function</span></li>
+    <li><span class="chip wf">Vercel Workflow</span></li>
+    <li><span class="chip ai">Model through AI Gateway</span></li>
+    <li><span class="chip ed">Editor in the Studio</span></li>
+  </ul>
+
+  <h2>The loop at a glance</h2>
+  <div class="scroll">
+    <svg viewBox="0 0 980 470" role="img" aria-labelledby="t d">
+      <title id="t">The search-gap loop</title>
+      <desc id="d">Three rows. Capture: a visitor's failed search is recorded in Sanity after the response. Analysis: a Sanity Function wakes a Vercel Workflow, which asks a model once and writes product ideas. Review: an editor accepts or rejects each idea.</desc>
+      <defs>
+        <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" style="fill: var(--muted)"/>
+        </marker>
+      </defs>
+
+      <text x="20" y="28" class="small">1 · CAPTURE (slice 2)</text>
+      <g>
+        <rect x="20" y="40" width="200" height="70" rx="10" style="fill: var(--store-bg); stroke: var(--store)"/>
+        <text x="120" y="70" text-anchor="middle">Visitor searches</text>
+        <text x="120" y="90" text-anchor="middle" class="small">/search?q=umbrella</text>
+
+        <rect x="270" y="40" width="200" height="70" rx="10" style="fill: var(--store-bg); stroke: var(--store)"/>
+        <text x="370" y="70" text-anchor="middle">Nothing found</text>
+        <text x="370" y="90" text-anchor="middle" class="small">page is sent first</text>
+
+        <rect x="520" y="40" width="200" height="70" rx="10" style="fill: var(--store-bg); stroke: var(--store)"/>
+        <text x="620" y="70" text-anchor="middle">after(): recordGap</text>
+        <text x="620" y="90" text-anchor="middle" class="small">filters, bot check, dedupe</text>
+
+        <rect x="770" y="40" width="190" height="70" rx="10" style="fill: var(--data-bg); stroke: var(--data)"/>
+        <text x="865" y="70" text-anchor="middle">searchGap.&lt;hash&gt;</text>
+        <text x="865" y="90" text-anchor="middle" class="small">count + 1, private id</text>
+
+        <path class="edge" marker-end="url(#a)" d="M220 75 H268"/>
+        <path class="edge" marker-end="url(#a)" d="M470 75 H518"/>
+        <path class="edge" marker-end="url(#a)" d="M720 75 H768"/>
+      </g>
+
+      <text x="20" y="178" class="small">2 · ANALYSIS (slices 3 and 4)</text>
+      <g>
+        <rect x="770" y="190" width="190" height="70" rx="10" style="fill: var(--fn-bg); stroke: var(--fn)"/>
+        <text x="865" y="220" text-anchor="middle">Function gap-threshold</text>
+        <text x="865" y="240" text-anchor="middle" class="small">fires when count ≥ 2</text>
+
+        <rect x="520" y="190" width="200" height="70" rx="10" style="fill: var(--store-bg); stroke: var(--store)"/>
+        <text x="620" y="220" text-anchor="middle">POST /api/demand/analyse</text>
+        <text x="620" y="240" text-anchor="middle" class="small">bearer secret, answers 202</text>
+
+        <rect x="270" y="190" width="200" height="70" rx="10" style="fill: var(--wf-bg); stroke: var(--wf)"/>
+        <text x="370" y="214" text-anchor="middle">Workflow analyseDemand</text>
+        <text x="370" y="232" text-anchor="middle" class="small">lock · settle 10 min · claim</text>
+        <text x="370" y="248" text-anchor="middle" class="small">catalogue · validate · write</text>
+
+        <rect x="20" y="190" width="200" height="70" rx="10" style="fill: var(--ai-bg); stroke: var(--ai)"/>
+        <text x="120" y="220" text-anchor="middle">One model call</text>
+        <text x="120" y="240" text-anchor="middle" class="small">schema-checked, no tools</text>
+
+        <path class="edge" marker-end="url(#a)" d="M865 110 V188"/>
+        <text x="873" y="152" class="label">on update</text>
+        <path class="edge" marker-end="url(#a)" d="M770 225 H722"/>
+        <path class="edge" marker-end="url(#a)" d="M520 225 H472"/>
+        <path class="edge" marker-end="url(#a)" marker-start="url(#a)" d="M270 225 H222"/>
+      </g>
+
+      <text x="20" y="328" class="small">3 · REVIEW (slice 5)</text>
+      <g>
+        <rect x="270" y="340" width="200" height="70" rx="10" style="fill: var(--data-bg); stroke: var(--data)"/>
+        <text x="370" y="370" text-anchor="middle">productIdea.&lt;hash&gt;</text>
+        <text x="370" y="390" text-anchor="middle" class="small">proposed; gaps settled</text>
+
+        <rect x="520" y="340" width="200" height="70" rx="10" style="fill: var(--fn-bg); stroke: var(--fn)"/>
+        <text x="620" y="364" text-anchor="middle">Function idea-start-review</text>
+        <text x="620" y="382" text-anchor="middle" class="small">starts Sanity Workflows</text>
+        <text x="620" y="398" text-anchor="middle" class="small">instance "idea-review"</text>
+
+        <rect x="770" y="340" width="190" height="70" rx="10" style="fill: var(--ed-bg); stroke: var(--ed)"/>
+        <text x="865" y="370" text-anchor="middle">Editor decides</text>
+        <text x="865" y="390" text-anchor="middle" class="small">Accept, or Reject + reason</text>
+
+        <path class="edge" marker-end="url(#a)" d="M370 260 V338"/>
+        <text x="378" y="302" class="label">one transaction</text>
+        <path class="edge" marker-end="url(#a)" d="M470 375 H518"/>
+        <path class="edge" marker-end="url(#a)" d="M720 375 H768"/>
+        <path class="edge" marker-end="url(#a)" d="M865 410 V440 H370 V412"/>
+        <text x="617" y="458" text-anchor="middle" class="label">Function wf-drain-effects applies the decision to the idea and its gaps</text>
+      </g>
+    </svg>
+  </div>
+
+  <h2>Step by step</h2>
+  <ol class="steps">
+    <li><div class="card">
+      <div class="meta"><span class="chip store">Store</span><span class="chip slice">E07, unchanged</span></div>
+      <h3>A visitor searches</h3>
+      <p>The search form navigates to <code>/search?q=…</code> on Enter, on the button, and after a 300 ms pause in typing from three characters on. All three are the same navigation, so the server cannot tell a finished search from a pause.</p>
+    </div></li>
+
+    <li><div class="card">
+      <div class="meta"><span class="chip store">Store</span><span class="chip slice">Slice 2</span></div>
+      <h3>The search finds nothing</h3>
+      <p><code>SearchResults</code> records a miss only when all three hold:</p>
+      <ul><li>there is a query,</li><li>no category filter is set,</li><li>the API and the category expansion returned no product.</li></ul>
+      <p>The empty state says: "We keep track of what people look for and don't find."</p>
+    </div></li>
+
+    <li><div class="card">
+      <div class="meta"><span class="chip store">Store</span><span class="chip slice">Slice 2</span></div>
+      <h3>Should this miss be recorded at all?</h3>
+      <p><code>recordGapAfterResponse</code> checks, in order. Any "no" and <span class="stop">nothing is recorded</span>:</p>
+      <ul>
+        <li>Is <code>SANITY_API_WRITE_TOKEN</code> set? Previews, CI and forks have none.</li>
+        <li>Is the user agent a person, not a bot?</li>
+        <li>Does the query survive <code>normaliseGap</code>? See the filter table below.</li>
+      </ul>
+      <p class="next">Then it registers the write with <code>after()</code>, so the visitor never waits for it.</p>
+    </div></li>
+
+    <li><div class="card">
+      <div class="meta"><span class="chip store">Store</span><span class="chip data">Sanity dataset</span><span class="chip slice">Slice 2</span></div>
+      <h3>After the response: count the gap</h3>
+      <p>One read, at most one write. <span class="stop">No write</span> when:</p>
+      <ul>
+        <li>the gap was counted less than 10 minutes ago, by anyone,</li>
+        <li>the gap is new and 500 gaps are already open,</li>
+        <li>the gap's status is <code>ignored</code>.</li>
+      </ul>
+      <p>Otherwise one transaction creates <code>searchGap.&lt;hash&gt;</code> if needed and adds one to <code>count</code>. Every failure is caught and logged as a code. The query and the token are never logged.</p>
+    </div></li>
+
+    <li><div class="card">
+      <div class="meta"><span class="chip fn">Sanity Function</span><span class="chip slice">Slice 4</span></div>
+      <h3><code>gap-threshold</code> notices the gap matters</h3>
+      <p>Fires on every update where the gap is <code>new</code>, its count is 2 or more, and the count just changed. It writes nothing. It only calls the store: <code>POST /api/demand/analyse</code> with the bearer secret. A lost call heals itself on the next search.</p>
+    </div></li>
+
+    <li><div class="card">
+      <div class="meta"><span class="chip store">Store</span><span class="chip slice">Slice 3</span></div>
+      <h3>The route starts the workflow</h3>
+      <p>Wrong or missing secret: <span class="stop">401</span>. Right secret: it starts <code>analyseDemand</code> and answers 202 at once. The same call by hand with <code>{"settle": false}</code> skips the wait in step 8.</p>
+    </div></li>
+
+    <li><div class="card">
+      <div class="meta"><span class="chip wf">Vercel Workflow</span><span class="chip slice">Slice 3</span></div>
+      <h3>Lock: only one run at a time</h3>
+      <p>The run claims the hook token <code>demand-analysis</code>. If another run holds it, this one <span class="stop">ends as skipped</span>. A burst of Function calls collapses into one analysis.</p>
+    </div></li>
+
+    <li><div class="card">
+      <div class="meta"><span class="chip wf">Vercel Workflow</span><span class="chip slice">Slice 3</span></div>
+      <h3>Settle for ten minutes</h3>
+      <p>A durable sleep. It lets "umbrellas" and "rain umbrella" arrive next to "umbrella", and lets someone finish typing.</p>
+    </div></li>
+
+    <li><div class="card">
+      <div class="meta"><span class="chip wf">Vercel Workflow</span><span class="chip data">Sanity dataset</span><span class="chip slice">Slice 3</span></div>
+      <h3>Step <code>claim</code></h3>
+      <ul>
+        <li>Delete gaps that stayed under 2 searches and went quiet for 30 days.</li>
+        <li>Take up to 100 gaps that are <code>new</code> with a count of 2 or more.</li>
+        <li>Typing fragments of those gaps go to <code>ignored</code> with a note.</li>
+        <li>The rest go to <code>analysing</code> under this run's id. Each patch is guarded by the revision that was read.</li>
+      </ul>
+      <p class="next">Nothing claimed: <span class="stop">the run ends here</span>.</p>
+    </div></li>
+
+    <li><div class="card">
+      <div class="meta"><span class="chip wf">Vercel Workflow</span><span class="chip store">Store's cached API readers</span><span class="chip slice">Slice 3</span></div>
+      <h3>Step <code>catalogue</code></h3>
+      <p>Every product and category from the Swag Store API, through the same cached functions the pages use. This is what "already sold" is judged against.</p>
+    </div></li>
+
+    <li><div class="card">
+      <div class="meta"><span class="chip wf">Vercel Workflow</span><span class="chip ai">Model</span><span class="chip slice">Slice 3</span></div>
+      <h3>Step <code>propose</code>: the one model call</h3>
+      <p>The model gets the categories, the products and the gaps as a JSON array. It has no tools and must answer in one schema: clusters, each of kind <code>newProduct</code>, <code>alreadySold</code> or <code>noise</code>. The queries are presented as untrusted data, never as instructions. A malformed answer throws and the step retries.</p>
+    </div></li>
+
+    <li><div class="card">
+      <div class="meta"><span class="chip wf">Vercel Workflow</span><span class="chip slice">Slice 3</span></div>
+      <h3>Validate: nothing the model says is written unchecked</h3>
+      <ul>
+        <li>Gap ids that were not claimed are dropped, and so is a gap's second appearance.</li>
+        <li>An idea named like an existing product is dropped.</li>
+        <li>A category or match that is not a real slug is cleared. "Already sold" without a real match becomes noise.</li>
+        <li>Claimed gaps that no cluster mentions are listed to go back to <code>new</code>.</li>
+      </ul>
+    </div></li>
+
+    <li><div class="card">
+      <div class="meta"><span class="chip wf">Vercel Workflow</span><span class="chip data">Sanity dataset</span><span class="chip slice">Slice 3</span></div>
+      <h3>Step <code>write</code>: one transaction</h3>
+      <ul>
+        <li><code>newProduct</code>: create <code>productIdea.&lt;hash&gt;</code> as <code>proposed</code>, with the summed demand. Its gaps become <code>reviewed</code>.</li>
+        <li><code>alreadySold</code>: gaps become <code>matched</code>, with the match and the reason as a note.</li>
+        <li><code>noise</code>: gaps become <code>ignored</code>, with the reason.</li>
+        <li>Unmentioned gaps return to <code>new</code>.</li>
+      </ul>
+      <p>The idea's id is a hash of its gap ids, so a second run over the same gaps creates nothing new.</p>
+      <p class="next">If anything throws after the claim, step <code>release</code> puts this run's gaps back to <code>new</code> and the run shows as failed. No gap is ever stuck in <code>analysing</code>.</p>
+    </div></li>
+
+    <li><div class="card">
+      <div class="meta"><span class="chip fn">Sanity Function</span><span class="chip slice">Slice 5</span></div>
+      <h3><code>idea-start-review</code> opens a review</h3>
+      <p>Fires when a <code>productIdea</code> is created and starts a Sanity Workflows instance of <code>idea-review</code> for it.</p>
+    </div></li>
+
+    <li><div class="card">
+      <div class="meta"><span class="chip ed">Editor</span><span class="chip slice">Slice 5</span></div>
+      <h3>A person decides</h3>
+      <p>In the Studio, under "Demand signals", the editor opens the idea and chooses Accept, or Reject with a reason. Without slice 5 the same decision is a radio field on the idea.</p>
+    </div></li>
+
+    <li><div class="card">
+      <div class="meta"><span class="chip fn">Sanity Function</span><span class="chip data">Sanity dataset</span><span class="chip slice">Slice 5</span></div>
+      <h3><code>wf-drain-effects</code> applies the decision</h3>
+      <ul>
+        <li>Accepted: the idea becomes <code>accepted</code> and its gaps <code>promoted</code>.</li>
+        <li>Rejected: the idea becomes <code>rejected</code> with the reason, and its gaps stay <code>reviewed</code>.</li>
+      </ul>
+      <p>Delivery is at least once, so a decision already on the idea writes nothing. <code>wf-heartbeat</code> runs daily to sweep stale work.</p>
+      <p class="next">The loop ends here. "Accepted" is a signal to whoever owns the catalogue. The API has no way to create a product, and nothing downstream trusts the flag.</p>
+    </div></li>
+  </ol>
+
+  <h2>What a gap and an idea can be</h2>
+  <p><strong>Search gap</strong></p>
+  <div class="states">
+    <span class="state">new</span><span class="arrow">→</span>
+    <span class="state">analysing</span><span class="arrow">→</span>
+    <span class="state">reviewed</span><span class="arrow">→</span>
+    <span class="state">promoted</span>
+  </div>
+  <p>From <code>analysing</code> a gap can also become <code>matched</code> (we sell it under another word), <code>ignored</code> (noise or a typing fragment), or return to <code>new</code> (the model skipped it, or the run failed). An <code>ignored</code> gap stops counting. Every other settled gap keeps counting without changing status.</p>
+  <p><strong>Product idea</strong></p>
+  <div class="states">
+    <span class="state">proposed</span><span class="arrow">→</span>
+    <span class="state">accepted</span><span class="arrow">or</span>
+    <span class="state">rejected</span>
+  </div>
+
+  <h2>What never gets stored</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Dropped</th><th>Example</th><th>Where</th></tr></thead>
+    <tbody>
+      <tr><td>Anything with an <code>@</code></td><td>jane@example.com</td><td><code>normaliseGap</code></td></tr>
+      <tr><td>URLs and bare domains</td><td>buy at vercel.com</td><td><code>normaliseGap</code></td></tr>
+      <tr><td>Six or more digits, spaced or not</td><td>0171 234 5678</td><td><code>normaliseGap</code></td></tr>
+      <tr><td>Under 3 characters, over 6 words</td><td>ab</td><td><code>normaliseGap</code></td></tr>
+      <tr><td>Searches by bots</td><td>Googlebot</td><td><code>recordGapAfterResponse</code></td></tr>
+      <tr><td>Raw input, IP, user agent, cart token</td><td></td><td>never read for storage</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Gaps and ideas have ids with a dot. Sanity keeps such ids private, so an anonymous reader of this public dataset gets nothing back for either type.</p>
+</main>
+</body>
+</html>
