@@ -32,4 +32,18 @@ describe('favouriteProducts', () => {
   it('returns nothing when the lookbook names nothing', () => {
     expect(favouriteProducts([], catalogue)).toEqual([])
   })
+
+  it('drops what the page already shows, such as the cart lines', () => {
+    const ranked = favouriteProducts(
+      [{ apiId: 'mug_001' }, { apiId: 'tote_001' }, { apiId: 'tshirt_001' }],
+      catalogue,
+      ['tote_001'],
+    )
+    expect(ranked.map((p) => p.id)).toEqual(['mug_001', 'tshirt_001'])
+  })
+
+  it('returns nothing when the cart already holds every favourite', () => {
+    const ranked = favouriteProducts([{ apiId: 'mug_001' }], catalogue, ['mug_001'])
+    expect(ranked).toEqual([])
+  })
 })
