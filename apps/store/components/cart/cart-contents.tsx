@@ -1,9 +1,12 @@
 import Link from 'next/link'
 import { EmptyState } from '@/components/empty-state'
+import { FavouriteProducts } from '@/components/favourite-products'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { FAVOURITES_FALLBACK } from '@/lib/content/fallbacks'
 import { loadCart } from '@/lib/cart/get-cart'
 import { toLines } from '@/lib/cart/lines'
+import { getHomePage } from '@/lib/sanity/content'
 import { CartView } from './cart-view'
 import { EmptyCart } from './empty-cart'
 
@@ -12,13 +15,38 @@ import { EmptyCart } from './empty-cart'
  * (never created, expired, or no lines) is the empty state; a failed cart call
  * says the cart could not be loaded, because "your cart is empty" would be
  * false (specs/callout.md); otherwise the client view takes the lines.
+ *
+ * Under all of them, the same favourites row the home page shows (E09). An
+ * empty cart gets it unfiltered; a cart with lines gets it without the products
+ * already in it, so the row never suggests something the shopper just added.
+ * Only the exclusion is dynamic: the ranking and the catalogue are cached.
  */
 export async function CartContents() {
   const result = await loadCart('Cart')
   if (!result) return <CartUnavailable />
   const { cart } = result
-  if (!cart || cart.items.length === 0) return <EmptyCart />
-  return <CartView lines={toLines(cart)} currency={cart.currency} />
+  const items = cart?.items ?? []
+  return (
+    <>
+      {cart && items.length > 0 ? (
+        <CartView lines={toLines(cart)} currency={cart.currency} />
+      ) : (
+        <EmptyCart />
+      )}
+      <Favourites exclude={items.map((item) => item.productId)} />
+    </>
+  )
+}
+
+/** The favourites row with the heading the home page document owns. */
+async function Favourites({ exclude }: { exclude: readonly string[] }) {
+  const content = await getHomePage()
+  return (
+    <FavouriteProducts
+      heading={content?.favourites?.heading || FAVOURITES_FALLBACK.heading}
+      exclude={exclude}
+    />
+  )
 }
 
 function CartUnavailable() {

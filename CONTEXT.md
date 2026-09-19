@@ -40,6 +40,10 @@ _Avoid_: Sanity category, taxonomy term
 One photo of a person with the products they are wearing, plus their name, role and a quote. Shown on the page of each product it names.
 _Avoid_: Editorial photo, testimonial, story
 
+**Lookbook mention**:
+One published lookbook entry naming one product. It records that an editor photographed the product with someone, not that anyone bought, rated or clicked it. The count of mentions is what orders the favourites on the home page.
+_Avoid_: Popularity, rating, vote, like
+
 **FAQ**:
 One question and its answer, written once and shown on many products. It reaches a product through the categories it names, or because that product attaches it directly.
 _Avoid_: Help article, question entry

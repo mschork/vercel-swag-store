@@ -9,9 +9,10 @@ import {
   type BreadcrumbLink,
 } from '@/components/product/breadcrumb'
 import {
-  CommonQuestions,
-  ProductStory,
-  SeenOn,
+  About,
+  Care,
+  Faqs,
+  Lookbook,
 } from '@/components/product/enrichment'
 import { ProductGallery } from '@/components/product/gallery'
 import {
@@ -21,9 +22,14 @@ import {
 import { findCategory } from '@/lib/api/categories'
 import { findProduct, getAllProductSlugs } from '@/lib/api/products'
 import { getStoreConfig } from '@/lib/api/store'
+import { PRODUCT_HEADINGS_FALLBACK, type ProductHeadings } from '@/lib/content/fallbacks'
 import { publicEnv } from '@/lib/env.public'
 import { openGraphDefaults } from '@/lib/metadata'
-import { getLookbookForProduct, getProductDocument } from '@/lib/sanity/content'
+import {
+  getLookbookForProduct,
+  getProductDocument,
+  getSiteSettings,
+} from '@/lib/sanity/content'
 import { photoUrls } from '@/lib/sanity/image'
 import { mergeProduct } from '@/lib/sanity/merge'
 import { breadcrumbJsonLd } from '@/lib/structured-data'
@@ -83,10 +89,11 @@ export default async function ProductPage({ params }: Props) {
   // Enrichment and lookbook are cached like the catalogue, so the page stays
   // prerendered; a missing document or a failed call renders the page as it
   // was before Sanity existed (specs/E09-sanity-integration.md).
-  const [category, document, lookbook] = await Promise.all([
+  const [category, document, lookbook, settings] = await Promise.all([
     findCategory(product.category),
     getProductDocument(product.id),
     getLookbookForProduct(product.id),
+    getSiteSettings(),
   ])
   const merged = mergeProduct(product, document)
   const entries = lookbook ?? []
@@ -97,6 +104,15 @@ export default async function ProductPage({ params }: Props) {
     Boolean(merged.care) ||
     entries.length > 0 ||
     merged.faqs.length > 0
+  // Every heading below the buy row is the editor's to rename; each falls back
+  // to the wording the store shipped with (specs/E08-sanity-content-model.md).
+  const copy = settings?.productPage
+  const headings: ProductHeadings = {
+    about: copy?.aboutHeading || PRODUCT_HEADINGS_FALLBACK.about,
+    care: copy?.careHeading || PRODUCT_HEADINGS_FALLBACK.care,
+    lookbook: copy?.lookbookHeading || PRODUCT_HEADINGS_FALLBACK.lookbook,
+    faq: copy?.faqHeading || PRODUCT_HEADINGS_FALLBACK.faq,
+  }
   const categoryName = category?.name ?? product.category
   const trail: BreadcrumbLink[] = [
     { name: 'Home', href: '/' },
@@ -135,9 +151,12 @@ export default async function ProductPage({ params }: Props) {
       </article>
       {enriched ? (
         <div className="flex flex-col gap-8">
-          <ProductStory product={merged} />
-          <SeenOn entries={entries} />
-          <CommonQuestions faqs={merged.faqs} />
+          {/* People first: the buy panel already carries the short description,
+              so the photo and quote follow it and the reference text comes after. */}
+          <Lookbook entries={entries} heading={headings.lookbook} />
+          <About text={merged.extendedDescription} heading={headings.about} />
+          <Care text={merged.care} heading={headings.care} />
+          <Faqs faqs={merged.faqs} heading={headings.faq} />
         </div>
       ) : null}
     </Container>

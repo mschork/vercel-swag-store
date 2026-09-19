@@ -1,6 +1,7 @@
 import 'server-only'
 import type {
   CheckoutPageQueryResult,
+  FavouriteProductsQueryResult,
   HomePageQueryResult,
   LookbookForProductQueryResult,
   ProductQueryResult,
@@ -10,6 +11,7 @@ import { loadOptional } from '@/lib/load-optional'
 import { sanityFetch } from './fetch'
 import {
   checkoutPageQuery,
+  favouriteProductsQuery,
   homePageQuery,
   lookbookForProductQuery,
   productQuery,
@@ -68,6 +70,20 @@ export function getLookbookForProduct(apiId: string) {
       query: lookbookForProductQuery,
       params: { productDocId: `product-${apiId}` },
       tags: ['sanity:lookbookEntry'],
+    }),
+  )
+}
+
+/**
+ * The products lookbook entries name most, ranked in GROQ. Tagged for both
+ * document types because either a new entry or a re-sync can change the answer.
+ */
+export function getFavouriteProducts(limit: number) {
+  return loadOptional('Lookbook favourites', () =>
+    sanityFetch<FavouriteProductsQueryResult>({
+      query: favouriteProductsQuery,
+      params: { limit },
+      tags: ['sanity:lookbookEntry', 'sanity:product'],
     }),
   )
 }

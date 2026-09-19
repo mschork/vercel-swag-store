@@ -27,22 +27,26 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-/** The two rich text blocks, in the order they belong: what it is, then how to keep it. */
-export function ProductStory({ product }: { product: MergedProduct }) {
+type RichText = NonNullable<MergedProduct['extendedDescription']>
+
+/** A heading beside an editor's rich text; nothing at all when there is no text. */
+function RichTextSection({ text, heading }: { text: RichText | null | undefined; heading: string }) {
+  if (!text) return null
   return (
-    <>
-      {product.extendedDescription ? (
-        <Section title="About this item">
-          <PortableText value={product.extendedDescription} />
-        </Section>
-      ) : null}
-      {product.care ? (
-        <Section title="How to use and care">
-          <PortableText value={product.care} />
-        </Section>
-      ) : null}
-    </>
+    <Section title={heading}>
+      <PortableText value={text} />
+    </Section>
   )
+}
+
+/** What the product is, in the editor's words (`product.extendedDescription`). */
+export function About(props: { text: RichText | null | undefined; heading: string }) {
+  return <RichTextSection {...props} />
+}
+
+/** How to use it and keep it (`product.care`). */
+export function Care(props: { text: RichText | null | undefined; heading: string }) {
+  return <RichTextSection {...props} />
 }
 
 type LookbookEntry = LookbookForProductQueryResult[number]
@@ -84,44 +88,104 @@ function EntryPhoto({ entry, sizes }: { entry: LookbookEntry; sizes: string }) {
   )
 }
 
+/** How many entries follow the feature. Five on the page at most, newest first. */
+const MAX_LOOKBOOK_ROW = 4
+
 /**
- * Lookbook entries naming this product. One entry takes the page's two columns
- * head on: the heading and the quote on the left, the photo filling the right
- * column, which puts it at the width of the buy panel above rather than at a
- * fraction of a fraction. Two or more fall back to a grid, where equal weight
- * is the point.
+ * One entry across the full width: a photo filling one column, the quote at
+ * the foot of the other. The feature has its photo on the right and its words
+ * ranged right against it; mirrored, the photo leads and the words stay ranged
+ * left, so either way the quote sits against the picture it belongs to.
  */
-export function SeenOn({ entries }: { entries: LookbookForProductQueryResult }) {
-  if (entries.length === 0) return null
-  const [only] = entries
-  if (entries.length === 1 && only) {
-    return (
-      <section className="grid gap-5 border-t border-border pt-6 md:grid-cols-2 md:items-center md:gap-12">
-        <div className="flex flex-col gap-3 md:order-first md:self-center">
-          <h2 className="text-xl font-medium tracking-tight">Seen on</h2>
-          {only.quote ? (
-            <Quote className="text-lg leading-8 sm:text-xl sm:leading-9">{only.quote}</Quote>
-          ) : null}
-          <Attribution entry={only} />
-        </div>
-        <EntryPhoto entry={only} sizes="(min-width: 768px) 45vw, 90vw" />
-      </section>
-    )
-  }
+function WideEntry({ entry, mirrored = false }: { entry: LookbookEntry; mirrored?: boolean }) {
   return (
-    <Section title="Seen on">
-      <ul className="grid gap-6 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2">
-        {entries.map((entry) => (
-          <li key={entry._id} className="flex flex-col gap-3">
-            <EntryPhoto entry={entry} sizes="(min-width: 1024px) 22vw, (min-width: 640px) 45vw, 90vw" />
-            <div className="flex flex-col gap-1">
-              {entry.quote ? <Quote>{entry.quote}</Quote> : null}
-              <Attribution entry={entry} />
-            </div>
-          </li>
-        ))}
-      </ul>
-    </Section>
+    <div className="grid gap-5 md:grid-cols-2 md:gap-12">
+      <div className={`flex flex-col gap-2 md:justify-end ${mirrored ? '' : 'md:text-right'}`}>
+        {entry.quote ? (
+          <Quote className="text-xl leading-9 sm:text-2xl sm:leading-10">{entry.quote}</Quote>
+        ) : null}
+        <Attribution entry={entry} />
+      </div>
+      {/* Stacked, every entry reads words then photo; only the columns swap. */}
+      <div className={mirrored ? 'md:order-first' : undefined}>
+        <EntryPhoto entry={entry} sizes="(min-width: 768px) 45vw, 90vw" />
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Two entries, one per half of the page: the photo on the left at the size a
+ * card's photo has, the words beside it at its foot. The gaps match the card
+ * grid's, which is what makes the photos come out the same size.
+ */
+function EntryPair({ entries }: { entries: readonly LookbookEntry[] }) {
+  return (
+    <ul className="mt-3 grid gap-6 md:grid-cols-2">
+      {entries.map((entry) => (
+        <li key={entry._id} className="grid grid-cols-2 gap-6">
+          <EntryPhoto entry={entry} sizes="(min-width: 768px) 22vw, 45vw" />
+          <div className="flex flex-col justify-end gap-1">
+            {entry.quote ? <Quote>{entry.quote}</Quote> : null}
+            <Attribution entry={entry} />
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** Three or four entries: cards, the photo with the words underneath. */
+function EntryCards({ entries }: { entries: readonly LookbookEntry[] }) {
+  return (
+    <ul className="mt-3 grid gap-6 sm:grid-cols-2 md:grid-cols-4">
+      {entries.map((entry) => (
+        <li key={entry._id} className="flex flex-col gap-3">
+          <EntryPhoto entry={entry} sizes="(min-width: 768px) 22vw, (min-width: 640px) 45vw, 90vw" />
+          <div className="flex flex-col gap-1">
+            {entry.quote ? <Quote className="text-sm">{entry.quote}</Quote> : null}
+            <Attribution entry={entry} />
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/**
+ * Lookbook entries naming this product, newest first, under a heading the site
+ * settings own (`siteSettings.productPage.lookbookHeading`).
+ *
+ * The newest entry is the feature. What follows depends on how many there are,
+ * so the second row always spans the page instead of trailing off to the left:
+ * one is the feature mirrored, two take a half each, three or four are cards.
+ * Beyond five, the rest wait for their turn as newer entries push them along.
+ */
+export function Lookbook({
+  entries,
+  heading,
+}: {
+  entries: LookbookForProductQueryResult
+  heading: string
+}) {
+  const [feature, ...rest] = entries
+  if (!feature) return null
+  const row = rest.slice(0, MAX_LOOKBOOK_ROW)
+  const [second] = row
+  return (
+    <section className="flex flex-col gap-5 border-t border-border pt-6">
+      <h2 className="text-xl font-medium tracking-tight">{heading}</h2>
+      <WideEntry entry={feature} />
+      {row.length === 1 && second ? (
+        <div className="mt-3">
+          <WideEntry entry={second} mirrored />
+        </div>
+      ) : row.length === 2 ? (
+        <EntryPair entries={row} />
+      ) : row.length > 2 ? (
+        <EntryCards entries={row} />
+      ) : null}
+    </section>
   )
 }
 
@@ -150,10 +214,16 @@ function Chevron() {
  * (`app/globals.css`), where a browser without `::details-content` and anyone
  * asking for less motion simply gets the instant toggle.
  */
-export function CommonQuestions({ faqs }: { faqs: readonly ProductFaq[] }) {
+export function Faqs({
+  faqs,
+  heading,
+}: {
+  faqs: readonly ProductFaq[]
+  heading: string
+}) {
   if (faqs.length === 0) return null
   return (
-    <Section title="Common questions">
+    <Section title={heading}>
       <ul className="flex flex-col divide-y divide-border border-y border-border">
         {faqs.map((faq) => (
           <li key={faq._id}>
