@@ -10,6 +10,10 @@
  * Open Graph image routes (specs/callout.md). `allowIndexing` drops it; it
  * exists only so a Lighthouse run can score SEO without the header
  * (`ALLOW_INDEXING=true` at build time), and is off everywhere else.
+ *
+ * `frame-ancestors` is `'none'` unless `PRESENTATION_STUDIO_ORIGINS` names the
+ * Studios that may frame the store for live editing (E17). Nothing else in the
+ * policy moves: the overlay talks to the Studio by `postMessage`, not to Sanity.
  */
 
 /** Hosts that may serve product images; `next.config.ts` derives `remotePatterns` from it. */
@@ -31,9 +35,44 @@ export type SecurityHeaderOptions = {
   allowEval: boolean
   /** Leaves out `X-Robots-Tag: noindex`. For a measurement run only. */
   allowIndexing?: boolean
+  /** Origins that may frame the store, from `parseStudioOrigins`. None: `'none'`. */
+  studioOrigins?: readonly string[]
 }
 
-export function contentSecurityPolicy({ allowEval }: SecurityHeaderOptions): string {
+/**
+ * `PRESENTATION_STUDIO_ORIGINS`: comma-separated, exact origins. A wildcard is
+ * refused on purpose (`https://*.vercel.app` would let any Vercel site frame
+ * the store), and so is anything with a path, because `frame-ancestors`
+ * matches origins. Throws with the offending entry, which is never a secret.
+ * `next.config.ts` and `lib/env.ts` both call it, so a bad value stops the
+ * build and the server alike.
+ */
+export function parseStudioOrigins(raw: string | undefined): string[] {
+  const entries = (raw ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+  for (const entry of entries) {
+    let origin: string | null = null
+    try {
+      const url = new URL(entry)
+      if (url.protocol === 'https:' || url.protocol === 'http:') origin = url.origin
+    } catch {
+      // Not a URL at all; reported below.
+    }
+    if (entry.includes('*') || origin !== entry) {
+      throw new Error(
+        `PRESENTATION_STUDIO_ORIGINS: "${entry}" is not an exact origin such as https://studio.example.com`,
+      )
+    }
+  }
+  return [...new Set(entries)]
+}
+
+export function contentSecurityPolicy({
+  allowEval,
+  studioOrigins = [],
+}: SecurityHeaderOptions): string {
   const directives = [
     "default-src 'self'",
     `img-src 'self' data: blob: ${IMAGE_HOSTS.join(' ')}`,
@@ -41,7 +80,9 @@ export function contentSecurityPolicy({ allowEval }: SecurityHeaderOptions): str
     "style-src 'self' 'unsafe-inline'",
     `connect-src 'self' ${VERCEL_SCRIPT_HOST} ${VERCEL_VITALS_HOST}`,
     "font-src 'self'",
-    "frame-ancestors 'none'",
+    studioOrigins.length > 0
+      ? `frame-ancestors 'self' ${studioOrigins.join(' ')}`
+      : "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

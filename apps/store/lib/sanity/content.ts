@@ -37,6 +37,21 @@ export function getSiteSettings() {
   )
 }
 
+/**
+ * The same document for `generateMetadata`: titles, descriptions and Open
+ * Graph values are exported to machines, so in draft mode they come without
+ * stega's invisible characters (E17).
+ */
+export function getSiteSettingsForMetadata() {
+  return loadOptional('Site settings (metadata)', () =>
+    sanityFetch<SiteSettingsQueryResult>({
+      query: siteSettingsQuery,
+      tags: ['sanity:siteSettings'],
+      stega: false,
+    }),
+  )
+}
+
 export function getHomePage() {
   return loadOptional('Home page content', () =>
     sanityFetch<HomePageQueryResult>({ query: homePageQuery, tags: ['sanity:homePage'] }),
