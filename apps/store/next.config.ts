@@ -1,6 +1,6 @@
 import type { NextConfig } from 'next'
 import { withWorkflow } from 'workflow/next'
-import { IMAGE_HOSTS, securityHeaders } from './lib/security-headers'
+import { IMAGE_HOSTS, parseStudioOrigins, securityHeaders } from './lib/security-headers'
 
 const GEIST_TTF = './node_modules/geist/dist/fonts/geist-sans/Geist-Regular.ttf'
 
@@ -31,6 +31,8 @@ const nextConfig: NextConfig = {
       allowEval: process.env.NODE_ENV === 'development',
       // Off unless a measurement build sets it (lib/security-headers.ts).
       allowIndexing: process.env.ALLOW_INDEXING === 'true',
+      // The Studios that may frame the store for live editing (E17); unset, none.
+      studioOrigins: parseStudioOrigins(process.env.PRESENTATION_STUDIO_ORIGINS),
     })
     return [{ source: '/:path*', headers }]
   },
