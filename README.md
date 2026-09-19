@@ -85,6 +85,32 @@ curl -X POST https://vercel-swag-store-ms.vercel.app/api/revalidate/catalog \
 
 The next request for any page reads the catalogue from the API again. Stock, promotions and the cart are never cached and need no refresh.
 
+## Sanity Functions and the Blueprint
+
+`sanity.blueprint.ts` at the repo root declares what Sanity runs for this repo; the Functions live in `apps/functions`. The stack is called `production` and is scoped to the organisation. Run these from the repo root, logged in with `sanity login`:
+
+```sh
+pnpm exec sanity blueprints plan      # preview; deploy shows no preview of its own
+pnpm exec sanity blueprints deploy
+pnpm exec sanity functions logs gap-threshold
+pnpm exec sanity functions test gap-threshold --event update \
+  --data-before '{"_id":"searchGap.test","_type":"searchGap","status":"new","count":1}' \
+  --data-after '{"_id":"searchGap.test","_type":"searchGap","status":"new","count":2}'
+```
+
+`gap-threshold` wakes the demand analysis when a search gap reaches two searches. Its two variables are set once after the first deploy, never in the blueprint, which is in git:
+
+```sh
+pnpm exec sanity functions env add gap-threshold STORE_URL https://<production-host>
+pnpm exec sanity functions env add gap-threshold DEMAND_ANALYSE_SECRET <the same value as on Vercel>
+```
+
+A manual run of the analysis is the same call the Function makes:
+
+```sh
+curl -X POST https://<host>/api/demand/analyse -H "Authorization: Bearer $DEMAND_ANALYSE_SECRET"
+```
+
 ## Deployment
 
 _To be written in E12._

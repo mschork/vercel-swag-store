@@ -1,0 +1,21 @@
+{
+  "name": "functions",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@repo/demand": "workspace:*",
+    "@sanity/client": "^8.6.1",
+    "@sanity/functions": "^1.8.0"
+  },
+  "devDependencies": {
+    "@repo/config": "workspace:*",
+    "@types/node": "^26.6.1",
+    "typescript": "^5",
+    "vitest": "^5.0.0"
+  }
+}
