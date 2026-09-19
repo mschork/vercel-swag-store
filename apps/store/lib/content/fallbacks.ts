@@ -39,3 +39,28 @@ export const CHECKOUT_FALLBACK: CheckoutContent = {
   body: 'This is a demo store, so nothing has been charged, shipped or sent.',
   continueShoppingLabel: 'Continue shopping',
 }
+
+/**
+ * The headings over the editorial blocks on a product page, matching
+ * `siteSettings.productPage` (E08), and the pair over the home page grid,
+ * matching `homePage.featured`. An editor can rename any of them in the Studio;
+ * empty or missing, the page uses the wording here.
+ */
+export const PRODUCT_HEADINGS_FALLBACK = {
+  about: 'About this item',
+  care: 'How to use and care',
+  lookbook: 'What people say about it',
+  faq: 'Common questions',
+} as const
+
+export type ProductHeadings = { [K in keyof typeof PRODUCT_HEADINGS_FALLBACK]: string }
+
+export const FEATURED_FALLBACK = {
+  heading: 'Featured',
+  linkLabel: 'View all',
+} as const
+
+/** The heading over the lookbook-ranked grid, matching `homePage.favourites`. */
+export const FAVOURITES_FALLBACK = {
+  heading: 'People’s favourites',
+} as const

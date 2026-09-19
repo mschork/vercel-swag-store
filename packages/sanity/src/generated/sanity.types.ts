@@ -194,6 +194,13 @@ export type HomePage = {
       _type: 'image'
     }
   }
+  favourites?: {
+    heading?: string
+  }
+  featured?: {
+    heading?: string
+    linkLabel?: string
+  }
 }
 
 export type SiteSettings = {
@@ -220,6 +227,12 @@ export type SiteSettings = {
     _key: string
   }>
   footerText?: string
+  productPage?: {
+    aboutHeading?: string
+    careHeading?: string
+    lookbookHeading?: string
+    faqHeading?: string
+  }
 }
 
 export type MediaFolderReference = {
@@ -381,12 +394,18 @@ export type AllSanitySchemaTypes =
 
 // Source: ../store/lib/sanity/queries.ts
 // Variable: siteSettingsQuery
-// Query: *[_type == "siteSettings"][0]{    storeName, seoTitle, seoDescription, footerText,    "ogImage": ogImage{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio },    socialLinks[]{ label, url }  }
+// Query: *[_type == "siteSettings"][0]{    storeName, seoTitle, seoDescription, footerText,    productPage{ aboutHeading, careHeading, lookbookHeading, faqHeading },    "ogImage": ogImage{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio },    socialLinks[]{ label, url }  }
 export type SiteSettingsQueryResult = {
   storeName: string
   seoTitle: string | null
   seoDescription: string | null
   footerText: string | null
+  productPage: {
+    aboutHeading: string | null
+    careHeading: string | null
+    lookbookHeading: string | null
+    faqHeading: string | null
+  } | null
   ogImage: {
     asset?: SanityImageAssetReference
     media?: unknown
@@ -405,7 +424,7 @@ export type SiteSettingsQueryResult = {
 
 // Source: ../store/lib/sanity/queries.ts
 // Variable: homePageQuery
-// Query: *[_type == "homePage"][0]{    hero{ headline, description, "image": image{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio } }  }
+// Query: *[_type == "homePage"][0]{    hero{ headline, description, "image": image{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio } },    featured{ heading, linkLabel },    favourites{ heading }  }
 export type HomePageQueryResult = {
   hero: {
     headline: string | null
@@ -420,6 +439,13 @@ export type HomePageQueryResult = {
       lqip: string | null
       aspectRatio: number | null
     } | null
+  } | null
+  featured: {
+    heading: string | null
+    linkLabel: string | null
+  } | null
+  favourites: {
+    heading: string | null
   } | null
 } | null
 
@@ -481,4 +507,13 @@ export type LookbookForProductQueryResult = Array<{
     lqip: string | null
     aspectRatio: number | null
   } | null
+}>
+
+// Source: ../store/lib/sanity/queries.ts
+// Variable: favouriteProductsQuery
+// Query: *[_type == "product" && missing != true && count(*[_type == "lookbookEntry" && references(^._id)]) > 0]{    apiId,    "mentions": count(*[_type == "lookbookEntry" && references(^._id)]),    "newest": *[_type == "lookbookEntry" && references(^._id)] | order(publishedAt desc)[0].publishedAt  } | order(mentions desc, newest desc, apiId asc)[0...$limit]
+export type FavouriteProductsQueryResult = Array<{
+  apiId: string
+  mentions: number
+  newest: string | null
 }>

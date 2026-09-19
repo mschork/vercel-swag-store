@@ -14,8 +14,18 @@ const MAX_FEATURED = 12
  * underneath is cached too), so the grid is part of the static shell. It
  * carries the same tag and lifetime as the data: without them the entry would
  * fall back to the default profile and outlive a `revalidateTag('products')`.
+ *
+ * The heading and the link label arrive as props rather than being read here:
+ * they come from Sanity, and a prop is part of this entry's cache key, so a
+ * rename takes effect without this entry outliving it (E09).
  */
-export async function FeaturedProducts() {
+export async function FeaturedProducts({
+  heading,
+  linkLabel,
+}: {
+  heading: string
+  linkLabel: string
+}) {
   'use cache'
   cacheTag(TAGS.products)
   cacheLife(CATALOG_PROFILE)
@@ -30,13 +40,13 @@ export async function FeaturedProducts() {
     >
       <div className="flex items-baseline justify-between">
         <h2 id="featured-heading" className="text-2xl font-medium tracking-tight">
-          Featured
+          {heading}
         </h2>
         <Link
           href="/search"
           className="text-sm text-fg-secondary underline-offset-4 hover:text-fg hover:underline"
         >
-          View all
+          {linkLabel}
         </Link>
       </div>
       <ProductGrid products={products} variant="home" />

@@ -55,6 +55,40 @@ export const siteSettings = defineType({
       ],
     }),
     defineField({ name: 'footerText', title: 'Footer text', type: 'string' }),
+    defineField({
+      name: 'productPage',
+      title: 'Product page headings',
+      type: 'object',
+      description:
+        'The headings above each block on a product page. Leave one empty and the page uses its own wording.',
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({
+          name: 'aboutHeading',
+          title: 'Extended description',
+          type: 'string',
+          description: 'Default: “About this item”.',
+        }),
+        defineField({
+          name: 'careHeading',
+          title: 'Care text',
+          type: 'string',
+          description: 'Default: “How to use and care”.',
+        }),
+        defineField({
+          name: 'lookbookHeading',
+          title: 'Lookbook entries',
+          type: 'string',
+          description: 'Default: “What people say about it”.',
+        }),
+        defineField({
+          name: 'faqHeading',
+          title: 'Questions',
+          type: 'string',
+          description: 'Default: “Common questions”.',
+        }),
+      ],
+    }),
   ],
   preview: { select: { title: 'storeName' } },
 })
@@ -88,6 +122,43 @@ export const homePage = defineType({
           title: 'Photo',
           description:
             'Full width behind the copy. Set the hotspot on the subject; the crop changes with the screen.',
+        }),
+      ],
+    }),
+    defineField({
+      name: 'favourites',
+      title: 'People’s favourites',
+      type: 'object',
+      description:
+        'The products named most often by published lookbook entries. Ordered by how many entries name them; nothing to show means no section.',
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({
+          name: 'heading',
+          title: 'Heading',
+          type: 'string',
+          description: 'Default: “People’s favourites”.',
+        }),
+      ],
+    }),
+    defineField({
+      name: 'featured',
+      title: 'Featured grid',
+      type: 'object',
+      description: 'The heading over the product grid and the link beside it.',
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({
+          name: 'heading',
+          title: 'Heading',
+          type: 'string',
+          description: 'Default: “Featured”.',
+        }),
+        defineField({
+          name: 'linkLabel',
+          title: 'Link label',
+          type: 'string',
+          description: 'Links to search either way. Default: “View all”.',
         }),
       ],
     }),
