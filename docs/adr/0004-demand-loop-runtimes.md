@@ -10,7 +10,7 @@ The loop (specs/E13-search-gap-loop.md) has four jobs with different needs, so e
 - **Capture** runs in the store, in `after()`. It must never delay a page, and only the store sees the search.
 - **The trigger** is a Sanity Function on the gap document. The event is a Sanity event: a count changed. A Function reacts to exactly that with a GROQ filter and no polling, and Vercel's Hobby cron is daily, which is too slow to feel like a loop. The Function writes nothing, so it cannot re-trigger itself.
 - **The analysis** is a Vercel Workflow in the store. It waits ten minutes, calls a model that can fail or time out, and must never leave gaps stuck in `analysing`. Durable steps with retries, a durable sleep and a hook token used as a lock give that without a queue or a lock table of our own. It also reads the catalogue through the store's own cached API functions, so "already sold" is judged against the source of truth (AGENTS.md rule 1) at no extra API cost. A Sanity Function could not do this: its timeout is measured in seconds, and it has no access to those cached readers.
-- **The review** stays in Sanity, because the people who decide work in the Studio and the idea is a Sanity document. It is a status an editor sets; Sanity Workflows (early access) is planned on top of it and is removable.
+- **The review** stays in Sanity, because the people who decide work in the Studio and the idea is a Sanity document. Accept and Reject are Studio document actions that set the idea's status; a second Sanity Function, `idea-decided`, reacts to that change, stamps the date and promotes the idea's gaps. Sanity Workflows was evaluated for this step and left out: it needs a runtime of three more Functions, and the documentation of the release evaluated (0.33.0) calls that runtime experimental and not ready for production use. Document actions and Functions are stable, and give an editor the same two buttons.
 
 The cost is two platforms to watch and a shared secret between them. `@repo/demand` keeps that honest: every filter, id, prompt, schema and query lives there once, and each runtime is a thin caller.
 
@@ -21,6 +21,7 @@ The dataset is public, and a search box receives whatever people type. `searchGa
 ## Considered options
 
 - Everything in the store, triggered by Vercel Cron: one platform, but a daily cadence on Hobby, and polling Sanity for something Sanity can announce.
+- Sanity Workflows for the review: a modelled process with a task list, but an early-access engine whose runtime its own README marks as not production ready, exact-pinned packages, and a dependency override in the Studio. Revisit when it is generally available.
 - Everything in Sanity Functions: no shared secret, but no durable wait, a short timeout around a model call, and a second copy of catalogue reading outside the store's cache.
 - A private dataset for demand documents: real isolation, but a second dataset to provision, and references from ideas to categories cannot cross datasets.
 

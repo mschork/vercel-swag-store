@@ -4,6 +4,7 @@ import { media } from 'sanity-plugin-media'
 import { structureTool } from 'sanity/structure'
 import { CREATABLE_TYPES, schemaTypes } from '@repo/sanity'
 import { requireSanityEnv } from '@repo/sanity/env'
+import { AcceptIdea, RejectIdea } from './actions/idea-decision'
 import { structure } from './structure'
 
 const { projectId, dataset } = requireSanityEnv({
@@ -33,5 +34,11 @@ export default defineConfig({
       previous.filter((item) =>
         CREATABLE_TYPES.includes(item.templateId as (typeof CREATABLE_TYPES)[number]),
       ),
+    // A product idea is decided, not edited: Accept and Reject replace publish
+    // and the rest. Delete stays, for an idea nobody wants to keep.
+    actions: (previous, context) =>
+      context.schemaType === 'productIdea'
+        ? [AcceptIdea, RejectIdea, ...previous.filter((action) => action.action === 'delete')]
+        : previous,
   },
 })
