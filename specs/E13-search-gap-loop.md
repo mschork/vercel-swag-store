@@ -16,8 +16,10 @@ The storefront half shows `after()` and keeps the request path fast. The back-of
 | Sanity Function (document) | notice a gap crossing the threshold and wake the analysis | `apps/functions/gap-threshold` |
 | Vercel Workflow (`workflow` 4.x) | the analysis as durable steps: settle, claim, read catalogue, ask the model, write, release on failure | `apps/store/workflows` |
 | Vercel AI SDK 7 through AI Gateway | one structured-output call, no chat, no tools | a step of that workflow |
-| Sanity Workflows (early access) | the editor's accept / reject process on a product idea | `apps/functions/workflows`, Studio plugin |
-| Sanity Blueprints | every Function, the robot token and the schedule, declared in code | `sanity.blueprint.ts` at the repo root |
+| Studio document actions | Accept and Reject on a product idea, Reject with a reason | `apps/studio/actions/idea-decision.tsx` |
+| Sanity Function (document) | finish the decision: stamp the date, promote the gaps | `apps/functions/idea-decided` |
+| Sanity Blueprints | every Function, declared in code | `sanity.blueprint.ts` at the repo root |
+| Sanity Workflows (early access) | not here. Evaluated for the review and left out: its runtime is marked experimental by its own documentation (`docs/adr/0004-demand-loop-runtimes.md`) | |
 | Eve | not here. E14 re-expresses the analysis as an Eve agent on top of the package this epic creates | `specs/E14-eve-agent.md` |
 
 The API stays the catalogue; Sanity holds editorial data; the model proposes and a person decides.
@@ -33,17 +35,15 @@ The API stays the catalogue; Sanity holds editorial data; the model proposes and
                      settle 10 min ▶ claim gaps ▶ read catalogue ▶ generateText + Output.object ▶ validate ▶ write
                                                               │
                                    productIdea.<hash> (proposed)        gaps: reviewed | matched | ignored
-                                                              │ created
-                                        Sanity Function idea-start-review ▶ Sanity Workflows instance "idea-review"
                                                               │ editor: Accept / Reject (with reason) in the Studio
-                                        Sanity Function wf-drain-effects ▶ idea accepted | rejected, gaps promoted | reviewed
+                                        Sanity Function idea-decided ▶ decidedAt stamped, gaps promoted | reviewed
 ```
 
 ## Privacy and abuse
 
 A search box receives whatever people type, the dataset is public, and the text ends up in a model prompt. The rules below are part of the design, not hardening for later.
 
-- **Private by id.** `searchGap`, `productIdea` and the workflow instances have ids with a dot (`searchGap.<hash>`, `productIdea.<hash>`). Sanity treats any id containing a dot as private: an anonymous client cannot read it, a token or a logged-in editor can. This is the same rule E08 avoids for mirrors, used here on purpose. The store's anonymous client can never read these documents, so no page can leak them.
+- **Private by id.** `searchGap` and `productIdea` have ids with a dot (`searchGap.<hash>`, `productIdea.<hash>`). Sanity treats any id containing a dot as private: an anonymous client cannot read it, a token or a logged-in editor can. This is the same rule E08 avoids for mirrors, used here on purpose. The store's anonymous client can never read these documents, so no page can leak them.
 - **Only the normalised query is stored.** No raw input, no IP, no user agent, no cart token, no timestamp per search beyond `firstSeen` and `lastSeen`.
 - **Filter before storing.** Dropped entirely: under 3 characters after normalising, over 6 words, anything containing `@`, anything that looks like a URL or a domain, any run of 6 or more digits (phone, card, order numbers).
 - **Retention.** A gap that never reached the threshold is deleted 30 days after `lastSeen`. The analysis run does the deleting.
@@ -78,7 +78,7 @@ Three questions decide details below. Answer them on a throwaway branch first an
 **Schemas** in `packages/sanity/src/schemas/demand.ts`, exported with the rest; typegen re-run.
 
 - `searchGap`: `query` (the normalised text), `count`, `firstSeen`, `lastSeen`, `status` (`new`, `analysing`, `reviewed`, `matched`, `ignored`, `promoted`), `note` (the model's reason for `matched` and `ignored`), `runId`. Every field read only: machines write it, editors read it. Preview: query, "`count` searches, last `lastSeen`".
-- `productIdea`: `title`, `rationale`, `suggestedCategory` (reference to `category`, optional), `sourceGaps[]` (weak references to `searchGap`, so retention can delete a gap), `estimatedDemand` (sum of the source gaps' counts when written), `status` (`proposed`, `accepted`, `rejected`), `rejectionReason`, `decidedAt`, `generatedBy` (model id), `generatedAt`, `runId`. `status` is a radio an editor sets until slice 5 makes it read only. The document description says what accepting means: a signal to whoever owns the catalogue, nothing more, because the API has no way to create a product.
+- `productIdea`: `title`, `rationale`, `suggestedCategory` (reference to `category`, optional), `sourceGaps[]` (weak references to `searchGap`, so retention can delete a gap), `estimatedDemand` (sum of the source gaps' counts when written), `status` (`proposed`, `accepted`, `rejected`), `rejectionReason`, `decidedAt`, `generatedBy` (model id), `generatedAt`, `runId`. `status` and `rejectionReason` are read only: the Accept and Reject actions of slice 5 set them. The document description says what accepting means: a signal to whoever owns the catalogue, nothing more, because the API has no way to create a product.
 - Neither type appears in the Studio's create menu.
 
 **Desk**: a "Demand signals" section under a titled divider after Categories. "Search gaps" lists `status == 'new' && count >= 2` ordered by `count desc`, with a second list "All gaps". "Product ideas" is a folder with one list per status: "Open ideas" by estimated demand, "Accepted ideas" and "Rejected ideas" by decision date.
@@ -116,31 +116,28 @@ Three questions decide details below. Answer them on a throwaway branch first an
 ### Slice 4: Blueprint and trigger
 
 - `apps/functions`: a new workspace (`package.json` with `@sanity/functions`, `@sanity/client`, `@repo/demand`), one folder per Function. `sanity.blueprint.ts` and `@sanity/blueprints` sit at the repo root beside the lockfile, which is where Blueprints looks in a pnpm monorepo; Functions are bundled from TypeScript and may import workspace packages.
-- Stack: organisation-scoped (`sanity blueprints init . --type ts --stack-name production --organization-id <org>`), because slice 5 and E15 both need a scheduled Function and those require it. Every document Function names its resource explicitly: `{ type: 'dataset', id: '<projectId>.production' }`, project id from `process.env.SANITY_STUDIO_PROJECT_ID` at plan time.
+- Stack: organisation-scoped (`sanity blueprints init . --type ts --stack-name production --organization-id <org>`), because E15 needs a scheduled Function and those require it. A Function in an organisation-scoped stack names its `project`. Every document Function names its resource explicitly: `{ type: 'dataset', id: '<projectId>.production' }`, project id from `process.env.SANITY_STUDIO_PROJECT_ID` at plan time.
 - Resources in this slice:
-  - `defineRobotToken({ name: 'demand-robot', … roleNames: ['editor'] })`, shared by the Functions.
   - `defineDocumentFunction({ name: 'gap-threshold', src: './apps/functions/gap-threshold', timeout: 15, event: { on: ['update'], filter, projection: '{_id}' } })` with filter `_type == 'searchGap' && status == 'new' && count >= ${ANALYSE_THRESHOLD} && delta::changedAny(count)`. It fires on every increment past the threshold, not only the crossing: a lost call heals itself on the next search, and the workflow's lock makes the extra calls free. Its own writes cannot re-trigger it, because it writes nothing.
 - Handler: POST `${STORE_URL}/api/demand/analyse` with the bearer secret; non-2xx throws so the log shows it. `context.local` short-circuits to a log line. `STORE_URL` and `DEMAND_ANALYSE_SECRET` are set with `sanity functions env add gap-threshold …` after the first deploy, never in the blueprint's `env` block, which would put them in git.
 - Commands in the README: `sanity blueprints plan`, then `deploy` (deploy shows no preview); `sanity functions test gap-threshold --event update --data-before … --data-after …`; `sanity functions logs gap-threshold`.
 - No Vercel Cron: the trigger is the event. A manual run is the same `curl` as the Function's.
 
-### Slice 5: review process
+### Slice 5: review
 
-Sanity Workflows is early access and versioned 0.x, so this slice is last, pinned, and removable: without it slice 1's radio field is the review.
+An editor decides in the Studio with two buttons; a Function finishes the decision. Both are stable APIs. Sanity Workflows was evaluated for this slice and left out: a workflow with effects needs a runtime of three more Functions, and the documentation of the release evaluated (0.33.0) calls that runtime "experimental, and not ready for production use".
 
-- Packages at one exact version (0.33.0 today; their peers are exact): `@sanity/workflow-engine` and `@sanity/workflow-cli` in `apps/functions`, `@sanity/workflow-studio-plugin` in `apps/studio`, with the documented override `'@sanity/sdk@3>@sanity/mutate': 0.18.2` in `pnpm-workspace.yaml` and `styled-components` raised to `^6.4.2` in the Studio.
-- `apps/functions/workflows/idea-review.ts`: definition `idea-review`, subject a `productIdea`. Stage `review` with one activity `decide` and two actions: `accept` (sets field `approval` to the actor, effect `applyDecision` with `accepted`) and `reject` (required string param `reason`, sets `rejectionReason`, effect `applyDecision` with `rejected`). Transitions to terminal stages `accepted` when `defined($fields.approval)` and `rejected` when `defined($fields.rejectionReason)`.
-- `apps/functions/sanity.workflow.ts`: one deployment, tag `production`, `workflowResource` the production dataset (instance ids are dotted, so private). Deployed with `sanity-workflows deploy` before the Functions, with definition sharing switched off; Blueprints does not register workflow definitions yet.
-- `apps/functions/effect-handlers.ts`: `applyDecision` calls `@repo/demand`'s `applyDecision`: set the idea's `status`, `decidedAt` and `rejectionReason`; accepted moves its source gaps to `promoted`, rejected leaves them `reviewed`. Idempotent on `ctx.effectKey`: delivery is at least once.
-- Three more Blueprint resources: `idea-start-review` (document Function, `on: ['create']`, `_type == 'productIdea'`; `engine.startInstance`, because ideas are created outside the Studio and the plugin's `autoStart` only sees Studio creates), `wf-drain-effects` (the documented drainer, filter and handler as in Sanity's "Run Workflows with Sanity Functions"), `wf-heartbeat` (`defineScheduledFunction`, daily, `sweepStaleClaims` and `tick`; daily is the Free plan's cadence).
-- Studio: `workflowStudioPlugin({ tag: 'production', mappings: [{ docType: 'productIdea', definition: 'idea-review', label: 'Idea review' }] })` and `workflowDefaultDocumentNode()`. `productIdea.status` becomes read only. Editors get Accept and Reject on the idea and a "For me" list.
-- The engine's checks are advisory, as its docs say: the process guides editors, it does not secure anything. Nothing downstream trusts `accepted`.
+- `apps/studio/actions/idea-decision.tsx`: two document actions, registered for `productIdea` only, replacing publish and the rest; delete stays. `Accept` sets `status` to `accepted`. `Reject` opens a dialog with a required reason and sets `status` to `rejected` and `rejectionReason`. Ideas are written as published documents, so the actions patch the document directly with the editor's own session: no draft, no publish step. Both are disabled once the idea is decided.
+- `productIdea.status` and `rejectionReason` are read only in the form, so the actions are the only way to decide, a rejection always carries its reason and a decision its date.
+- One more Blueprint resource: `defineDocumentFunction({ name: 'idea-decided', event: { on: ['update'], filter, projection: '{_id, status}' } })` with filter `_type == 'productIdea' && status in ['accepted', 'rejected'] && delta::changedAny(status)`. The handler calls `@repo/demand`'s `applyDecision` with the Function's own client (`context.clientOptions`; no robot token is needed): stamp `decidedAt`; accepted moves the source gaps to `promoted`, rejected leaves them `reviewed`. Its own write changes `decidedAt`, not `status`, so it cannot re-trigger itself. Delivery is at least once: an idea that already has a decision date writes nothing.
+- The desk's Product ideas folder (E08) has one list per status, so an idea moves from Open to Accepted or Rejected as it is decided.
+- Nothing downstream trusts `accepted`: it is a signal to whoever owns the catalogue, because the API has no way to create a product.
 
 ### Slice 6: docs
 
 - README: "Search-gap loop" under Sanity: the diagram above, the table of pieces, the privacy rules in five lines, how to run it locally, the three dashboards to watch (Vercel Observability → Workflows, `sanity functions logs`, the Studio's Workflows tool).
 - `AGENTS.md`: repo layout gains `apps/functions`, `packages/demand` and `sanity.blueprint.ts`; the cache-policy table gains "Search gaps: `lib/search/record-gap.ts`, never cached, written in `after()`".
-- `docs/adr/0004-demand-loop-runtimes.md`: why the analysis runs in a Vercel Workflow and the review in Sanity Workflows rather than one runtime for both, and why ids are dotted.
+- `docs/adr/0004-demand-loop-runtimes.md`: why capture, trigger, analysis and review each run where they do, why Sanity Workflows was left out, and why ids are dotted.
 
 ## Tests
 
@@ -148,7 +145,7 @@ Sanity Workflows is early access and versioned 0.x, so this slice is last, pinne
 - Vitest, store: `recordGapAfterResponse` records nothing for a bot, an unset token or a filtered query, and never throws when the client does; the analyse route answers 401 without the secret, with a wrong one and with none configured, 202 with the right one (`workflow/api` mocked).
 - Vitest, steps as plain functions: `propose` with `MockLanguageModelV4` from `ai/test` returning a fixed object; `write` against a fake client produces the expected transaction; a throwing `propose` leads to `release`.
 - Workflow integration, `vitest.integration.config.ts` with `@workflow/vitest`, not part of `pnpm verify`: a second `start` while one holds the lock returns `skipped`.
-- Vitest, `apps/functions`: `gap-threshold` posts with the bearer header and throws on a 500; `applyDecision` twice with one effect key writes once.
+- Vitest, `apps/functions`: `gap-threshold` posts with the bearer header and throws on a 500; `idea-decided` applies an accepted or rejected status with the Function's client, ignores a proposed one, and lets a failure surface; in `packages/demand`, `applyDecision` delivered twice writes once.
 - Playwright: none new. The existing "umbrella" empty-state test gains the transparency line.
 - Manual, in the PR description: search "umbrella", "umbrellas" and "rain umbrella" twice each, ten minutes apart or with `DEDUPE_MINUTES` lowered locally; see three gaps; see the Function log its POST; see the run in Vercel's Workflows view; see one "Umbrella" idea whose `estimatedDemand` is the sum; reject it with a reason in the Studio; see the status and reason on the document. Then `curl` the dataset anonymously for `*[_type in ['searchGap','productIdea']]` and get `[]`.
 
@@ -161,7 +158,7 @@ Sanity Workflows is early access and versioned 0.x, so this slice is last, pinne
 - [x] A gap reaching the threshold starts exactly one analysis run however many Function calls arrive, and a failed run leaves no gap in `analysing`.
 - [x] The run writes sensible ideas for the seeded gaps: one umbrella idea, "hodie" `matched` to hoodies, "umb" and the gibberish `ignored`, no idea for a product that exists. A second run over the same gaps writes nothing new.
 - [x] After a deploy, `sanity blueprints plan` lists nothing but an update per Function (a Function's source is uploaded again on every deploy, so it always plans as an update); no secret is in `sanity.blueprint.ts` or anywhere in git.
-- [ ] An editor accepts or rejects an idea in the Studio and the idea and its gaps follow (slice 5; with the slice dropped, via the radio field and no gap change).
+- [ ] An editor accepts or rejects an idea in the Studio with the two actions, and the idea's date and its gaps follow within seconds.
 - [x] No route other than `/api/demand/analyse` and Workflow's own `/.well-known/workflow/*` was added; the build's route table is otherwise identical to `main`.
 - [x] README, `AGENTS.md` and ADR 0004 written.
 
