@@ -228,11 +228,12 @@ export function Faqs({
         {faqs.map((faq) => (
           <li key={faq._id}>
             <details className="disclosure group py-3">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">
-                {faq.question}
+              <summary className="flex cursor-pointer list-none items-center gap-3 font-medium">
                 <Chevron />
+                {faq.question}
               </summary>
-              <div className="pt-2 text-fg-secondary">
+              {/* Indented by the chevron and its gap, so the answer sits under the question. */}
+              <div className="pt-2 pl-7 text-fg-secondary">
                 <PortableText value={faq.answer} />
               </div>
             </details>
