@@ -10,9 +10,9 @@ Replace the seed script's one-off write of `catalogProduct` documents with a sch
 
 ### Function
 
-- `sanity.blueprint.ts` at the repo root (or under `apps/studio`) declaring one `scheduled-function`, `syncCatalog`, cron `0 4 * * *` (daily, 04:00 UTC).
+- One more resource in the root `sanity.blueprint.ts` that E13 created (if E15 goes first, it creates the file and the `apps/functions` workspace as E13 slice 4 describes): `defineScheduledFunction({ name: 'sync-catalog', event: { expression: '0 4 * * *' } })`, daily at 04:00 UTC, which is the Free plan's cadence. Scheduled Functions need an organisation-scoped stack and an explicit robot token, because their context carries no project or dataset; E13's stack and `demand-robot` token already are both.
 - Handler: pages through `/products` with `hasNextPage`, maps each product to a `catalogProduct` document (`_id: 'catalogProduct.<apiId>'`, fields as in E08), and writes with `createOrReplace` in one transaction of at most 100 mutations per batch. Sets `syncedAt`. Products missing from the API are not deleted; they are marked `syncedAt` stale and the picker filters on freshness.
-- Secrets `API_BASE_URL` and `API_BYPASS_TOKEN` provided to the function through Blueprint environment configuration, never in the Studio bundle.
+- Secrets `API_BASE_URL` and `API_BYPASS_TOKEN` set with `sanity functions env add sync-catalog …` after the first deploy, never in the blueprint's `env` block (that would put them in git) and never in the Studio bundle.
 - The API client code is shared: the function imports `fetchApi` and the product schema from a package-level export of `apps/store/lib/api` moved into `@repo/api-client` if the import boundary requires it.
 
 ### Seed script

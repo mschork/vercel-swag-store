@@ -11,7 +11,7 @@ Settled choices that every epic spec inherits. Change here first, then in the sp
 
 ## Architecture
 
-- Monorepo: pnpm workspaces + Turborepo. `apps/store` (Next.js 16, App Router, Cache Components on, TypeScript, Tailwind v4), `apps/studio` (Sanity Studio), `packages/sanity` (schemas, client, GROQ, typegen), `packages/config` (tsconfig, eslint).
+- Monorepo: pnpm workspaces + Turborepo. `apps/store` (Next.js 16, App Router, Cache Components on, TypeScript, Tailwind v4), `apps/studio` (Sanity Studio), `packages/sanity` (schemas, client, GROQ, typegen), `packages/config` (tsconfig, eslint). Stretch epics add `apps/functions` (Sanity Functions, E13 and E15), `packages/demand` (E13) and `apps/demand-agent` (Eve, E14).
 - Source of truth: the Vercel Swag Store API for products, price, category, featured, stock, promotion and cart. Sanity for marketing content and product enrichment; merged at render time, API fields win on conflict.
 - Static vs dynamic: product list, product detail, categories and store config are cached with `"use cache"` (tagged, long `cacheLife`). Stock, promotion and cart are dynamic and rendered inside Suspense boundaries. `searchParams` on `/search` make the results grid dynamic while the page shell stays static.
 - Cart: server-side only, so the cart token never reaches the browser (`docs/adr/0002-cart-server-side-only.md`). Token in an httpOnly, `sameSite=lax`, `secure` cookie with a 24 h `maxAge`; created lazily on first add. Server Actions for add, update, remove; they answer with the cart's item count, never its lines, so the header badge updates without a second read. Optimistic updates for add, quantity and remove (`specs/E16-cart-api-improvements.md`). Dedicated `/cart` page; no drawer. The Checkout button is a form bound to a `placeOrder` Server Action that drops the cart cookie and redirects to a static `/checkout` page ("Thank you for your order!"); its copy comes from Sanity from E09.
@@ -32,6 +32,7 @@ Settled choices that every epic spec inherits. Change here first, then in the sp
 
 - New Sanity project, dataset `production` and public, so the store needs no read token. Store reads through a `next-sanity` client wrapped in `"use cache"` with `cacheTag('sanity')` and per-document tags, on a `content` profile (stale 5 min, revalidate 1 d, expire 7 d); the publish webhook hits `/api/revalidate/sanity`, verifies Sanity's signature and expires the type and id tags. No Live Content API.
 - Document types: `siteSettings`, `homePage`, `checkoutPage`, `product`, `category`, `lookbookEntry`, `faq`. Products and categories are mirrors of the API, written by a script and read only in the Studio, so every link from editorial content to the catalogue is an ordinary Sanity reference (`docs/adr/0003-sanity-mirrors-api-products-and-categories.md`); E15 replaces the script's trigger with a scheduled Sanity Function. The Studio holds no API secret. E08 and E09 ship in one pull request.
+- Demand signals (E13): `searchGap` and `productIdea` are written by machines and carry dotted ids (`searchGap.<hash>`), which makes them unreadable without a token in the public dataset. Capture runs in `after()` in the store; a Sanity Function wakes a Vercel Workflow that asks a model through AI SDK 7 and AI Gateway; editors decide in the Studio through Sanity Workflows. Functions, the robot token and schedules are declared in one root `sanity.blueprint.ts`. Shared logic lives in `packages/demand`.
 - Studio deployed both as `apps/studio` on Vercel and via `sanity deploy`; both origins allowed in Sanity CORS.
 
 ## Platform signals
@@ -54,7 +55,8 @@ Settled choices that every epic spec inherits. Change here first, then in the sp
 
 Store: `API_BASE_URL`, `API_BYPASS_TOKEN` (server only), `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`, `SANITY_REVALIDATE_SECRET`, `NEXT_PUBLIC_SITE_URL`. No Sanity read token: the dataset is public.
 Store, E11: `CATALOG_REVALIDATE_SECRET`.
-Store, E13 only: `SANITY_API_WRITE_TOKEN` (server only), `DEMAND_ANALYSE_SECRET`, `AI_GATEWAY_API_KEY`.
+Store, E13 only: `SANITY_API_WRITE_TOKEN` (server only), `DEMAND_ANALYSE_SECRET`. No AI Gateway key: on Vercel the AI SDK authenticates with the deployment's OIDC token; locally `vercel env pull` provides one.
+Sanity Functions, E13 only: `STORE_URL` and `DEMAND_ANALYSE_SECRET` on `gap-threshold`, set with `sanity functions env add`, never in `sanity.blueprint.ts`.
 Studio: `SANITY_STUDIO_PROJECT_ID`, `SANITY_STUDIO_DATASET`. No API variables: the product picker reads `catalogProduct` documents.
 Local scripts only: `SANITY_API_WRITE_TOKEN` for the seed script.
 
