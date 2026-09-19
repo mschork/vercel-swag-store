@@ -8,10 +8,12 @@ export const ClusterSchema = z
   .object({
     kind: z.enum(['newProduct', 'alreadySold', 'noise']),
     gapIds: z.array(z.string()).min(1),
-    title: z.string().max(60).optional(),
+    // Nullable, never optional: some providers' structured output requires
+    // every property to be present, and null is accepted by all of them.
+    title: z.string().max(60).nullable(),
     rationale: z.string().max(400),
-    suggestedCategory: z.string().optional(),
-    match: z.string().optional(),
+    suggestedCategory: z.string().nullable(),
+    match: z.string().nullable(),
   })
   .refine((c) => c.kind !== 'newProduct' || Boolean(c.title?.trim()), {
     path: ['title'],

@@ -138,9 +138,9 @@ describe('writeOutcome', () => {
         { _id: 'searchGap.e', count: 2 },
       ],
       clusters: [
-        { kind: 'newProduct', gapIds: ['searchGap.a', 'searchGap.b'], title: 'Umbrella', rationale: 'Rain.', suggestedCategory: 'accessories' },
-        { kind: 'alreadySold', gapIds: ['searchGap.c'], rationale: 'Typo of hoodie.', match: 'hoodies' },
-        { kind: 'noise', gapIds: ['searchGap.d'], rationale: 'Gibberish.' },
+        { kind: 'newProduct', gapIds: ['searchGap.a', 'searchGap.b'], title: 'Umbrella', rationale: 'Rain.', suggestedCategory: 'accessories', match: null },
+        { kind: 'alreadySold', gapIds: ['searchGap.c'], rationale: 'Typo of hoodie.', match: 'hoodies', title: null, suggestedCategory: null },
+        { kind: 'noise', gapIds: ['searchGap.d'], rationale: 'Gibberish.', title: null, suggestedCategory: null, match: null },
       ],
       unmentioned: ['searchGap.e'],
     })

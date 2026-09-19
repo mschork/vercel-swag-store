@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { ModelOutputSchema } from './model-schema.ts'
 
-const parse = (cluster: object) => ModelOutputSchema.safeParse({ clusters: [cluster] }).success
+const parse = (cluster: object) =>
+  ModelOutputSchema.safeParse({
+    clusters: [{ title: null, suggestedCategory: null, match: null, ...cluster }],
+  }).success
 
 describe('ModelOutputSchema', () => {
   it('requires a title for newProduct and a match for alreadySold', () => {
@@ -10,6 +13,10 @@ describe('ModelOutputSchema', () => {
     expect(parse({ kind: 'alreadySold', gapIds: ['g'], rationale: 'r' })).toBe(false)
     expect(parse({ kind: 'alreadySold', gapIds: ['g'], rationale: 'r', match: 'hoodies' })).toBe(true)
     expect(parse({ kind: 'noise', gapIds: ['g'], rationale: 'r' })).toBe(true)
+  })
+
+  it('rejects a cluster that leaves a field out, so every provider is held to one shape', () => {
+    expect(ModelOutputSchema.safeParse({ clusters: [{ kind: 'noise', gapIds: ['g'], rationale: 'r' }] }).success).toBe(false)
   })
 
   it('rejects an empty cluster, a long title and an unknown kind', () => {
