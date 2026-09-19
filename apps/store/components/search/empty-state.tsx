@@ -18,8 +18,6 @@ export function EmptyState({
   category: Category | null
   categories: readonly Category[]
 }) {
-  // E13 records the miss here: a query with no category and no results is the
-  // signal it aggregates. No code for it in E07.
   return (
     <Frame title={headline(query, category)}>
       {query && category ? (
@@ -46,9 +44,15 @@ export function EmptyState({
         </ul>
       </div>
       {query && !category ? (
-        <Link href="/search" className="underline underline-offset-4">
-          Clear search
-        </Link>
+        <>
+          <Link href="/search" className="underline underline-offset-4">
+            Clear search
+          </Link>
+          {/* E13: this miss is counted (lib/search/record-gap.ts), so say so. */}
+          <p className="text-sm text-fg-secondary">
+            We keep track of what people look for and don&apos;t find.
+          </p>
+        </>
       ) : null}
     </Frame>
   )

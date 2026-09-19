@@ -4,6 +4,7 @@ import { getCategories } from '@/lib/api/categories'
 import { getFeaturedProducts, getProducts } from '@/lib/api/products'
 import type { Category, Product } from '@/lib/api/types'
 import { RESULT_CAP, expandQuery, mergeResults, normaliseQuery } from '@/lib/search'
+import { recordGapAfterResponse } from '@/lib/search/record-gap'
 import { EmptyState } from '@/components/empty-state'
 import { EmptyState as SearchEmptyState } from './empty-state'
 
@@ -61,6 +62,9 @@ export async function SearchResults({
   const outcome = await search(query, category, categories)
 
   if (outcome.products.length === 0) {
+    // E13: a query with no category and no results is a demand signal. The
+    // write happens after the response; deleting this line restores E07.
+    if (query && !category) await recordGapAfterResponse(query)
     return query || category ? (
       <SearchEmptyState query={query} category={category} categories={categories} />
     ) : (

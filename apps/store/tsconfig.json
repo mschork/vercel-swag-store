@@ -1,6 +1,7 @@
 {
   "extends": "@repo/config/tsconfig/nextjs.json",
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "paths": {
       "@/*": ["./*"]
     }

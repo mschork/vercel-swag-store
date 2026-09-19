@@ -205,6 +205,9 @@ importers:
       '@portabletext/react':
         specifier: ^8.0.1
         version: 8.0.1(react@19.2.8)
+      '@repo/demand':
+        specifier: workspace:*
+        version: link:../../packages/demand
       '@repo/sanity':
         specifier: workspace:*
         version: link:../../packages/sanity
