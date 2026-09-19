@@ -154,16 +154,16 @@ Sanity Workflows is early access and versioned 0.x, so this slice is last, pinne
 
 ## Acceptance criteria
 
-- [ ] Slice 0's three answers are in the PR description.
-- [ ] A zero-result search creates or increments one `searchGap` within seconds; `/search` is still a partial prerender and its response time is unchanged within noise (ten runs each way, median).
-- [ ] With `SANITY_API_WRITE_TOKEN` unset the store builds, runs and records nothing; removing the one call in `SearchResults` restores E07.
-- [ ] Nothing personal is stored: the filter tests pass, the documents hold only what the schema lists, and an anonymous query returns neither type.
-- [ ] A gap reaching the threshold starts exactly one analysis run however many Function calls arrive, and a failed run leaves no gap in `analysing`.
-- [ ] The run writes sensible ideas for the seeded gaps: one umbrella idea, "hodie" `matched` to hoodies, "umb" and the gibberish `ignored`, no idea for a product that exists. A second run over the same gaps writes nothing new.
-- [ ] After a deploy, `sanity blueprints plan` lists nothing but an update per Function (a Function's source is uploaded again on every deploy, so it always plans as an update); no secret is in `sanity.blueprint.ts` or anywhere in git.
+- [x] Slice 0's three answers are in the PR description.
+- [x] A zero-result search creates or increments one `searchGap` within seconds; `/search` is still a partial prerender and its response time is unchanged within noise (ten runs each way, median).
+- [x] With `SANITY_API_WRITE_TOKEN` unset the store builds, runs and records nothing; removing the one call in `SearchResults` restores E07.
+- [x] Nothing personal is stored: the filter tests pass, the documents hold only what the schema lists, and an anonymous query returns neither type.
+- [x] A gap reaching the threshold starts exactly one analysis run however many Function calls arrive, and a failed run leaves no gap in `analysing`.
+- [x] The run writes sensible ideas for the seeded gaps: one umbrella idea, "hodie" `matched` to hoodies, "umb" and the gibberish `ignored`, no idea for a product that exists. A second run over the same gaps writes nothing new.
+- [x] After a deploy, `sanity blueprints plan` lists nothing but an update per Function (a Function's source is uploaded again on every deploy, so it always plans as an update); no secret is in `sanity.blueprint.ts` or anywhere in git.
 - [ ] An editor accepts or rejects an idea in the Studio and the idea and its gaps follow (slice 5; with the slice dropped, via the radio field and no gap change).
-- [ ] No route other than `/api/demand/analyse` and Workflow's own `/.well-known/workflow/*` was added; the build's route table is otherwise identical to `main`.
-- [ ] README, `AGENTS.md` and ADR 0004 written.
+- [x] No route other than `/api/demand/analyse` and Workflow's own `/.well-known/workflow/*` was added; the build's route table is otherwise identical to `main`.
+- [x] README, `AGENTS.md` and ADR 0004 written.
 
 ## Set up by hand
 
