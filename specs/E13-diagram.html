@@ -210,7 +210,8 @@
     <li><div class="card">
       <div class="meta"><span class="chip store">Store</span><span class="chip data">Sanity dataset</span><span class="chip slice">Slice 2</span></div>
       <h3>After the response: count the gap</h3>
-      <p>One read, at most one write. <span class="stop">No write</span> when:</p>
+      <p><strong>Written to:</strong> the Sanity <code>production</code> dataset, as one document of type <code>searchGap</code> per distinct query, with the id <code>searchGap.&lt;hash of the query&gt;</code>. It holds <code>query</code>, <code>count</code>, <code>firstSeen</code>, <code>lastSeen</code> and <code>status</code>. Editors see it in the Studio under Demand signals, in "All gaps" from the first search and in "Search gaps" from the second.</p>
+      <p>The store writes with <code>SANITY_API_WRITE_TOKEN</code>, the only write credential it has. One read, at most one write. <span class="stop">No write</span> when:</p>
       <ul>
         <li>the gap was counted less than 10 minutes ago, by anyone,</li>
         <li>the gap is new and 500 gaps are already open,</li>
