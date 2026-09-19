@@ -15,8 +15,13 @@ export const MAX_OPEN_GAPS = 500
 /** A gap under the threshold is deleted this long after it was last seen. */
 export const RETENTION_DAYS = 30
 export const MAX_GAPS_PER_RUN = 100
-/** AI Gateway model id; the Gateway's catalogue spells versions with a dot. */
-export const MODEL = 'anthropic/claude-haiku-4.5'
+/**
+ * AI Gateway model id. Sorting a few dozen short queries against a small
+ * catalogue is an easy task, so the smallest model that AI Gateway's free tier
+ * serves does it; the free tier refuses Anthropic models. Changing model is
+ * this one line: the schema and the prompt hold for every provider.
+ */
+export const MODEL = 'openai/gpt-5-nano'
 
 export const MAX_QUERY_LENGTH = 64
 export const MIN_QUERY_LENGTH = 3
