@@ -143,6 +143,12 @@ curl -X POST http://localhost:3000/api/demand/analyse \
   -H "Content-Type: application/json" -d '{"settle":false}'
 ```
 
+The lock that collapses a burst of calls into one run has its own test against the real workflow runtime. It is hermetic (no Sanity, no model) and is not part of `pnpm verify`:
+
+```sh
+pnpm --filter store test:integration
+```
+
 `{"settle":false}` skips the ten-minute wait. Local run data is under `apps/store/.next/workflow-data`.
 
 Where to look: Vercel's Observability, Workflows view for the runs; `pnpm exec sanity functions logs gap-threshold` for the trigger; the Studio's "Demand signals" for the gaps and the ideas.

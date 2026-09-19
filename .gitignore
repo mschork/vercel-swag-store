@@ -6,6 +6,9 @@ node_modules
 # Next's SWC plugin cache, and what Vercel Workflow generates at build time (E13)
 .swc
 apps/store/app/.well-known/workflow
+# written by the workflow integration tests (pnpm --filter store test:integration)
+.workflow-data
+.workflow-vitest
 .turbo
 dist
 out
