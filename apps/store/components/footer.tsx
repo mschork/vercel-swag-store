@@ -1,5 +1,6 @@
 import { cacheLife } from 'next/cache'
 import { getStoreConfig } from '@/lib/api/store'
+import { FOOTER_FALLBACK } from '@/lib/content/fallbacks'
 import { loadOptional } from '@/lib/load-optional'
 import { getSiteSettings } from '@/lib/sanity/content'
 import { socialLinks } from '@/lib/social-links'
@@ -13,6 +14,12 @@ async function CopyrightYear() {
   'use cache'
   cacheLife('days')
   return <>{new Date().getFullYear()}</>
+}
+
+/** The words after the year: the editor's (`siteSettings.footerText`), or the shipped ones. */
+async function FooterText() {
+  const settings = await getSiteSettings()
+  return <>{settings?.footerText || FOOTER_FALLBACK.text}</>
 }
 
 /**
@@ -52,7 +59,7 @@ export function Footer() {
     <footer className="mt-12 border-t border-border text-sm text-fg-secondary md:mt-16">
       <Container className="flex flex-col gap-4 py-8 sm:flex-row sm:items-center sm:justify-between">
         <p>
-          © <CopyrightYear /> Vercel Swag Store
+          © <CopyrightYear /> <FooterText />
         </p>
         <SocialLinks />
       </Container>

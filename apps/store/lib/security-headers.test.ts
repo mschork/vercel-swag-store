@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { contentSecurityPolicy, securityHeaders } from './security-headers'
+import { contentSecurityPolicy, parseStudioOrigins, securityHeaders } from './security-headers'
 
 const directive = (csp: string, name: string) =>
   csp
@@ -74,5 +74,45 @@ describe('securityHeaders', () => {
     const open = securityHeaders({ allowEval: false, allowIndexing: true })
     expect(open.map((h) => h.key)).not.toContain('X-Robots-Tag')
     expect(securityHeaders({ allowEval: false, allowIndexing: false })).toEqual(headers)
+  })
+})
+
+describe('frame-ancestors (E17)', () => {
+  const STUDIOS = 'https://vercel-swag-studio.vercel.app, https://swagstore-ms.sanity.studio,https://www.sanity.io'
+
+  it("stays 'none' with the env unset or empty", () => {
+    expect(parseStudioOrigins(undefined)).toEqual([])
+    expect(parseStudioOrigins(' , ')).toEqual([])
+    const csp = contentSecurityPolicy({ allowEval: false, studioOrigins: parseStudioOrigins('') })
+    expect(directive(csp, 'frame-ancestors')).toBe("frame-ancestors 'none'")
+  })
+
+  it('names exactly the origins given, and self', () => {
+    const csp = contentSecurityPolicy({ allowEval: false, studioOrigins: parseStudioOrigins(STUDIOS) })
+    expect(directive(csp, 'frame-ancestors')).toBe(
+      "frame-ancestors 'self' https://vercel-swag-studio.vercel.app https://swagstore-ms.sanity.studio https://www.sanity.io",
+    )
+  })
+
+  it('changes no other directive', () => {
+    const strip = (csp: string) => csp.replace(/frame-ancestors [^;]+/, '')
+    expect(strip(contentSecurityPolicy({ allowEval: false, studioOrigins: parseStudioOrigins(STUDIOS) }))).toBe(
+      strip(contentSecurityPolicy({ allowEval: false })),
+    )
+  })
+
+  it.each([
+    ['a wildcard', 'https://*.vercel.app'],
+    ['a path', 'https://studio.example.com/desk'],
+    ['a trailing slash', 'https://studio.example.com/'],
+    ['no scheme', 'studio.example.com'],
+    ['another scheme', 'ftp://studio.example.com'],
+    ['a directive injection', "https://a.example; script-src 'unsafe-eval'"],
+  ])('rejects %s', (_, entry) => {
+    expect(() => parseStudioOrigins(`https://ok.example,${entry}`)).toThrow(/PRESENTATION_STUDIO_ORIGINS/)
+  })
+
+  it('accepts the local Studio and drops duplicates', () => {
+    expect(parseStudioOrigins('http://localhost:3333,http://localhost:3333')).toEqual(['http://localhost:3333'])
   })
 })
