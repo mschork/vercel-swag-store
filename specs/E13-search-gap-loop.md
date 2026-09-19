@@ -81,7 +81,7 @@ Three questions decide details below. Answer them on a throwaway branch first an
 - `productIdea`: `title`, `rationale`, `suggestedCategory` (reference to `category`, optional), `sourceGaps[]` (weak references to `searchGap`, so retention can delete a gap), `estimatedDemand` (sum of the source gaps' counts when written), `status` (`proposed`, `accepted`, `rejected`), `rejectionReason`, `decidedAt`, `generatedBy` (model id), `generatedAt`, `runId`. `status` and `rejectionReason` are read only: the Accept and Reject actions of slice 5 set them. The document description says what accepting means: a signal to whoever owns the catalogue, nothing more, because the API has no way to create a product.
 - Neither type appears in the Studio's create menu.
 
-**Desk**: a "Demand signals" section under a titled divider after Categories. "Search gaps" lists `status == 'new' && count >= 2` ordered by `count desc`, with a second list "All gaps". "Product ideas" is a folder with one list per status: "Open ideas" by estimated demand, "Accepted ideas" and "Rejected ideas" by decision date.
+**Desk**: a "Demand signals" section under a titled divider after Categories. First "Product ideas", a folder with one list per status: "Open ideas" by estimated demand, "Accepted ideas" and "Rejected ideas" by decision date. Then "Search gaps", which lists `status == 'new' && count >= 2` ordered by `count desc`, and "All gaps".
 
 **Seed**: `packages/sanity/scripts/seed-demand.ts` writes six gaps (three that cluster: "umbrella", "umbrellas", "rain umbrella"; a typo "hodie"; a fragment "umb"; gibberish) so slices 3 to 5 can be developed without searching by hand. Never part of `seed`.
 

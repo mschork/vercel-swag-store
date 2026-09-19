@@ -31,7 +31,7 @@ Portable Text everywhere: paragraphs, bold, italic and links. No headings, lists
 
 ## Studio `apps/studio`
 
-- Desk, in the order an editor works, each item with its own icon. Under the list's "Content" title: Products, FAQs, Testimonials. Under a "Website" heading: Home page, Checkout page, Site settings. Under "Taxonomies": Categories. Under "Demand signals" (E13): Search gaps, All gaps, and a Product ideas folder. The headings are titled dividers. Singletons open their document directly; the create menu offers only FAQ and Testimonial.
+- Desk, in the order an editor works, each item with its own icon. Under the list's "Content" title: Products, FAQs, Testimonials. Under a "Website" heading: Home page, Checkout page, Site settings. Under "Taxonomies": Categories. Under "Demand signals" (E13): a Product ideas folder first, because that is where an editor decides, then Search gaps and All gaps. The headings are titled dividers. Singletons open their document directly; the create menu offers only FAQ and Testimonial.
 - Previews: product shows its photo, name and category; a testimonial shows the photo and person; FAQ shows the question and its categories.
 - Plugins: `structureTool`, `visionTool`, `sanity-plugin-media`.
 - `sanity typegen`: `sanity schema extract` then `sanity typegen generate` into `packages/sanity/src/generated/sanity.types.ts`, committed, script `pnpm --filter @repo/sanity typegen`.
