@@ -15,6 +15,58 @@
 export declare const internalGroqTypeReferenceTo: unique symbol
 
 // Source: ../../packages/sanity/src/generated/schema.json
+export type CategoryReference = {
+  _ref: string
+  _type: 'reference'
+  _weak?: boolean
+  [internalGroqTypeReferenceTo]?: 'category'
+}
+
+export type SearchGapReference = {
+  _ref: string
+  _type: 'reference'
+  _weak?: boolean
+  [internalGroqTypeReferenceTo]?: 'searchGap'
+}
+
+export type ProductIdea = {
+  _id: string
+  _type: 'productIdea'
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  title: string
+  rationale?: string
+  status: 'proposed' | 'accepted' | 'rejected'
+  rejectionReason?: string
+  suggestedCategory?: CategoryReference
+  sourceGaps?: Array<
+    {
+      _key: string
+    } & SearchGapReference
+  >
+  estimatedDemand?: number
+  decidedAt?: string
+  generatedBy?: string
+  generatedAt?: string
+  runId?: string
+}
+
+export type SearchGap = {
+  _id: string
+  _type: 'searchGap'
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  query: string
+  count: number
+  firstSeen?: string
+  lastSeen?: string
+  status: 'new' | 'analysing' | 'reviewed' | 'matched' | 'ignored' | 'promoted'
+  note?: string
+  runId?: string
+}
+
 export type SanityImageAssetReference = {
   _ref: string
   _type: 'reference'
@@ -69,13 +121,6 @@ export type SanityImageHotspot = {
   y: number
   height: number
   width: number
-}
-
-export type CategoryReference = {
-  _ref: string
-  _type: 'reference'
-  _weak?: boolean
-  [internalGroqTypeReferenceTo]?: 'category'
 }
 
 export type Faq = {
@@ -365,12 +410,15 @@ export type Geopoint = {
 }
 
 export type AllSanitySchemaTypes =
+  | CategoryReference
+  | SearchGapReference
+  | ProductIdea
+  | SearchGap
   | SanityImageAssetReference
   | ProductReference
   | LookbookEntry
   | SanityImageCrop
   | SanityImageHotspot
-  | CategoryReference
   | Faq
   | RichText
   | FaqReference

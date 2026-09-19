@@ -1,5 +1,6 @@
 import type { SchemaTypeDefinition } from 'sanity'
 import { category } from './category'
+import { productIdea, searchGap } from './demand'
 import { faq } from './faq'
 import { lookbookEntry } from './lookbook-entry'
 import { product } from './product'
@@ -8,7 +9,8 @@ import { checkoutPage, homePage, siteSettings } from './singletons'
 
 /**
  * Every type the Studio registers (E08). Products and categories mirror the
- * API and are written by `scripts/sync.ts`; the rest is an editor's.
+ * API and are written by `scripts/sync.ts`; search gaps and product ideas are
+ * written by the search-gap loop (E13); the rest is an editor's.
  */
 export const schemaTypes: SchemaTypeDefinition[] = [
   portableText,
@@ -19,6 +21,8 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   category,
   faq,
   lookbookEntry,
+  searchGap,
+  productIdea,
 ]
 
 /** Ids of the documents that exist once, shared by the Studio and the seed. */
