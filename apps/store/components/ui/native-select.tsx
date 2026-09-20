@@ -5,10 +5,9 @@ type NativeSelectProps = Omit<React.ComponentProps<'select'>, 'size'> & {
 }
 
 /**
- * shadcn's native select. Two edits: the generated file imported its chevron
- * from `lucide-react`, which this repo does not depend on (AGENTS.md rule 7),
- * so the glyph is inline like the cart and logo icons; and a `lg` size is
- * added, because `className` lands on the wrapper and cannot reach the
+ * shadcn's native select, with two edits: the chevron is inline rather than
+ * imported from `lucide-react`, to keep the dependency list short, and a `lg`
+ * size is added, because `className` lands on the wrapper and cannot reach the
  * select's own height.
  */
 function NativeSelect({

@@ -2,7 +2,7 @@ import type { Product } from './api/types'
 import { decimalAmount } from './format'
 import type { StockAvailability } from './stock-status'
 
-/** A JSON-LD document; plain data, typed loosely on purpose (no schema-dts dependency). */
+/** A JSON-LD document; plain data, loosely typed to avoid a schema-dts dependency. */
 export type JsonLd = Record<string, unknown>
 
 /** One breadcrumb step: a visible name and a site-relative link. */

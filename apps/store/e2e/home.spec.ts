@@ -4,14 +4,14 @@ import { expect, test } from '@playwright/test'
  * Smoke for the home page against a production build. The promo outage case
  * (API unreachable, page renders without the banner) is a server-side
  * condition this test cannot create; it is verified by starting the server
- * with an unreachable `API_BASE_URL` (see the E04 PR).
+ * with an unreachable `API_BASE_URL`.
  */
 test('home renders the hero, the featured grid and at least six product cards', async ({
   page,
 }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-  // The hero photo is the LCP element; it is not a link (E10).
+  // The hero photo is the LCP element and is not a link.
   await expect(page.getByRole('img', { name: /hoodie/ })).toBeVisible()
   expect(await page.getByRole('img', { name: /hoodie/ }).locator('xpath=ancestor::a').count()).toBe(0)
   await expect(page.getByRole('heading', { name: 'Featured' })).toBeVisible()

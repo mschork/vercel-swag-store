@@ -6,7 +6,10 @@ export const alt = 'Vercel Swag Store'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
-/** Black canvas, the triangle and the store name. The font is read inside the handler (lib/og-font.ts). */
+/**
+ * Black canvas, the triangle and the store name. The font is read inside the
+ * handler (`loadOgFonts` in `lib/og-font.ts`).
+ */
 export default async function Image() {
   return new ImageResponse(
     (

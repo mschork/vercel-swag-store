@@ -3,11 +3,10 @@ import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
 
 /**
- * Draft mode against a production build (E17). The Studio normally switches
- * it on through `/api/draft-mode/enable`, which needs a secret only a
- * signed-in Studio can mint; the test sets the cookie that route would set,
- * with the id the build wrote to its manifest. Nothing here needs the Sanity
- * read token, so it runs in CI, where the token is unset.
+ * Draft mode against a production build. The Studio normally switches it on
+ * through `/api/draft-mode/enable`, which needs a secret only a signed-in
+ * Studio can mint; the test sets the cookie that route would set, with the id
+ * the build wrote to its manifest. It runs with `SANITY_API_READ_TOKEN` unset.
  */
 const STEGA = /[​‌‍﻿]/
 

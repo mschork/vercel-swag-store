@@ -6,8 +6,7 @@ import { cn } from '@/lib/utils'
  * A product's first photo, filling its parent (which sets the frame and the
  * aspect). `alt` is empty where the surrounding link already names the
  * product (cards) and the product name where the image is the link's only
- * content. `preload` is Next 16's name for the deprecated `priority`. Renders
- * nothing for a product without images.
+ * content. Renders nothing for a product without images.
  */
 export function ProductImage({
   product,

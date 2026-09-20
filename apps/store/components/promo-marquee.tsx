@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 const PX_PER_SECOND = 40
 
 /**
- * One line that scrolls when it does not fit (E10). A `ResizeObserver`
+ * One line that scrolls when it does not fit. A `ResizeObserver`
  * compares the text to the strip; only an overflowing line animates, and it
  * keeps its centred, still layout otherwise. The loop is seamless because a
  * second, `aria-hidden` copy follows the first and both travel their own

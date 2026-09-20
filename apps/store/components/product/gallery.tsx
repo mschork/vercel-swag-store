@@ -2,7 +2,7 @@ import { GalleryImage } from './gallery-image'
 import { GalleryThumbnails } from './gallery-thumbnails'
 
 /**
- * The product photos: the API's, followed by any an editor added (E09). With
+ * The product photos: the API's, followed by any an editor added. With
  * one image this stays a server component; thumbnails and their client-side
  * selection render only when there is more than one.
  */

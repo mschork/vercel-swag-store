@@ -7,11 +7,7 @@ import { expect, test, type Page } from '@playwright/test'
  * a test skips when none is in stock on that request.
  */
 
-/**
- * The API's cart endpoints answer in two to three seconds each, and a first
- * add is two of them, so cart assertions wait far longer than Playwright's
- * five-second default and each flow gets a generous test budget.
- */
+/** Cart assertions wait far longer: the cart API is slow (`lib/api/cart.ts`). */
 const SAVED = { timeout: 30_000 }
 
 test.describe.configure({ timeout: 180_000 })
@@ -34,8 +30,7 @@ async function openInStockProduct(page: Page) {
   for (const href of hrefs) {
     if (!href) continue
     await page.goto(href)
-    // Scoped to the page: React streams a hidden copy of the hole to the end
-    // of the body before revealing it.
+    // Scoped to `main` for the reason given in product.spec.ts.
     const stock = page.getByRole('main').getByText(STOCK_LINE)
     await expect(stock).toBeVisible()
     if ((await stock.textContent()) === 'Out of stock') continue

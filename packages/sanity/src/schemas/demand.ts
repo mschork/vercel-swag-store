@@ -3,9 +3,8 @@ import { GAP_STATUSES, IDEA_STATUSES } from '@repo/demand/constants'
 
 /**
  * The search-gap loop's two documents (specs/E13-search-gap-loop.md). Both are
- * written by machines under dotted ids (`searchGap.<hash>`), which Sanity keeps
- * private: an anonymous client in this public dataset cannot read them. Neither
- * type is in the create menu.
+ * written by machines, under the private ids that `gapId` and `ideaId` build
+ * (`packages/demand/src/ids.ts`). Neither type is in the create menu.
  */
 
 const titled = (values: readonly string[]) =>

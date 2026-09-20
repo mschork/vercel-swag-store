@@ -25,7 +25,7 @@ export function toLines(cart: Cart): Line[] {
   }))
 }
 
-/** One optimistic change; quantity 0 removes the line, as the API does. */
+/** One optimistic change, mirroring `updateCartItem` in `lib/api/cart.ts`. */
 export type LineChange = { productId: string; quantity: number }
 
 export function applyLineChange(

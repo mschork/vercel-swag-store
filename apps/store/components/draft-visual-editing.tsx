@@ -5,14 +5,12 @@ import { VisualEditing } from 'next-sanity/visual-editing'
 import { useCallback } from 'react'
 
 /**
- * The overlay, plus the one thing it does not do by itself (E17): re-render
- * the route when the Studio reports an edit. next-sanity leaves a `mutation`
- * to the app because it cannot know how the app reads content; here every
+ * The overlay, plus the re-render it leaves to the app: next-sanity hands
+ * `mutation` over because it cannot know how the app reads content. Here every
  * read goes through `sanityFetch`, which draft mode runs uncached, so a plain
  * `router.refresh()` returns the draft the editor just typed.
  *
- * The promise tells the Studio how long to show its refresh spinner. A client
- * component, because `refresh` is a function and takes the router.
+ * The promise tells the Studio how long to show its refresh spinner.
  */
 export function DraftVisualEditing() {
   const router = useRouter()

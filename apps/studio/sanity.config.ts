@@ -21,9 +21,9 @@ const { projectId, dataset } = requireSanityEnv({
 })
 
 /**
- * The store the Presentation tool frames (E17). Always the production store,
- * or `http://localhost:3000` for a local run: a Vercel preview deployment
- * answers with a login redirect and cannot be framed.
+ * The store the Presentation tool frames. Always the production store, or
+ * `http://localhost:3000` for a local run: a Vercel preview deployment answers
+ * with a login redirect and cannot be framed.
  */
 const previewOrigin =
   process.env.SANITY_STUDIO_PREVIEW_ORIGIN || 'https://vercel-swag-store-ms.vercel.app'
@@ -35,7 +35,6 @@ export default defineConfig({
   dataset,
   plugins: [
     structureTool({ structure }),
-    // Live editing beside the desk, which stays as it is (E08).
     presentationTool({
       previewUrl: { origin: previewOrigin, previewMode: { enable: '/api/draft-mode/enable' } },
       resolve,

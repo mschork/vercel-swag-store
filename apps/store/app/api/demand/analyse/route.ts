@@ -5,16 +5,16 @@ import { serverEnv } from '@/lib/env'
 import { analyseDemand } from '@/workflows/analyse-demand'
 
 /**
- * Wakes the demand analysis (E13). Called by the `gap-threshold` Sanity
- * Function when a search gap crosses the threshold, or by hand:
+ * Wakes the demand analysis. Called by the `gap-threshold` Sanity Function
+ * when a search gap crosses the threshold, or by hand:
  *
  *   curl -X POST https://<host>/api/demand/analyse \
  *     -H "Authorization: Bearer $DEMAND_ANALYSE_SECRET" \
  *     -H "Content-Type: application/json" -d '{"settle":false}'
  *
  * It only starts the workflow and answers at once; calling it while a run is
- * in flight is free, because the workflow's lock turns the extra run away.
- * With the secret unset the route refuses every call.
+ * in flight starts no second run, because the workflow's lock turns the extra
+ * run away. With the secret unset the route refuses every call.
  */
 const BodySchema = z.object({ settle: z.boolean().default(true) })
 

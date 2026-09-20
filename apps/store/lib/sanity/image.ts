@@ -35,7 +35,7 @@ export function sanityImageProps(
   }
 }
 
-/** True when the query returned an image an editor actually uploaded. */
+/** True when the query returned an image an editor uploaded. */
 export function hasImage(
   image: (SanityImageSource & SanityPhoto) | null | undefined,
 ): image is SanityImageSource & SanityPhoto {

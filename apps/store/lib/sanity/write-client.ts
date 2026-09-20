@@ -4,9 +4,9 @@ import { serverEnv } from '@/lib/env'
 import { publicEnv } from '@/lib/env.public'
 
 /**
- * The one Sanity client that can write, used only by the search-gap loop
- * (E13). Never cached, never imported by a component. `null` when the token is
- * unset, so previews, CI and forks simply record nothing.
+ * The one Sanity client that can write, used only by the search-gap loop.
+ * Never cached, never imported by a component. `null` when the token is unset,
+ * so previews, CI and forks record nothing.
  */
 export function getWriteClient(): SanityClient | null {
   const token = serverEnv.SANITY_API_WRITE_TOKEN

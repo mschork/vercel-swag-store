@@ -16,16 +16,11 @@ import { EmptyCart } from './empty-cart'
 
 /**
  * The cart page's client leaf. Lines live in `useOptimistic`, so a quantity
- * change or a removal shows at once and the totals follow. The server's answer
- * arrives through `refresh()` in the same round trip and replaces `lines`; a
- * failed change reverts on its own when its transition ends. Above them sit
- * drafts: quantities a row shows during its pause before saving, so rapid
- * clicks move the row and the totals before any request starts. While the
- * view is open the header badge shows its total, so the two never disagree.
- *
- * Messages are kept here, keyed by product, rather than in the rows: a row
- * removed optimistically unmounts, and if the removal fails the row comes
- * back and still has to show why.
+ * change or a removal shows at once and the totals follow; the server's answer
+ * arrives through `refresh()` and replaces `lines`. Above them sit drafts: the
+ * quantities a row shows during its pause before saving. Messages are kept
+ * here, keyed by product, because a row removed optimistically unmounts and
+ * has to show why if the removal fails.
  */
 export function CartView({
   lines,

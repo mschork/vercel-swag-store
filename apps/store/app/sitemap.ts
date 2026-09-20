@@ -6,9 +6,9 @@ import { publicEnv } from '@/lib/env.public'
 
 /**
  * Home, search, the product listing with its category pages, and every
- * product page. Built from the cached catalogue, so it
- * refreshes with the `products` tag. A product's `lastModified` is its
- * `createdAt`, the only date the API has.
+ * product page. Built from the cached catalogue, so it refreshes with the
+ * `products` tag. A product's `lastModified` is its `createdAt`, the only
+ * date the API has.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [products, categories] = await Promise.all([getAllProducts(), getCategories()])

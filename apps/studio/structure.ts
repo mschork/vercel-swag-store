@@ -20,12 +20,9 @@ import { SINGLETON_IDS, type SingletonType } from '@repo/sanity'
 const API_VERSION = '2026-09-01'
 
 /**
- * The desk (E08), in the order an editor works. What they write every day
- * comes first, under the list's own "Content" title: products, questions and
- * testimonials. "Website" holds the three pages that exist once. "Taxonomies"
- * holds categories, which mirror the API and which nobody edits. "Demand
- * signals" closes the list: what the search-gap loop (E13) proposed, which is
- * where an editor has something to decide, then what it recorded.
+ * The desk, in the order an editor works: what they write every day, then the
+ * three pages that exist once, then the categories that mirror the API and
+ * nobody edits, then the search-gap loop's proposals and the gaps behind them.
  */
 export const structure: StructureResolver = (S) =>
   S.list()

@@ -1,14 +1,15 @@
 /**
  * Most of one product a cart line holds, shared by the cart stepper and the
- * `updateQuantity` action. The API checks no stock on cart writes; stock is
- * enforced only when adding on the product page (specs/improvements.md).
+ * `updateQuantity` action. Cart writes are not stock-checked by the API; stock
+ * is enforced only when adding on the product page.
  */
 export const CART_MAX_QUANTITY = 99
 
 /**
- * Quantity rules for the stepper on the product page and the cart rows. Pure and safe for client components. A quantity is a whole number in
- * `[min, max]`. When `max` is below `min` (a product out of stock) the range
- * collapses to `min`, so the value stays valid while the control is disabled.
+ * A quantity clamped to a whole number in `[min, max]`, for the stepper on the
+ * product page and the cart rows. Pure and safe for client components. When
+ * `max` is below `min` (a product out of stock) the range collapses to `min`,
+ * so the value stays valid while the control is disabled.
  */
 export function clampQuantity(value: number, min: number, max: number): number {
   if (!Number.isFinite(value)) return min

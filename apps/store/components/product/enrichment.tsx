@@ -6,18 +6,11 @@ import type { MergedProduct } from '@/lib/sanity/merge'
 import type { TestimonialsForProductQueryResult } from '@repo/sanity/generated'
 
 /**
- * What an editor adds to a product page (E09). Every block renders only when
- * it has content, so a product nobody has touched looks exactly as it did
- * before Sanity existed. Each block lines up with the two columns above it:
- * heading on the left, content on the right.
+ * What an editor adds to a product page. Every block renders only when it has
+ * content.
  */
 
-/**
- * One block below the buy row. The rule spans the page and the content sits in
- * the same two columns as the gallery and the buy panel above it: the heading
- * on the left, the words on the right, so the text starts where the price does.
- * Below the medium breakpoint it stacks, heading first.
- */
+/** One block below the buy row, in the same two columns as the gallery. */
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="grid gap-3 border-t border-border pt-6 md:grid-cols-2 md:gap-12">
@@ -93,9 +86,8 @@ const MAX_TESTIMONIAL_ROW = 4
 
 /**
  * One entry across the full width: a photo filling one column, the quote at
- * the foot of the other. The feature has its photo on the right and its words
- * ranged right against it; mirrored, the photo leads and the words stay ranged
- * left, so either way the quote sits against the picture it belongs to.
+ * the foot of the other. `mirrored` swaps the two, and the words swap their
+ * alignment with them, so either way the quote sits against its photo.
  */
 function WideEntry({ entry, mirrored = false }: { entry: Testimonial; mirrored?: boolean }) {
   return (
@@ -115,9 +107,8 @@ function WideEntry({ entry, mirrored = false }: { entry: Testimonial; mirrored?:
 }
 
 /**
- * Two entries, one per half of the page: the photo on the left at the size a
- * card's photo has, the words beside it at its foot. The gaps match the card
- * grid's, which is what makes the photos come out the same size.
+ * Two entries, one per half of the page, photo beside words. The gaps match
+ * the card grid's, which is what makes the photos come out the same size.
  */
 function EntryPair({ entries }: { entries: readonly Testimonial[] }) {
   return (
@@ -154,12 +145,9 @@ function EntryCards({ entries }: { entries: readonly Testimonial[] }) {
 
 /**
  * Testimonials naming this product, newest first, under a heading the site
- * settings own (`siteSettings.productPage.testimonialsHeading`).
- *
- * The newest entry is the feature. What follows depends on how many there are,
- * so the second row always spans the page instead of trailing off to the left:
- * one is the feature mirrored, two take a half each, three or four are cards.
- * Beyond five, the rest wait for their turn as newer entries push them along.
+ * settings own (`siteSettings.productPage.testimonialsHeading`). The newest is
+ * the feature; the rest fill a second row that spans the page: one is the
+ * feature mirrored, two take a half each, three or four are cards.
  */
 export function Testimonials({
   entries,
@@ -210,9 +198,7 @@ function Chevron() {
 /**
  * The questions this product answers, from its category and from its own list.
  * Native `details` elements: they open without JavaScript and announce their
- * state to a screen reader on their own. The open and close animate in CSS
- * (`app/globals.css`), where a browser without `::details-content` and anyone
- * asking for less motion simply gets the instant toggle.
+ * state on their own. The open and close animate in CSS (`app/globals.css`).
  */
 export function Faqs({
   faqs,

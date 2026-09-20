@@ -3,10 +3,10 @@ import { gapId, normaliseGap } from '@repo/demand'
 import { required } from './env.ts'
 
 /**
- * Six search gaps, so the analysis and the review (E13 slices 3 to 5) can be
- * developed without searching by hand: three that cluster, a typo, a typing
- * fragment and gibberish. Never part of `seed`; idempotent, and it leaves a
- * gap that already exists alone.
+ * Six search gaps, so the analysis and the review can be developed without
+ * searching by hand: three that cluster, a typo, a typing fragment and
+ * gibberish. Kept out of `seed`; idempotent, and a gap that already exists is
+ * left alone.
  *
  * Run with `pnpm --filter @repo/sanity seed-demand`.
  */

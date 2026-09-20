@@ -13,7 +13,7 @@ type Props = Omit<ComponentProps<typeof Link>, 'aria-current'> & {
 
 /**
  * A nav link that marks itself as the current page and fades to the
- * secondary colour while its navigation is pending (E10).
+ * secondary colour while its navigation is pending.
  */
 export function NavLink({ href, currentUnder, className, children, ...rest }: Props) {
   const pathname = usePathname()

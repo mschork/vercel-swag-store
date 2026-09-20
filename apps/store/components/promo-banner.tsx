@@ -5,23 +5,20 @@ import { getPromotion } from '@/lib/api/promotions'
 import { loadOptional } from '@/lib/load-optional'
 
 /**
- * The strip and its skeleton share this box so the shell reserves the same
- * space before and after the promotion streams in: one line (36px), because
- * a line that does not fit scrolls. Under reduced motion the text wraps
- * instead, so there the box keeps the wrapped height of the longest of the
- * four current promos: three lines at 375 (76px), two at md (56px).
+ * The strip and its skeleton share this box, so the shell reserves the same
+ * space before and after the promotion streams in. A line that does not fit
+ * scrolls, so one line is enough. Under reduced motion the text wraps
+ * instead, and the box reserves the wrapped height per breakpoint.
  */
 const RESERVED_BOX =
   'flex min-h-9 items-center bg-accent text-accent-fg motion-reduce:min-h-19 motion-reduce:md:min-h-14 motion-reduce:lg:min-h-9'
 
 /**
- * The accent strip under the header, on every route (E10); the code is a
- * ticket chip and a line that does not fit scrolls (`PromoMarquee`). `getPromotion` is
+ * The accent strip under the header, on every route. The code is a ticket chip
+ * and a line that does not fit scrolls (`PromoMarquee`). `getPromotion` is
  * never cached and this renders inside `<Suspense>` in the root layout, so it
- * is the one dynamic hole every page has. Every field is shown as the API
- * returns it (specs/improvements.md). No promotion, or a failed call, leaves
- * the reserved box empty so nothing below it moves. The box is accent-coloured
- * in every state, so the band never changes colour while the strip loads.
+ * is the one dynamic hole every page has. Without a promotion, and after a
+ * failed call, the reserved box stays empty so nothing below it moves.
  */
 export async function PromoBanner() {
   const promotion = await loadOptional('PromoBanner: promotion', getPromotion)

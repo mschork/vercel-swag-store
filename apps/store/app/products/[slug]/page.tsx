@@ -49,11 +49,8 @@ export async function generateStaticParams() {
 
 /**
  * The product for this URL, or the not-found page. Awaited above any Suspense
- * boundary on purpose: an unknown slug is then settled before the response
- * starts streaming, so it gets a real 404 status instead of a 200 with a
- * noindex tag. The cost is that such a URL renders on the server before its
- * first byte instead of from a prerendered shell; every real product is
- * prerendered, so only mistyped or removed URLs pay it.
+ * boundary: an unknown slug is then settled before the response starts
+ * streaming, so it gets a real 404 status instead of a 200 with a noindex tag.
  */
 async function productFor(params: Props['params']) {
   const { slug } = await params
@@ -87,9 +84,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  */
 export default async function ProductPage({ params }: Props) {
   const product = await productFor(params)
-  // Enrichment and testimonials are cached like the catalogue, so the page stays
-  // prerendered; a missing document or a failed call renders the page as it
-  // was before Sanity existed (specs/E09-sanity-integration.md).
+  // Enrichment and testimonials are cached like the catalogue, so the page
+  // stays prerendered; a missing document or a failed call renders the
+  // API-only page.
   const [category, document, testimonials, settings] = await Promise.all([
     findCategory(product.category),
     getProductDocument(product.id),
@@ -98,15 +95,15 @@ export default async function ProductPage({ params }: Props) {
   ])
   const merged = mergeProduct(product, document)
   const entries = testimonials ?? []
-  // Nothing editorial: the page must be exactly the page E05 shipped, down to
-  // the spacing, so the wrapper is not rendered at all rather than left empty.
+  // Without editorial content the wrapper is not rendered at all rather than
+  // left empty, so the page's spacing is unchanged.
   const enriched =
     Boolean(merged.extendedDescription) ||
     Boolean(merged.care) ||
     entries.length > 0 ||
     merged.faqs.length > 0
-  // Every heading below the buy row is the editor's to rename; each falls back
-  // to the wording the store shipped with (specs/E08-sanity-content-model.md).
+  // Every heading below the buy row is the editor's to rename, with
+  // `PRODUCT_HEADINGS_FALLBACK` as the default.
   const copy = settings?.productPage
   const headings: ProductHeadings = {
     about: copy?.aboutHeading || PRODUCT_HEADINGS_FALLBACK.about,

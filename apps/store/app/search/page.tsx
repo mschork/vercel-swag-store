@@ -31,14 +31,10 @@ export async function generateMetadata({
 }
 
 /**
- * The heading and the form are the static shell; everything that depends on
- * the URL's params streams into the results region. `searchParams` is passed
- * on unawaited on purpose: awaiting it here would make the whole route
- * dynamic.
- *
- * The Suspense boundary is not re-keyed per search, so the previous grid stays
- * on screen while the next one loads and the skeleton is only ever seen on the
- * first load of the route (`specs/callout.md`).
+ * The heading and the form are the static shell. `searchParams` is passed on
+ * unawaited: awaiting it here would make the whole route dynamic. The Suspense
+ * boundary is not re-keyed per search, so the previous grid stays on screen
+ * while the next one loads.
  */
 export default function SearchPage({ searchParams }: Props) {
   return (

@@ -9,13 +9,9 @@ import { EmptyState } from '@/components/empty-state'
 import { EmptyState as SearchEmptyState } from './empty-state'
 
 /**
- * How many products the default state shows. Five, to match the cap on
- * results: arriving at a fuller grid than any search can return reads as the
- * search taking products away. It is also all the API flags as featured can
- * fill without a top-up, so nothing under the "Featured" heading is an
- * ordinary catalogue product. A display choice, never the featured count read
- * off the API (AGENTS.md rule 6); `min` keeps the grid full if one is
- * unflagged.
+ * How many products the default state shows: the results cap, so arriving at a
+ * fuller grid than any search can return does not read as the search taking
+ * products away. A display choice; the API's featured count is never read.
  */
 const DEFAULT_COUNT = RESULT_CAP
 /** How many images are preloaded: the first two rows on a phone. */
@@ -23,14 +19,14 @@ const PRELOAD_COUNT = 2
 
 type ParamValue = string | string[] | undefined
 
-/** A repeated param (`?q=a&q=b`) is a URL nobody wrote; take the first and move on. */
+/** A repeated param (`?q=a&q=b`) is a URL nobody wrote; the first one wins. */
 const first = (value: ParamValue): string | undefined =>
   Array.isArray(value) ? value[0] : value
 
 interface Outcome {
   products: Product[]
   heading: string
-  /** "Includes everything in {Category}", when the grid really holds it. */
+  /** "Includes everything in {Category}", when the grid holds all of it. */
   hint: string | null
   /** The cap cut results, so narrowing by category is worth suggesting. */
   capped: boolean
@@ -42,10 +38,8 @@ const countLabel = (count: number) =>
 /**
  * The page's only dynamic part. It takes the `searchParams` promise rather
  * than its value so the page can hand it over without awaiting, which is what
- * keeps the shell prerendered.
- *
- * Nothing here is wrapped in try/catch: a failed call belongs to the results
- * error boundary around this component, which keeps the form on screen.
+ * keeps the shell prerendered. A failed call propagates to the results error
+ * boundary around this component, which keeps the form on screen.
  */
 export async function SearchResults({
   searchParams,
@@ -62,8 +56,8 @@ export async function SearchResults({
   const outcome = await search(query, category, categories)
 
   if (outcome.products.length === 0) {
-    // E13: a query with no category and no results is a demand signal. The
-    // write happens after the response; deleting this line restores E07.
+    // A query with no category and no results is a demand signal; the write
+    // happens after the response.
     if (query && !category) await recordGapAfterResponse(query)
     return query || category ? (
       <SearchEmptyState query={query} category={category} categories={categories} />
@@ -97,13 +91,11 @@ export async function SearchResults({
 }
 
 /**
- * Four routes through the API, chosen by what the URL holds.
- *
- * The interesting one is a query with no explicit category. The API's `search`
- * matches product names, descriptions and tags, so "hats" finds nothing at all
- * while the Hats category holds three products. When the query names a
- * category, its products are fetched alongside the search hits and merged
- * behind them.
+ * Four routes through the API, chosen by what the URL holds. A query with no
+ * explicit category is the one that needs help: the API's `search` matches
+ * product names, descriptions and tags, so "hats" finds nothing while the Hats
+ * category holds products. When the query names a category, its products are
+ * fetched alongside the search hits and merged behind them.
  */
 async function search(
   query: string,

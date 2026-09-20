@@ -7,7 +7,7 @@ const TONE_CLASS: Record<StockTone, string> = {
   muted: 'text-fg-secondary',
 }
 
-/** The stock line: the text carries the meaning, the colour repeats it, no icon. */
+/** The stock line: the text carries the meaning, the colour repeats it. */
 export function StockIndicator({
   status,
 }: {

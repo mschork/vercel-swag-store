@@ -8,7 +8,6 @@ import { parseStudioOrigins } from './security-headers'
  * imports this module at startup so a missing or malformed variable stops the
  * server before the first request instead of failing inside a render.
  *
- * Sanity variables are added here by E09; E02 validates only what it uses.
  * `API_BYPASS_TOKEN` stays required even while the API is not enforcing
  * Deployment Protection: the documented contract is that it is.
  */
@@ -19,14 +18,14 @@ const ServerEnvSchema = PublicEnvSchema.extend({
   CATALOG_REVALIDATE_SECRET: z.string().min(32).optional(),
   // Optional: without it the Sanity webhook route refuses every call.
   SANITY_REVALIDATE_SECRET: z.string().min(16).optional(),
-  // Optional (E13): without it a failed search records nothing.
+  // Optional: without it a failed search records nothing.
   SANITY_API_WRITE_TOKEN: z.string().min(1).optional(),
-  // Optional (E13): without it the demand-analysis route refuses every call.
+  // Optional: without it the demand-analysis route refuses every call.
   DEMAND_ANALYSE_SECRET: z.string().min(32).optional(),
-  // Optional (E17): a Viewer token, used only in draft mode. Without it the
-  // enable route answers 404 and the store never reads a draft.
+  // Optional: a Viewer token, used only in draft mode. Without it the enable
+  // route answers 404 and the store never reads a draft.
   SANITY_API_READ_TOKEN: z.string().min(1).optional(),
-  // Optional (E17): the Studios that may frame the store. Exact origins only.
+  // Optional: the Studios that may frame the store. Exact origins only.
   PRESENTATION_STUDIO_ORIGINS: z
     .string()
     .optional()

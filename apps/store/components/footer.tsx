@@ -24,7 +24,7 @@ async function FooterText() {
 
 /**
  * Social links: the `siteSettings` document when an editor listed any, the
- * store config otherwise (E09). `app/error.tsx` does not cover the root
+ * store config otherwise. `app/error.tsx` does not cover the root
  * layout, so a failing call is caught here: the footer renders without the
  * link row rather than replacing the store with an error screen.
  */
@@ -53,7 +53,7 @@ async function SocialLinks() {
   )
 }
 
-/** Full width with a hairline above, mirroring the header (E10). */
+/** Full width with a hairline above, mirroring the header. */
 export function Footer() {
   return (
     <footer className="mt-12 border-t border-border text-sm text-fg-secondary md:mt-16">

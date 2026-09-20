@@ -77,7 +77,7 @@ describe('securityHeaders', () => {
   })
 })
 
-describe('frame-ancestors (E17)', () => {
+describe('frame-ancestors', () => {
   const STUDIOS = 'https://vercel-swag-studio.vercel.app, https://swagstore-ms.sanity.studio,https://www.sanity.io'
 
   it("stays 'none' with the env unset or empty", () => {

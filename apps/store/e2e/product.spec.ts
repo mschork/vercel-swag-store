@@ -15,8 +15,8 @@ async function openFirstFeaturedProduct(page: Page) {
     .getAttribute('href')
   if (!href) throw new Error('No product link in the featured grid')
   await page.goto(href)
-  // Scoped to the page: React streams a hidden copy of the hole to the end of
-  // the body before revealing it.
+  // Scoped to `main`: React streams a hidden copy of the hole to the end of
+  // the body before revealing it, so an unscoped match finds two.
   const stock = page
     .getByRole('main')
     .getByText(/^(In stock|Only \d+ left|Out of stock)$/)
@@ -62,19 +62,18 @@ test('adding confirms at once, and View cart waits for the write', async ({
   // The optimistic path needs the hydrated form, not the no-JS post.
   await page.waitForLoadState('networkidle')
   await page.getByRole('button', { name: 'Add to Cart', exact: true }).click()
-  // Optimistic (E16): the message and the busy button appear before the API
+  // Optimistic: the message and the busy button appear before the API
   // answers, and the link stays inert until the write has landed.
   const status = page.getByRole('status').filter({ hasText: 'Added.' })
   await expect(status).toBeVisible({ timeout: 1_000 })
   await expect(page.getByRole('button', { name: 'Adding…' })).toBeDisabled()
   const viewCart = page.getByRole('link', { name: 'View cart' })
   await expect(viewCart).toHaveAttribute('aria-disabled', 'true')
-  // The cart endpoints take seconds (specs/callout.md).
+  // The cart API is slow (`lib/api/cart.ts`).
   await expect(viewCart).toHaveAttribute('href', '/cart', { timeout: 30_000 })
   await expect(status).toBeVisible()
-  // The button returns to its label. Whether it is enabled depends on the
-  // stock the re-render reads, and the API's stock is random per request:
-  // roughly one request in 25 answers 0, which correctly disables it.
+  // The button returns to its label. Stock is random per request and can be
+  // 0, which disables it.
   await expect(
     page.getByRole('button', { name: 'Add to Cart', exact: true }),
   ).toBeVisible()

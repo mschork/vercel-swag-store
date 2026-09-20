@@ -17,7 +17,7 @@ const MAX_FEATURED = 12
  *
  * The heading and the link label arrive as props rather than being read here:
  * they come from Sanity, and a prop is part of this entry's cache key, so a
- * rename takes effect without this entry outliving it (E09).
+ * rename takes effect without this entry outliving it.
  */
 export async function FeaturedProducts({
   heading,

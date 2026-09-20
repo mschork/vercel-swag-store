@@ -48,7 +48,7 @@ export function EmptyState({
           <Link href="/search" className="underline underline-offset-4">
             Clear search
           </Link>
-          {/* E13: this miss is counted (lib/search/record-gap.ts), so say so. */}
+          {/* The miss is counted (lib/search/record-gap.ts), so say so. */}
           <p className="text-sm text-fg-secondary">
             We keep track of what people look for and don&apos;t find.
           </p>

@@ -5,22 +5,10 @@ import { getCategories } from '@/lib/api/categories'
 import type { Product } from '@/lib/api/types'
 
 /**
- * The two shapes a product grid takes. Each owns its column classes *and* the
- * `sizes` that follows from them, so a breakpoint can never change in one
- * place and leave `next/image` asking for the wrong width in the other.
- *
- * Below md both are a single column of row cards whose photo is 42% wide.
- * `home` stops at three columns: the home grid holds up to twelve products.
- * `favourites` shows at most four, so one row of four fits the cap exactly:
- * four columns of 264px once the content width stops growing.
- * `search` shows at most five, so one row of five at lg fits the cap exactly.
- * `listing` holds the whole catalogue over many rows, where five columns get
- * cramped: three from md, four from lg, the same 264px as `favourites`. It is
- * the one variant that is not rows below md: a whole catalogue of rows is a
- * long, half-empty scroll, so it shows two columns of grid cards instead, and
- * tells the card so through `shape`.
- * From 1152px the column stops growing (1104px of content), so the hints turn
- * into fixed widths: three columns of 357px, or five of 208px.
+ * The grid variants. Each owns its column classes and the `sizes` that follows
+ * from them, so a breakpoint can never change in one place and leave
+ * `next/image` asking for the wrong width in the other. `listing` is the one
+ * variant that is card-shaped below md, and tells the card so through `shape`.
  */
 const VARIANTS = {
   home: {
@@ -82,7 +70,7 @@ export async function ProductGrid({
 }
 
 /**
- * The same grid with a price sort above it (E18). The cards are rendered here,
+ * The same grid with a price sort above it. The cards are rendered here,
  * on the server, and handed to a client leaf that only re-orders them, so the
  * sort costs no request and the page stays prerendered. `summary` sits on the
  * sort's row, which keeps that row's height reserved before hydration.

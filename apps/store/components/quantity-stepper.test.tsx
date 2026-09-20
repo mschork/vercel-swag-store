@@ -18,7 +18,10 @@ function tagOf(props: Partial<Props>, marker: string): string {
   return tag
 }
 
-/** React renders a true boolean attribute as `name=""`; class names like `disabled:opacity-50` do not match. */
+/**
+ * React renders a true boolean attribute as `name=""`; class names like
+ * `disabled:opacity-50` do not match.
+ */
 const has = (tag: string, attribute: string) => tag.includes(` ${attribute}=""`)
 
 const plus = (props: Partial<Props>) =>

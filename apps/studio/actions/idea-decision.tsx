@@ -5,13 +5,10 @@ import { useState } from 'react'
 import { useClient, type DocumentActionComponent, type DocumentActionProps } from 'sanity'
 
 /**
- * Accept and Reject on a product idea (E13, slice 5). The idea is written by
- * the analysis as a published document, so the actions patch it directly: no
- * draft, no publish step. They set `status` (and the reason); the
- * `idea-decided` Function then stamps the date and moves the search gaps.
- *
- * Sanity Workflows was evaluated for this and left out: its runtime is marked
- * experimental by its own documentation (specs/callout.md).
+ * Accept and Reject on a product idea. The idea is written by the analysis as
+ * a published document, so the actions patch it directly: no draft, no publish
+ * step. They set `status` (and the reason); the `idea-decided` Function then
+ * stamps the date and moves the search gaps.
  */
 const API_VERSION = '2026-09-01'
 
