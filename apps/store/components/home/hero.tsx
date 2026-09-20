@@ -5,17 +5,12 @@ import { getHomePage } from '@/lib/sanity/content'
 import { hasImage, sanityImageProps } from '@/lib/sanity/image'
 
 /**
- * Full-bleed hero (E10): the photo edge to edge, the copy over the open sky
- * on its right from lg up and under it below that, where the band is the
- * photo's own 2:1 at md and a 4:3 crop around the figure on phones. At md the
- * figure and the copy would share the width, so the copy stays below. The photo is the LCP element and the
- * only preloaded image on the page, fetched at high priority because `preload`
- * alone leaves the browser's default. No link, no button.
- *
- * The copy and the photo come from the `homePage` document when an editor has
- * set them, and from the shipped fallbacks otherwise, so an empty dataset
- * renders the page E04 shipped. Both reads are cached, so the shell stays
- * prerendered.
+ * Full-bleed hero: the photo edge to edge, with the copy over it from lg and
+ * below it at narrower widths. The photo is the LCP element and the only
+ * preloaded image on the page; `fetchPriority` is set because `preload` alone
+ * leaves the browser's default. The copy and the photo come from the
+ * `homePage` document, and from the shipped fallbacks otherwise. Both reads
+ * are cached, so the shell stays prerendered.
  */
 export async function Hero() {
   const content = await getHomePage()

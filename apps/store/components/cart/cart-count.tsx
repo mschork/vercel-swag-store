@@ -29,7 +29,7 @@ const CartCountContext = createContext<CartCountApi | null>(null)
  * Holds the header badge's count on the client, so an action can update it
  * from the count it returns instead of waiting for the badge to read the cart
  * again. It wraps the layout and keeps no data of its own: the server seeds
- * it through the badge, and actions confirm it (specs/E16-cart-api-improvements.md).
+ * it through the badge, and actions confirm it.
  */
 export function CartCountProvider({ children }: { children: ReactNode }) {
   const [confirmed, confirm] = useState<number | null | undefined>(undefined)
@@ -50,9 +50,9 @@ export function useCartCount(): CartCountApi {
 
 /**
  * The badge's number. `serverCount` is what the badge read in this render,
- * or `undefined` when it did not read (inside an action's response). Each
- * count read is the freshest word from the API and becomes the confirmed
- * count, as does each count an action returns, whichever comes last.
+ * or `undefined` when it did not read (inside an action's response). The
+ * confirmed count is whichever arrived last: a count read here, or a count an
+ * action returned.
  */
 export function CartCount({
   serverCount,

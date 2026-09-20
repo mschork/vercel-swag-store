@@ -43,7 +43,7 @@ export function SearchFormClient({
 
   const [query, setQuery] = useState(urlQuery)
   // The select shows the chosen category at once; the URL is still the source
-  // of truth and takes over when the navigation commits (E10).
+  // of truth and takes over when the navigation commits.
   const [category, setCategory] = useOptimistic(urlCategory)
   // The query this form last navigated to. The URL holding anything else means
   // someone else changed it: a category chip, "Clear search", the product

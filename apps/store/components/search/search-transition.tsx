@@ -25,11 +25,7 @@ export const useSearchTransition = () => use(TransitionContext)
 /**
  * Owns the one `useTransition` of the search page. `useFormStatus` cannot do
  * this job: with `next/form` and a string `action`, submitting is a client
- * navigation that no form action ever sees, and the debounced path does not
- * submit the form at all.
- *
- * Server components passed as `children` are rendered on the server and
- * prerendered as usual; this wrapper adds no data of its own.
+ * navigation that no form action ever sees.
  */
 export function SearchTransition({ children }: { children: React.ReactNode }) {
   const [isPending, start] = useTransition()
