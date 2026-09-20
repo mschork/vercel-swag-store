@@ -43,7 +43,7 @@ An httpOnly cookie named `inventory`, `sameSite: lax`, `secure` in production, `
 - It expires 24 hours after `drawnAt` and does not slide. A new day is a restock. Rewrites keep the original `drawnAt` and set `maxAge` to the time left.
 - It is parsed with zod on every read, because a cookie is input. Anything malformed counts as no inventory. Counts are whole numbers from 0 to `CART_MAX_QUANTITY`.
 - It is not signed. A visitor who edits it changes only what their own browser is offered, against an API that accepts any quantity anyway. A signing secret would be one more server-only variable protecting nothing.
-- A cookie holds about 4 KB. At roughly 16 bytes per product this design carries about 200 products; the catalogue has far fewer. The route handler logs and truncates nothing: past the limit it stores what fits, in catalogue order, and the rest render "Stock unavailable". A larger catalogue needs a server-side store, which is out of scope.
+- A cookie holds about 4 KB. At about 27 URL-encoded bytes per product this design carries roughly 150 products; the catalogue's 28 take 745 bytes. The route handler logs and truncates nothing: past the limit it stores what fits, in catalogue order, and the rest render "Stock unavailable". A larger catalogue needs a server-side store, which is out of scope.
 
 It lives in a cookie because the store has no database. Sanity is the only datastore the repo writes to, and visitor state does not belong in a content dataset.
 
@@ -60,7 +60,7 @@ Pages cannot set cookies, so the inventory is opened by `POST /api/inventory`, c
 ### Reading it
 
 - `lib/inventory/cookie.ts`, server-only: `getInventory()`, `setInventory()`. Same split as `lib/cart/cookie.ts`.
-- `lib/inventory/remaining.ts`, pure and safe for client components: `remaining(draw, inCart)`, `availability(remaining)` returning the existing `StockStatus` shape from `lib/stock-status.ts`, which now takes a count instead of the API's `StockInfo`. The low-stock threshold is a named constant matched to the API's `lowStock` flag (spike).
+- `lib/inventory/remaining.ts`, pure and safe for client components: `remaining(draw, inCart)`, `availability(remaining)` returning the existing `StockStatus` shape from `lib/stock-status.ts`, which now takes a count instead of the API's `StockInfo`. The low-stock threshold is a named constant of 5, which is where the API's own `lowStock` flag turns over.
 - `lib/inventory/open.ts`, client-safe: the typed `openInventory()` that posts to the handler. No `fetch` in a component.
 - `lib/api/stock.ts` is unchanged: never cached, one call per product. Only its callers change.
 
@@ -69,7 +69,7 @@ Pages cannot set cookies, so the inventory is opened by `POST /api/inventory`, c
 The pattern is `CartCountProvider` again.
 
 - `InventoryProvider` wraps the layout beside `CartCountProvider`. It holds `stock` and `inCart`, both keyed by product id, and keeps no data of its own.
-- `InventorySeed` is a server component in the root layout inside `<Suspense fallback={null}>`. It reads the inventory cookie and the cart through the request-memoized `loadCart`, so it adds no API call to a request that renders the badge. Inside an action's response it skips the cart, as the badge does. It renders a client leaf that seeds the provider and, when the cookie is absent or lacks a catalogue id, calls `openInventory()` once.
+- `InventorySeed` is a server component in the root layout inside `<Suspense fallback={null}>`. It runs on a full load and on `refresh()`, not on a client-side navigation, because the root layout is preserved across those; the provider is therefore the client's source of truth and a seed that finds no cookie never resets it. It reads the inventory cookie and the cart through the request-memoized `loadCart`, so it adds no API call to a request that renders the badge. Inside an action's response it skips the cart, as the badge does. It renders a client leaf that seeds the provider and, when the cookie is absent or lacks a catalogue id, calls `openInventory()` once.
 - Cart actions answer with the touched line as well as the count: `{ ok: true, totalItems, line: { productId, quantity } }`. The provider applies it, so remaining moves at once and without a read. The result still never carries the token or the other lines.
 - `useRemaining(productId)` returns `number | undefined`; `undefined` means the inventory has not arrived.
 
@@ -77,13 +77,15 @@ The shell stays prerendered. The layout already reads a cookie inside a boundary
 
 ## Spike
 
-Throwaway branch, findings into the slice 1 PR. Nothing from it merges.
+Done on 20 Sep 2026 on a throwaway branch; nothing from it merges and the findings go into the slice 1 PR.
 
-1. A cookie set by the route handler is visible to `InventorySeed` on the next navigation and after `router.refresh()`, in a production build on Vercel.
-2. Build output still marks every page as a partial prerender with the seed in the layout.
-3. The API's `lowStock` boundary, from a few hundred samples.
-4. Time and failure rate of a full catalogue draw at concurrency 8, and whether the API rate-limits it.
-5. Serialized cookie size for the current catalogue.
+1. The cookie the route handler sets reaches the seed after `router.refresh()`, after a reload and in a second tab, but not after a client-side navigation, because the root layout is preserved across those. The provider holds the draws, so nothing on screen is wrong.
+2. Build output marks every page ◐ with the seed in the layout, as before.
+3. `lowStock` is true for 1 to 5 and false at 0 and 6 upwards, over 400 samples.
+4. A full 28-product draw takes about 1.05 s at concurrency 8 and 0.59 s at 16, with no failures and no rate limiting.
+5. The catalogue serialises to 745 URL-encoded bytes.
+
+One thing stayed unverified: the preview answers 302 and the project has no automation bypass, so the walk could not be driven on Vercel. It ran against the same production build locally.
 
 ## Slice 1: a stable count on the product page
 
