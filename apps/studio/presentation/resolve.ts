@@ -11,9 +11,9 @@ import {
  * document to the page it appears on, and the Presentation tool knows which
  * document a page is mainly about.
  *
- * Only editorial types are listed. `category`, `searchGap` and `productIdea`
- * have no entry on purpose: the first is a mirror of the API and the other two
- * never reach a page.
+ * Only types an editor writes in are listed. A `category` is mostly a mirror
+ * of the API, but its intro shows on its product listing (E18). `searchGap`
+ * and `productIdea` have no entry on purpose: they never reach a page.
  */
 
 const HOME = { title: 'Home page', href: '/' }
@@ -74,6 +74,21 @@ export function productLocations(doc: ProductRef | null): DocumentLocationsState
     : { message: 'No page yet: the sync script has not given it a slug.', tone: 'caution' }
 }
 
+/** A category's intro shows on its product listing, at the slug the sync script mirrors. */
+export function categoryLocations(
+  doc: { name?: string | null; apiSlug?: string | null } | null,
+): DocumentLocationsState {
+  return doc?.apiSlug
+    ? {
+        locations: [
+          { title: doc.name || 'Category page', href: `/products/category/${doc.apiSlug}` },
+        ],
+        message: 'The intro shows under the heading of this page.',
+        tone: 'positive',
+      }
+    : { message: 'No page yet: the sync script has not given it a slug.', tone: 'caution' }
+}
+
 const PRODUCTS = `{ name, slug }`
 
 /**
@@ -83,6 +98,7 @@ const PRODUCTS = `{ name, slug }`
  */
 const QUERIED: Record<string, { query: string; read: (doc: never) => DocumentLocationsState }> = {
   product: { query: `*[_id == $id][0]${PRODUCTS}`, read: productLocations },
+  category: { query: `*[_id == $id][0]{ name, apiSlug }`, read: categoryLocations },
   testimonial: {
     query: `*[_id == $id][0]{ "products": products[]->${PRODUCTS} }`,
     read: testimonialLocations,
@@ -117,6 +133,7 @@ export const resolve: PresentationPluginOptions['resolve'] = {
   mainDocuments: defineDocuments([
     { route: '/', filter: `_type == "homePage"` },
     { route: '/checkout', filter: `_type == "checkoutPage"` },
+    { route: '/products/category/:slug', filter: `_type == "category" && apiSlug == $slug` },
     { route: '/products/:slug', filter: `_type == "product" && slug == $slug` },
   ]),
   locations,

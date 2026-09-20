@@ -33,7 +33,7 @@ interface ApiProduct {
  * the way `drafts.` works, and a document on a path is invisible to an
  * unauthenticated reader. The store reads this dataset without a token.
  */
-const categoryId = (slug: string) => `category-${slug}`
+export const categoryId = (slug: string) => `category-${slug}`
 const productId = (apiId: string) => `product-${apiId}`
 
 interface Pagination {
@@ -59,6 +59,54 @@ async function allProducts(): Promise<ApiProduct[]> {
   }
 }
 
+/** The two transaction calls the mirror needs; narrow so a test can stand in for the client. */
+type MirrorTransaction = {
+  createIfNotExists(doc: { _id: string; _type: string } & Record<string, unknown>): unknown
+  patch(id: string, operations: { set: Record<string, unknown> }): unknown
+}
+
+/**
+ * Queues the mirror writes. Every document is created with the catalogue
+ * fields, or patched with only those when it exists, so what an editor wrote
+ * beside them (a product's enrichment, a category's intro) survives every
+ * sync. Never `createOrReplace`: that would replace the editor's fields too.
+ */
+export function queueCatalogue(
+  transaction: MirrorTransaction,
+  {
+    categories,
+    products,
+    syncedAt,
+  }: { categories: readonly ApiCategory[]; products: readonly ApiProduct[]; syncedAt: string },
+) {
+  for (const category of categories) {
+    const fields = {
+      name: category.name,
+      apiSlug: category.slug,
+      syncedAt,
+      missing: false,
+    }
+    transaction.createIfNotExists({ _id: categoryId(category.slug), _type: 'category', ...fields })
+    transaction.patch(categoryId(category.slug), { set: fields })
+  }
+
+  for (const product of products) {
+    const fields = {
+      name: product.name,
+      apiId: product.id,
+      slug: product.slug,
+      category: { _type: 'reference' as const, _ref: categoryId(product.category) },
+      price: product.price,
+      featured: product.featured,
+      image: product.images[0] ?? null,
+      syncedAt,
+      missing: false,
+    }
+    transaction.createIfNotExists({ _id: productId(product.id), _type: 'product', ...fields })
+    transaction.patch(productId(product.id), { set: fields })
+  }
+}
+
 export async function syncCatalogue() {
   const client = createClient({
     projectId: required('NEXT_PUBLIC_SANITY_PROJECT_ID'),
@@ -75,37 +123,7 @@ export async function syncCatalogue() {
   const syncedAt = new Date().toISOString()
   const transaction = client.transaction()
 
-  for (const category of categories) {
-    const fields = {
-      name: category.name,
-      apiSlug: category.slug,
-      syncedAt,
-      missing: false,
-    }
-    transaction.createOrReplace({
-      _id: categoryId(category.slug),
-      _type: 'category',
-      ...fields,
-    })
-  }
-
-  for (const product of products) {
-    const fields = {
-      name: product.name,
-      apiId: product.id,
-      slug: product.slug,
-      category: { _type: 'reference' as const, _ref: categoryId(product.category) },
-      price: product.price,
-      featured: product.featured,
-      image: product.images[0] ?? null,
-      syncedAt,
-      missing: false,
-    }
-    // Create with the catalogue fields, or patch only those on an existing
-    // document, so enrichment survives every sync.
-    transaction.createIfNotExists({ _id: productId(product.id), _type: 'product', ...fields })
-    transaction.patch(productId(product.id), { set: fields })
-  }
+  queueCatalogue(transaction, { categories, products, syncedAt })
 
   await transaction.commit()
 
@@ -119,7 +137,12 @@ export async function syncCatalogue() {
     await flag.commit()
   }
 
-  return { categories: categories.length, products: products.length, flagged: gone.length }
+  return {
+    categories: categories.length,
+    products: products.length,
+    flagged: gone.length,
+    categorySlugs: categories.map((category) => category.slug),
+  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
