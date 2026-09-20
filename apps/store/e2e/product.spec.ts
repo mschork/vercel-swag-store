@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
-import { openWithStock } from './visit'
+import { decodeVisit, openWithStock } from './visit'
 
 /**
  * Smoke for the product page against a production build. The product comes
@@ -161,5 +161,6 @@ test('the footer reset draws a whole new visit', async ({ page, context }) => {
 async function visitStock(context: BrowserContext): Promise<Record<string, number>> {
   const cookie = (await context.cookies()).find((candidate) => candidate.name === 'visit')
   if (!cookie) return {}
-  return JSON.parse(decodeURIComponent(cookie.value)).stock as Record<string, number>
+  const json = decodeVisit(cookie.value)
+  return json ? (JSON.parse(json).stock as Record<string, number>) : {}
 }

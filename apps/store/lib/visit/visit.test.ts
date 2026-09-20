@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Promotion } from '@/lib/api/types'
 import {
   afterOrder,
+  encodeVisit,
   MAX_VISIT_BYTES,
   parseVisit,
   serialiseVisit,
@@ -31,7 +32,8 @@ const visit = (overrides: Partial<Visit> = {}): Visit => ({
   ...overrides,
 })
 
-const cookie = (value: Visit | unknown) => JSON.stringify(value)
+/** The cookie carries base64url, so a test's input goes through the same door. */
+const cookie = (value: Visit | unknown) => encodeVisit(JSON.stringify(value))
 
 describe('parseVisit', () => {
   it('reads a visit it wrote', () => {
@@ -48,7 +50,19 @@ describe('parseVisit', () => {
   })
 
   it('has no visit when the value is not JSON', () => {
-    expect(parseVisit('{oh dear', NOW)).toBeNull()
+    expect(parseVisit(encodeVisit('{oh dear'), NOW)).toBeNull()
+  })
+
+  it('has no visit when the value is not the encoding we write', () => {
+    expect(parseVisit('{"v":1}', NOW)).toBeNull()
+    expect(parseVisit('not base64!!', NOW)).toBeNull()
+  })
+
+  it('survives a promotion whose text carries a per-cent sign', () => {
+    const percent = { ...promotion, description: 'Save 10% automatically.' }
+    const { value } = serialiseVisit(visit({ promotion: percent }))
+    expect(value).toMatch(/^[A-Za-z0-9_-]+$/)
+    expect(parseVisit(value, NOW)?.promotion?.description).toBe('Save 10% automatically.')
   })
 
   it('has no visit when a count is not a whole number in range', () => {
@@ -75,13 +89,17 @@ describe('serialiseVisit', () => {
     expect(parseVisit(value, NOW)).toEqual(visit())
   })
 
+  it('writes only characters no encoding step can alter', () => {
+    expect(serialiseVisit(visit()).value).toMatch(/^[A-Za-z0-9_-]+$/)
+  })
+
   it('drops the products that do not fit, keeping the promotion', () => {
     const stock = Object.fromEntries(
       Array.from({ length: 400 }, (_, index) => [`product_${index}`, index % 30]),
     )
     const { value, dropped } = serialiseVisit(visit({ stock }))
 
-    expect(encodeURIComponent(value).length).toBeLessThanOrEqual(MAX_VISIT_BYTES)
+    expect(value.length).toBeLessThanOrEqual(MAX_VISIT_BYTES)
     expect(dropped.length).toBeGreaterThan(0)
     const parsed = parseVisit(value, NOW)
     expect(parsed?.promotion).toEqual(promotion)

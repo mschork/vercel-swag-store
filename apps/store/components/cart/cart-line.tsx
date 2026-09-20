@@ -38,6 +38,7 @@ export function CartLine({
   currency,
   draw,
   error,
+  priority = false,
   onChange,
   onDraft,
   onResult,
@@ -46,6 +47,12 @@ export function CartLine({
   currency: string
   draw: number | null
   error: string | null
+  /**
+   * The first row's photo is the cart page's largest paint. It streams inside
+   * the page's hole, so it cannot be preloaded from the shell; loading it
+   * eagerly at least starts the request the moment the hole arrives.
+   */
+  priority?: boolean
   onChange: (change: LineChange) => void
   onDraft: (productId: string, quantity: number | null, onlyIf?: number) => void
   onResult: (productId: string, error: string | null) => void
@@ -113,6 +120,7 @@ export function CartLine({
               alt=""
               fill
               sizes="96px"
+              priority={priority}
               className="object-cover"
             />
           ) : null}

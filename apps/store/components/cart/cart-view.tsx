@@ -73,12 +73,13 @@ export function CartView({
   return (
     <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-start lg:grid-cols-[minmax(0,1fr)_20rem]">
       <ul className="flex flex-col divide-y divide-border border-y border-border">
-        {shownLines.map((line) => (
+        {shownLines.map((line, index) => (
           <CartLine
             key={line.productId}
             line={line}
             currency={currency}
             draw={drawOf(line.productId)}
+            priority={index === 0}
             error={errors[line.productId] ?? null}
             onChange={applyChange}
             onDraft={draft}

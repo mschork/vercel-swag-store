@@ -4,7 +4,6 @@ import { useFormStatus } from 'react-dom'
 import { placeOrder } from '@/app/cart/actions'
 import { Price } from '@/components/price'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 
 /**
  * Totals for the lines on screen, optimistic changes included, and the
@@ -40,7 +39,11 @@ export function CartSummary({
           <dt className="text-fg-secondary">Items</dt>
           <dd className="font-mono tabular-nums">{totalItems}</dd>
         </div>
-        <Separator />
+        {/* The rule between the rows, as a plain div. `Separator` put a
+            `separator` role inside a description list, which axe fails, and
+            drew nothing at all: its `data-horizontal:` classes never matched
+            Base UI's `data-orientation` attribute. This renders. */}
+        <div aria-hidden="true" className="h-px w-full shrink-0 bg-border" />
         <div className="flex justify-between gap-4 text-base font-medium">
           <dt>Subtotal</dt>
           <dd>

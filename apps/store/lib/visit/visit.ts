@@ -21,10 +21,34 @@ export type Visit = z.infer<typeof VisitSchema>
 export const VISIT_MAX_AGE_SECONDS = 60 * 60 * 24
 
 /**
- * Most URL-encoded bytes the cookie's value may take. A cookie holds about
- * 4 KB including its name and attributes, which cost about 70 here.
+ * Most bytes the cookie's value may take. A cookie holds about 4 KB including
+ * its name and attributes, which cost about 70 here.
  */
 export const MAX_VISIT_BYTES = 4000
+
+/**
+ * The cookie carries base64url, not JSON. A promotion's text is arbitrary and
+ * the API's promotions contain per-cent signs ("save 10% automatically"); a
+ * bare `%` in a cookie value makes the percent-decoding in the request path
+ * throw `URIError: URI malformed`, which fails the whole request. base64url
+ * uses only `A-Z a-z 0-9 - _`, which no encoding or decoding step alters.
+ */
+export function encodeVisit(json: string): string {
+  const bytes = new TextEncoder().encode(json)
+  let binary = ''
+  for (const byte of bytes) binary += String.fromCharCode(byte)
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+/** The inverse; `null` for anything that is not the value we wrote. */
+export function decodeVisit(value: string): string | null {
+  try {
+    const binary = atob(value.replace(/-/g, '+').replace(/_/g, '/'))
+    return new TextDecoder().decode(Uint8Array.from(binary, (c) => c.charCodeAt(0)))
+  } catch {
+    return null
+  }
+}
 
 /** A visit's age in seconds, for the expiry and the cookie's remaining `maxAge`. */
 export function visitAge(visit: Visit, now: number): number {
@@ -39,9 +63,11 @@ export function visitAge(visit: Visit, now: number): number {
  */
 export function parseVisit(raw: string | undefined, now: number): Visit | null {
   if (!raw) return null
+  const decoded = decodeVisit(raw)
+  if (decoded === null) return null
   let json: unknown
   try {
-    json = JSON.parse(raw)
+    json = JSON.parse(decoded)
   } catch {
     return null
   }
@@ -51,25 +77,24 @@ export function parseVisit(raw: string | undefined, now: number): Visit | null {
 }
 
 /**
- * The visit as JSON, with the stock entries that do not fit dropped from the
- * end. The size is measured URL-encoded, which is how a cookie travels. The
- * promotion is kept whatever happens, because a banner cannot degrade the way
- * a missing count can: a product left out renders "Stock unavailable".
- * `stock` keeps its insertion order, so the caller decides which products are
- * worth the room.
+ * The visit as a cookie value, with the stock entries that do not fit dropped
+ * from the end. base64 costs a third on top of the JSON, so the size is
+ * measured on the encoded form. The promotion is kept whatever happens,
+ * because a banner cannot degrade the way a missing count can: a product left
+ * out renders "Stock unavailable". `stock` keeps its insertion order, so the
+ * caller decides which products are worth the room.
  */
 export function serialiseVisit(visit: Visit): { value: string; dropped: string[] } {
-  const fits = (candidate: string) => encodeURIComponent(candidate).length <= MAX_VISIT_BYTES
-  let value = JSON.stringify(visit)
-  if (fits(value)) return { value, dropped: [] }
+  let value = encodeVisit(JSON.stringify(visit))
+  if (value.length <= MAX_VISIT_BYTES) return { value, dropped: [] }
 
   const entries = Object.entries(visit.stock)
   const dropped: string[] = []
   while (entries.length > 0) {
     const [id] = entries.pop() as [string, number]
     dropped.push(id)
-    value = JSON.stringify({ ...visit, stock: Object.fromEntries(entries) })
-    if (fits(value)) break
+    value = encodeVisit(JSON.stringify({ ...visit, stock: Object.fromEntries(entries) }))
+    if (value.length <= MAX_VISIT_BYTES) break
   }
   return { value, dropped }
 }
