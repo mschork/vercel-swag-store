@@ -8,7 +8,7 @@ A place to browse the whole catalogue: `/products` for everything, one page per 
 
 ## Why paths and not params
 
-Search is dynamic because free text has unbounded values. A category is one of a closed set the API lists, so each one can be a page built ahead of time. No listing page reads `searchParams`, `cookies()` or `headers()`; the build output shows them all as prerendered (see `callout.md`).
+Search is dynamic because free text has unbounded values. A category is one of a closed set the API lists, so each one can be a page built ahead of time. No listing page reads `searchParams`, `cookies()` or `headers()`. The build output marks them as partial prerenders like every other page, and the only dynamic hole is the one the root layout brings: the header's cart badge (see `callout.md`).
 
 ## URL contract
 
@@ -27,13 +27,14 @@ Search is dynamic because free text has unbounded values. A category is one of a
 
 - `app/products/page.tsx` and `app/products/category/[slug]/page.tsx`, both rendering one shared `components/listing/product-listing.tsx` with `{ category: Category | null }`.
 - `generateStaticParams` on the category route returns every slug from `getCategories()`. The page resolves its category with `findCategory(slug)` and calls `notFound()` for `null`.
-- Layout, top to bottom: h1, the count, the category chips, the sort control, the grid.
+- Layout, top to bottom: h1, the category chips, one row with the count on the left and the sort on the right, the grid. The count shares the sort's row so that row has its height before hydration and the select arriving shifts nothing.
 - h1: "All products", or the category's name. Count: "N products" / "1 product", from the length of the list that is rendered.
+- Links to a category page are built by `categoryPath(slug)` in `lib/listing.ts`. It holds the one `as Route` cast: with two dynamic routes under `/products`, typed routes cannot place a template string whose slug is a plain `string`.
 - Metadata: title equal to the h1. Description "Browse every product in the store." or "Browse all {name} in the store." (slice 2 lets an editor replace the second). Indexable, unlike search results. No `opengraph-image.tsx`; the root image applies.
 
 ### Category chips `components/listing/category-chips.tsx`
 
-A server component: a `<nav aria-label="Categories">` holding a list of `next/link` links, "All" first, then one per category in the API's order. The active chip carries `aria-current="page"` and the strong border. Links, not a select: moving between pages is what a link is for, they work without JavaScript, they are prefetched and a crawler can follow them. The chips share the height, border and type size of the search page's select so the two pages read as one system. Below md the row scrolls sideways instead of wrapping, so the grid starts within the first screen.
+A server component: a `<nav aria-label="Categories">` holding a list of `next/link` links, "All" first, then one per category in the API's order. The active chip carries `aria-current="page"` and the strong border. Links, not a select: moving between pages is what a link is for, they work without JavaScript, they are prefetched and a crawler can follow them. The chips share the height, border and type size of the search page's select so the two pages read as one system. Below md the row scrolls sideways instead of wrapping, so the grid starts within the first screen. The `<ul>` is a small client leaf, `chip-row.tsx`, whose one effect moves the row to the current chip on mount, without animation: a category far down the list would otherwise open with its own chip out of sight. Without JavaScript the row starts at "All" and the heading still names the category.
 
 A category the API lists but that holds no products keeps its chip.
 
@@ -61,7 +62,7 @@ A real category with no products renders the shared `components/empty-state.tsx`
 ### Navigation
 
 - Header: "Products" between "Home" and "Search". `NavLink` marks it current on `/products` and on every `/products/category/*` page, not on a product page.
-- The header's "Search" link gets a magnifying-glass glyph before its label: an inline SVG in the cart icon's stroke style, `aria-hidden`, no icon dependency. The label stays the accessible name. If the row does not fit at 320px, the label becomes visually hidden below sm and the glyph stands alone.
+- The header's "Search" link gets a magnifying-glass glyph before its label: an inline SVG in the cart icon's stroke style, `aria-hidden`, no icon dependency. The label stays the accessible name. With three links the row is 2px too wide at 320px, so below sm the label is visually hidden and the glyph stands alone.
 - The home page's "View all" points at `/products`.
 - The product page's breadcrumb category points at `/products/category/<slug>` instead of `/search?category=<slug>`: the category's own page is the better parent. The search page's empty-state chips keep pointing at search, where the visitor already is.
 
@@ -110,9 +111,9 @@ The seed script writes one intro per category the API returns, keyed by slug, wi
 
 Slice 1
 
-- [ ] Build output shows `/products` and every `/products/category/<slug>` as prerendered, with no dynamic hole.
+- [ ] Build output lists `/products` and every `/products/category/<slug>` as prerendered paths; the header's cart badge is their only dynamic hole.
 - [ ] `/products` renders every product the API returns; a category page only its own; counts match.
-- [ ] Chips navigate without JavaScript; the active chip is marked; the row scrolls on a phone without the page scrolling sideways.
+- [ ] Chips navigate without JavaScript; the active chip is marked and in view; the row scrolls on a phone without the page scrolling sideways.
 - [ ] The sort re-orders the DOM, is announced, and is absent without JavaScript.
 - [ ] Unknown category 404s; an empty category shows the empty state.
 - [ ] Header shows Home, Products, Search with the glyph, and fits at 320px; "View all" and the breadcrumb point at the listing.
