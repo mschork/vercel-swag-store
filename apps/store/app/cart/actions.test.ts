@@ -6,6 +6,7 @@ import type { Cart } from '@/lib/api/types'
 import * as stock from '@/lib/api/stock'
 import { CART_COOKIE, CART_COOKIE_MAX_AGE } from '@/lib/cart/cookie'
 import { VISIT_COOKIE } from '@/lib/visit/cookie'
+import { decodeVisit, encodeVisit } from '@/lib/visit/visit'
 import { product } from '@/test/helpers'
 import {
   addToCart,
@@ -50,17 +51,19 @@ const mockedStock = vi.mocked(stock)
 function seedVisit(counts: Record<string, number>) {
   jar.set(
     VISIT_COOKIE,
-    JSON.stringify({
-      v: 1,
-      drawnAt: Math.floor(Date.now() / 1000),
-      stock: counts,
-      promotion: null,
-    }),
+    encodeVisit(
+      JSON.stringify({
+        v: 1,
+        drawnAt: Math.floor(Date.now() / 1000),
+        stock: counts,
+        promotion: null,
+      }),
+    ),
   )
 }
 
 const visitStock = (): Record<string, number> =>
-  JSON.parse(jar.get(VISIT_COOKIE) ?? '{}').stock
+  JSON.parse(decodeVisit(jar.get(VISIT_COOKIE) ?? '') ?? '{}').stock
 
 const EXPIRED = 'Your cart expired. Add products again to start a new cart.'
 const NOT_IN_CART = 'This item is no longer in your cart.'

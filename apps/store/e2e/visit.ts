@@ -8,6 +8,26 @@ import { expect, type BrowserContext, type Page } from '@playwright/test'
 
 const ORIGIN = 'http://localhost:3000'
 
+/**
+ * base64url, the encoding the cookie carries (`lib/visit/visit.ts` states
+ * why). Written out here because that module is server-only and this file
+ * runs in Playwright's plain Node.
+ */
+export function encodeVisit(json: string): string {
+  let binary = ''
+  for (const byte of new TextEncoder().encode(json)) binary += String.fromCharCode(byte)
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+export function decodeVisit(value: string): string | null {
+  try {
+    const binary = atob(value.replace(/-/g, '+').replace(/_/g, '/'))
+    return new TextDecoder().decode(Uint8Array.from(binary, (c) => c.charCodeAt(0)))
+  } catch {
+    return null
+  }
+}
+
 /** A promotion no API call can change, so the strip reads the same every run. */
 export const SEEDED_PROMOTION = {
   id: 'promo_seed',
@@ -20,11 +40,7 @@ export const SEEDED_PROMOTION = {
   active: true,
 }
 
-/**
- * Gives the browser a visit holding `stock`. The value is URL-encoded because
- * that is how the store writes it, and `cookies().get()` decodes on the way
- * back in.
- */
+/** Gives the browser a visit holding `stock`, encoded the way the store writes it. */
 export async function seedVisit(
   context: BrowserContext,
   stock: Record<string, number>,
@@ -34,7 +50,7 @@ export async function seedVisit(
   await context.addCookies([
     {
       name: 'visit',
-      value: encodeURIComponent(JSON.stringify(visit)),
+      value: encodeVisit(JSON.stringify(visit)),
       url: ORIGIN,
     },
   ])
@@ -80,7 +96,8 @@ export async function visitStock(
 ): Promise<Record<string, number>> {
   const cookie = (await context.cookies()).find((candidate) => candidate.name === 'visit')
   if (!cookie) return {}
-  return JSON.parse(decodeURIComponent(cookie.value)).stock as Record<string, number>
+  const json = decodeVisit(cookie.value)
+  return json ? (JSON.parse(json).stock as Record<string, number>) : {}
 }
 
 /**
