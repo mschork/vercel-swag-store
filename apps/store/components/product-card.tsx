@@ -101,7 +101,8 @@ export function ProductCard({
             className="md:hidden"
           />
         ) : null}
-        <span className={cn('leading-snug font-medium text-pretty', c.name)}>
+        {/* The size first: tailwind-merge drops a `leading-*` that precedes a `text-*` size. */}
+        <span className={cn(c.name, 'leading-snug font-medium text-pretty')}>
           {product.name}
         </span>
         <span className="text-sm text-fg-secondary">{categoryName}</span>
