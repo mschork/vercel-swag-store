@@ -40,7 +40,7 @@ Checked against the live API on 15 Sep 2026.
 - `addToCart(prevState, formData)`: keeps the E05 signature, the `AddToCartState` type and its error copy. Reads the token; if it is missing or `getCart` returns `null`, `createCart()` and set the cookie. Then `addCartItem`, set the cookie again and `refresh()`. The product page stays put and shows the inline "Added. View cart" line; the badge updates through the refresh.
 - `updateQuantity(productId, quantity)`: plain arguments, called from the client inside `startTransition`. `productId` is a non-empty string and `quantity` an integer in `[0, 99]`; 0 removes the line.
 - `removeItem(productId)`: plain argument, called the same way.
-- `placeOrder()`: the form action behind the Checkout button. No token, an expired cart or an empty cart → `redirect('/cart')`. Otherwise it clears the cookie and redirects to `/checkout`. It drops the cookie only; the lines stay in the API cart until it expires.
+- `placeOrder()`: the form action behind the Checkout button. No token, an expired cart, an empty cart, or a line holding more than the visitor has (E19) → `redirect('/cart')`. Otherwise it takes the order's lines off the visit, clears the cookie and redirects to `/checkout`. It drops the cookie only; the lines stay in the API cart until it expires.
 
 A 404 on a write triggers one `getCart(token)`:
 
@@ -59,7 +59,7 @@ A 404 alone never clears the cookie.
 - `export const metadata = { title: 'Cart', robots: { index: false } }`.
 - Static shell; `<Suspense fallback={<CartSkeleton />}><CartContents /></Suspense>`.
 - `CartContents` (server) loads the cart. No cart or no lines → empty state with a link to `/search`. An API failure other than 404 → "Your cart could not be loaded, try again", distinct from the empty state. Otherwise one client `CartView` receiving the lines.
-- `CartView` (client) holds the lines in `useOptimistic` and derives the item count and subtotal from price × quantity, which equals the API's `lineTotal`. `CartSummary` is a presentational child: subtotal via `formatPrice`, item count and the Checkout form.
+- `CartView` (client) holds the lines in `useOptimistic` and derives the item count and subtotal from price × quantity, which equals the API's `lineTotal`. It also resolves each line's stock draw, caps its stepper and blocks Checkout while any line exceeds one (E19). `CartSummary` is a presentational child: subtotal via `formatPrice`, item count and the Checkout form.
 - Each row: `next/image` thumbnail, name linking to the product page, unit price, `QuantityStepper` with `min={1}`, `max={99}` and `defaultValue={quantity}`, line total, remove button. A minus or plus click fires `updateQuantity` at once; a typed value fires on blur or Enter; remove fires `removeItem`.
 - Each row has its own `useTransition`. While it is pending the stepper and the remove button are disabled and the row has reduced opacity. On `{ ok: false }` the optimistic value reverts and the message shows in a `role="status"` line under the row, cleared by the next successful action.
 

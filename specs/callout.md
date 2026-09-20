@@ -104,13 +104,18 @@ Every value from 0 to 29 appeared for every product, in numbers consistent with 
 draw. A single pass over all 28 products returned no zero at all, which is what one in
 thirty looks like in a sample of 28.
 
-What a stock line on a card would cost, at one in thirty per card:
+What a stock line on a card would have cost, at one in thirty per card, had it been
+drawn per render:
 
 | Grid | Cards | Renders showing a false "out of stock" |
 |---|---|---|
 | Favourites row | 4 | 13% |
 | Home featured grid | 6 | 18% |
 | Full listing | 28 | 61% |
+
+This is the table the visit cookie answers. A count drawn once and kept is wrong on no
+render rather than most of them, which is why every grid can badge a card now and none
+could before.
 
 The cart does not check stock. On a throwaway cart, `POST /cart` accepted a quantity of 30
 and then a further 500 for `bottle_001`, leaving a line of 530, and 40 consecutive

@@ -50,6 +50,7 @@ Installed: `button`, `input`, `native-select`, `skeleton` (E03 to E07), plus `ba
 
 Two shapes, chosen by the grid's breakpoint, one anatomy: photo in a frame (`bg-secondary`, 1px `border`, `rounded-lg`), name at 14 medium, category in `fg-secondary`, price in mono.
 
+- Stock badge, when there is something to say (E19): a pill on the photo at top-left, opposite the price, so it shifts nothing. "Out of stock" on `danger`, "Only N left" on `warning`, "In your cart" on `bg` with a `border`, all 12px medium with `text-bg` on the two filled ones. A product a visitor can simply buy gets no badge.
 - Grid card, md and up: the price sits top-right on the photo as a pill (`bg-bg`, 1px `border`, `rounded-full`, mono 12px). Name then category under the frame. Hover, under `@media (hover: hover)` only: the pill inverts to `bg-accent text-accent-fg border-accent`, the frame's border goes to `border-strong`, the photo scales 1.035, all fading in and out (250 ms; photo 400 ms; `motion-safe:`). The same inversion is the pending cue while the card's navigation is in flight (`useLinkStatus()`).
 - Row card, below md: a horizontal card, photo at 42% of the width (about 150px on a 390px phone), text top-aligned beside it: price first in mono 13px, then name at 15 medium, then category. No pill, no arrow, no hover state; the whole row is the link.
 - The name never sits over the photo and is never truncated; it wraps.
@@ -69,7 +70,8 @@ Two shapes, chosen by the grid's breakpoint, one anatomy: photo in a frame (`bg-
 
 ### Cart `app/cart`
 
-- Line item: photo in the card frame at 96px; name; unit price in mono; stepper and Remove on one row under the name; line total in mono top-right, on the same column as the summary's figures. Below md the "Quantity" label is dropped.
+- Line item: photo in the card frame at 96px; name; unit price in mono; stepper and Remove on one row under the name; line total in mono top-right, on the same column as the summary's figures. Below md the "Quantity" label is dropped. A line holding more than the visitor has says so under the row, in `danger` (E19).
+- Favourites row on this page only: an outline Add to Cart the full width of the card, under it and outside its link (E19). No stepper.
 - Summary: `sticky top-20` at lg; rows separated by `Separator`; Subtotal at 16 medium with mono figures; Checkout full width. Below md the summary follows the lines.
 - Empty and failed states use the shared `EmptyState`; "Search products" is a `Button`, not an underlined link.
 
