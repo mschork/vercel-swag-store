@@ -15,7 +15,10 @@ import type { Product } from '@/lib/api/types'
  * four columns of 264px once the content width stops growing.
  * `search` shows at most five, so one row of five at lg fits the cap exactly.
  * `listing` holds the whole catalogue over many rows, where five columns get
- * cramped: three from md, four from lg, the same 264px as `favourites`.
+ * cramped: three from md, four from lg, the same 264px as `favourites`. It is
+ * the one variant that is not rows below md: a whole catalogue of rows is a
+ * long, half-empty scroll, so it shows two columns of grid cards instead, and
+ * tells the card so through `shape`.
  * From 1152px the column stops growing (1104px of content), so the hints turn
  * into fixed widths: three columns of 357px, or five of 208px.
  */
@@ -34,9 +37,10 @@ const VARIANTS = {
       '(min-width: 1152px) 208px, (min-width: 1024px) 20vw, (min-width: 768px) 33vw, 42vw',
   },
   listing: {
-    grid: 'grid gap-4 md:grid-cols-3 lg:grid-cols-4',
+    grid: 'grid grid-cols-2 gap-x-3 gap-y-6 md:grid-cols-3 md:gap-4 lg:grid-cols-4',
     sizes:
-      '(min-width: 1152px) 264px, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 42vw',
+      '(min-width: 1152px) 264px, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw',
+    shape: 'card',
   },
 } as const
 
@@ -94,7 +98,9 @@ export async function SortableProductGrid({
   summary: string
   preloadCount?: number
 }) {
-  const { grid, sizes } = VARIANTS[variant]
+  const config = VARIANTS[variant]
+  const { grid, sizes } = config
+  const shape = 'shape' in config ? config.shape : undefined
   const categories = await getCategories()
   const nameOf = (slug: string) =>
     categories.find((category) => category.slug === slug)?.name ?? slug
@@ -111,6 +117,7 @@ export async function SortableProductGrid({
             categoryName={nameOf(product.category)}
             sizes={sizes}
             preload={index < preloadCount}
+            shape={shape}
           />
         ),
       }))}
