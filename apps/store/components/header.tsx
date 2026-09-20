@@ -27,7 +27,7 @@ const SearchGlyph = (
     strokeWidth="1.5"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="shrink-0"
+    className="inline-block align-[-0.2em] sm:mr-1.5"
   >
     <circle cx="10.5" cy="10.5" r="6.5" />
     <path d="m20 20-4.9-4.9" />
@@ -46,14 +46,17 @@ const NAV: readonly NavItem[] = [
 
 /**
  * With three links the row is 2px too wide at 320px, so below sm a link with
- * a glyph shows the glyph alone; the label stays in the DOM as its name.
+ * a glyph shows the glyph alone; the label stays in the DOM as its name. The
+ * glyph is inline and nudged onto the text, never a flex item: an inline-flex
+ * wrapper takes its baseline from the SVG and lifts the word above its
+ * neighbours.
  */
 const navLabel = ({ icon, label }: NavItem) =>
   icon ? (
-    <span className="inline-flex items-center gap-1.5">
+    <>
       {icon}
       <span className="max-sm:sr-only">{label}</span>
-    </span>
+    </>
   ) : (
     label
   )
