@@ -30,8 +30,7 @@ export async function FavouriteProducts({
   slot?: (product: Product) => ReactNode
 }) {
   const [rows, catalogue] = await Promise.all([
-    // Deep enough that dropping what the page already shows still fills a row.
-    getFavouriteProducts(MAX_FAVOURITES + exclude.length),
+    getFavouriteProducts(),
     getAllProducts(),
   ])
   const products = favouriteProducts(rows ?? [], catalogue, exclude).slice(0, MAX_FAVOURITES)

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { EmptyState } from '@/components/empty-state'
 import { FavouriteProducts } from '@/components/favourite-products'
 import { Button } from '@/components/ui/button'
@@ -21,7 +22,7 @@ import { EmptyCart } from './empty-cart'
  * Under all of them, the same favourites row the home page shows. An empty
  * cart gets it unfiltered; a cart with lines gets it without the products
  * already in it. Only the exclusion is dynamic: the ranking and the catalogue
- * are cached.
+ * are cached. The row has its own boundary, so the lines never wait for it.
  *
  * The visitor's draws travel with the lines, so the first paint already caps
  * each stepper and says which line holds more than there is. They also decide
@@ -47,7 +48,9 @@ export async function CartContents() {
       ) : (
         <EmptyCart />
       )}
-      <Favourites exclude={[...items.map((item) => item.productId), ...soldOut]} />
+      <Suspense fallback={<FavouritesSkeleton />}>
+        <Favourites exclude={[...items.map((item) => item.productId), ...soldOut]} />
+      </Suspense>
     </>
   )
 }
@@ -65,6 +68,32 @@ async function Favourites({ exclude }: { exclude: readonly string[] }) {
       exclude={exclude}
       slot={(product) => <QuickAddForm productId={product.id} name={product.name} />}
     />
+  )
+}
+
+/** Mirrors the favourites row: the section's spacing, a heading and one row of cards with their button. */
+function FavouritesSkeleton() {
+  return (
+    <div
+      className="flex flex-col gap-6 border-t border-border py-12 md:py-16"
+      aria-hidden="true"
+    >
+      <Skeleton className="h-8 w-56" />
+      <div className="grid gap-4 md:grid-cols-4">
+        {[0, 1, 2, 3].map((card) => (
+          <div key={card}>
+            <div className="grid grid-cols-[42%_minmax(0,1fr)] items-start gap-3.5 md:block">
+              <Skeleton className="aspect-square rounded-lg" />
+              <div className="flex flex-col gap-1 pt-1 md:pt-3">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-5 w-20" />
+              </div>
+            </div>
+            <Skeleton className="mt-2 h-8 w-full" />
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 

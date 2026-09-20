@@ -94,11 +94,10 @@ export function getTestimonialsForProduct(apiId: string) {
  * The products testimonials name most, ranked in GROQ. Tagged for both
  * document types because either a new entry or a re-sync can change the answer.
  */
-export function getFavouriteProducts(limit: number) {
+export function getFavouriteProducts() {
   return loadOptional('Testimonial favourites', () =>
     sanityFetch<FavouriteProductsQueryResult>({
       query: favouriteProductsQuery,
-      params: { limit },
       tags: ['sanity:testimonial', 'sanity:product'],
     }),
   )

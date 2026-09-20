@@ -62,12 +62,13 @@ export const testimonialsForProductQuery = defineQuery(`
  * The products published testimonials name most: the count first, then the
  * newest entry, then the id so the order never shuffles between two builds.
  * Mirrors the API no longer returns are skipped, and the store looks every
- * `apiId` up in the API before rendering anything.
+ * `apiId` up in the API before rendering anything. Unsliced, so every caller
+ * shares one cache entry and takes as many rows as it needs.
  */
 export const favouriteProductsQuery = defineQuery(`
   *[_type == "product" && missing != true && count(*[_type == "testimonial" && references(^._id)]) > 0]{
     apiId,
     "mentions": count(*[_type == "testimonial" && references(^._id)]),
     "newest": *[_type == "testimonial" && references(^._id)] | order(publishedAt desc)[0].publishedAt
-  } | order(mentions desc, newest desc, apiId asc)[0...$limit]
+  } | order(mentions desc, newest desc, apiId asc)
 `)
