@@ -20,7 +20,7 @@ export default defineConfig({
     exclude: ['node_modules/**', '.next/**', '**/*.integration.test.ts'],
     setupFiles: ['./test/setup.ts'],
     // Loads .env and .env.local so `API_INTEGRATION=1 pnpm test` can hit the
-    // live API; unit tests never read them because fetch is mocked.
+    // live API; unit tests mock fetch, so they ignore these.
     env: loadEnv('', root, ''),
     coverage: {
       provider: 'v8',

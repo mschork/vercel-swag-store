@@ -11,7 +11,7 @@ test('home renders the hero, the featured grid and at least six product cards', 
 }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-  // The hero photo is the LCP element; it is not a link (E10).
+  // The hero photo is the LCP element and is not a link.
   await expect(page.getByRole('img', { name: /hoodie/ })).toBeVisible()
   expect(await page.getByRole('img', { name: /hoodie/ }).locator('xpath=ancestor::a').count()).toBe(0)
   await expect(page.getByRole('heading', { name: 'Featured' })).toBeVisible()

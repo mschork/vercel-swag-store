@@ -2,21 +2,15 @@ import { readFileSync } from 'node:fs'
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 
 /**
- * Visual regression (E11). Four pages in light and dark at 375 and 1280.
- * Snapshots are committed; a diff fails the test and writes the comparison
- * into `test-results/`.
- *
- * Masked everywhere: the promo strip and the stock line, which the API varies
- * per request, and the cart badge, whose number depends on the cart. The cart
- * page is captured with one line in it, seeded through the API so the shot
- * never depends on live stock or on a slow Add to Cart.
+ * Visual regression: four pages in light and dark at 375 and 1280. A diff
+ * fails the test and writes the comparison into `test-results/`. The promo
+ * strip, the stock line and the cart badge are masked, and the cart page is
+ * captured with one seeded line, so no shot depends on live data.
  *
  * Snapshots are named per platform; the committed set is macOS. Generate
- * another platform's set there with `--update-snapshots`.
- *
- * The home and cart shots include the favourites row, which the testimonials
- * decide. Adding or removing a testimonial can change which products it
- * holds, so those eight files are regenerated when the testimonials change (E09).
+ * another platform's set there with `--update-snapshots`. The home and cart
+ * shots show the favourites row, which the testimonials decide, so those
+ * eight files are regenerated when the testimonials change.
  */
 test.describe.configure({ timeout: 180_000 })
 
@@ -55,8 +49,7 @@ async function shoot(page: Page, name: string) {
 
 /**
  * One fixed product, so a screenshot always shows the same photo and copy.
- * Stock is random per request, so the page may render Add to Cart disabled;
- * the stock line is masked, so the shot is the same either way.
+ * The stock line is masked, so a disabled Add to Cart is the same shot.
  */
 const PRODUCT = '/products/matte-black-insulated-tumbler'
 const PRODUCT_ID = 'tumbler_001'
@@ -70,7 +63,7 @@ function api(): { base: string; token: string } {
       if (key && value !== undefined) file.set(key, value.replace(/^["']|["']$/g, ''))
     }
   } catch {
-    // Not there in CI, where the values come from the environment.
+    // Absent when the values come from the environment.
   }
   const base = process.env.API_BASE_URL ?? file.get('API_BASE_URL') ?? ''
   const token = process.env.API_BYPASS_TOKEN ?? file.get('API_BYPASS_TOKEN') ?? ''
@@ -79,8 +72,8 @@ function api(): { base: string; token: string } {
 
 /**
  * Puts one known product in the cart and hands the browser its token, so the
- * cart page renders the same line every run. The API enforces no stock on
- * cart writes, so this works whatever stock says.
+ * cart page renders the same line every run. Cart writes ignore stock, so
+ * this works whatever stock says.
  */
 async function seedCart(context: BrowserContext) {
   const { base, token } = api()

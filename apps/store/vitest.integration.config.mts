@@ -6,8 +6,8 @@ const root = fileURLToPath(new URL('.', import.meta.url))
 
 /**
  * Workflow integration tests: the real compiler and an in-process runtime, so
- * hooks, sleeps and conflicts behave as they do on Vercel. Slower than the
- * unit suite and not part of `pnpm verify`; run with `pnpm test:integration`.
+ * hooks, sleeps and conflicts behave as they do on Vercel. Outside
+ * `pnpm verify`; run with `pnpm test:integration`.
  */
 export default defineConfig({
   plugins: [workflow()],
