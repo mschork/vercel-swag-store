@@ -28,6 +28,7 @@ Things worth saying out loud in the presentation or README because they are deli
 - **A quantity change is saved after a 400 ms pause** (E16 step 3). The cart rows keep taking clicks, show each value at once and send only the last one, so 3 to 7 is one slow request instead of four. Leaving for another page inside the pause saves at once. Closing the tab inside the pause loses that change; the row never claimed it was saved, and catching `pagehide` would need a second write path outside Server Actions.
 - **The store is noindex on purpose** (E06 review). Root and per-page metadata, both Open Graph image routes, `sitemap.xml` and `robots.txt` are built exactly as the brief asks, and then an `X-Robots-Tag: noindex` header on every response keeps the result out of search. A store of invented products under the Vercel name, on a public domain, should not compete with vercel.com for real searches. The header covers what a meta tag cannot, namely the sitemap and the Open Graph images, and `robots.txt` allows crawling on purpose: a URL a crawler may not fetch can still be indexed from a link, and its directive is never read. `/cart` and `/checkout` keep their own `robots: { index: false }` so the intent is visible in the page code too.
 - **Search is dynamic, the product listing is not, and the difference is the data** (E18 Q3). Both pages narrow the catalogue by category. Search reads `searchParams` because free text has unbounded values, so its grid is a dynamic hole in a static shell. The listing takes its category from the path, because categories are a closed set the API lists: `generateStaticParams` builds one page each and nothing is rendered per request. The price sort re-orders cards already on the page in the browser, so it costs no request and no dynamic hole; the price is that a sorted view has no URL.
+- **Stock cannot be handled properly, because the API's stock is a random number** (E05). A product carries no stock field; stock exists only as a separate live endpoint, and that endpoint answers with a fresh draw from 0 to 29 on every request. Three products sampled 300 times each came back 0 in 12, 15 and 10 of those draws, roughly one in thirty, with no product behaving differently from any other. The cart endpoint ignores stock entirely: a cart accepted 530 units of a bottle whose stock never reads above 29, and forty single adds in a row were refused none of the time. So a stock line on a product card would say nothing about the product. Four cards would strike one through on 13% of renders, the 28-card listing on 61%, and a reload would strike through a different one, which reads as a broken store rather than a sold-out product. It would also cost the listing its prerendered shell, because stock can never be cached and every card would need its own Suspense boundary. The store therefore reads stock exactly once, on the product page, where a visitor is deciding about one product: the stock line, the quantity cap, the disabled button and the schema.org availability all come from that single call, and a failed call says "Stock unavailable" rather than guessing. No grid offers to sell anything, so no grid has to claim availability. That is also why Add to Cart does not appear on a card. The measurements are in the section below.
 
 ## Cart latency measurements (E06)
 
@@ -87,3 +88,32 @@ Then the flows. "Acknowledged" is the first visible response to the click. "Save
 The header badge follows the click in 0.04 to 0.07 s after E16, on both pages; before, it moved only when the action's response arrived. A saved quantity change still includes one cart read, because the cart page re-renders its lines from the server; the 400 ms pause is part of its saved time. "Four plus clicks" before E16 means four saves in a row, because a row ignored clicks while one was saving.
 
 What changed, in order: a spinner on the busy button; the add writes first and reads only after a 404; quantity clicks wait for a pause and send the last value; the badge and the cart page share one read per request; actions return the item count and the badge holds it on the client; the product page confirms at submit time. What is left is the API's own time for one write, which no storefront change removes.
+
+## Stock measurements (E05)
+
+Measured against the live API on 20 Sep 2026. `GET /products/{id}/stock` called 300 times
+per product, concurrently, with the bypass header.
+
+| Product | Samples | Range | Read 0 |
+|---|---|---|---|
+| `bottle_001` | 300 | 0 to 29 | 12 |
+| `backpack_001` | 300 | 0 to 29 | 15 |
+| `hoodie_001` | 300 | 0 to 29 | 10 |
+
+Every value from 0 to 29 appeared for every product, in numbers consistent with a uniform
+draw. A single pass over all 28 products returned no zero at all, which is what one in
+thirty looks like in a sample of 28.
+
+What a stock line on a card would cost, at one in thirty per card:
+
+| Grid | Cards | Renders showing a false "out of stock" |
+|---|---|---|
+| Favourites row | 4 | 13% |
+| Home featured grid | 6 | 18% |
+| Full listing | 28 | 61% |
+
+The cart does not check stock. On a throwaway cart, `POST /cart` accepted a quantity of 30
+and then a further 500 for `bottle_001`, leaving a line of 530, and 40 consecutive
+single-unit adds were all accepted. The disabled Add to Cart button on the product page is
+a front-end courtesy: it stops a click, not a write, and the reading behind it has been
+replaced by a fresh draw before the add lands.
