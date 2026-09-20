@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as api from '@/lib/api/cart'
 import { ApiError } from '@/lib/api/client'
 import type { Cart } from '@/lib/api/types'
+import * as stock from '@/lib/api/stock'
 import { CART_COOKIE, CART_COOKIE_MAX_AGE } from '@/lib/cart/cookie'
+import { VISIT_COOKIE } from '@/lib/visit/cookie'
 import { product } from '@/test/helpers'
 import {
   addToCart,
@@ -36,8 +38,29 @@ vi.mock('@/lib/api/cart', () => ({
   updateCartItem: vi.fn(),
   removeCartItem: vi.fn(),
 }))
+vi.mock('@/lib/api/stock', () => ({ getStock: vi.fn() }))
 
 const mocked = vi.mocked(api)
+const mockedStock = vi.mocked(stock)
+
+/**
+ * Gives the visitor a visit holding `counts`. Without one the actions enforce
+ * nothing, which is what the tests above this line rely on.
+ */
+function seedVisit(counts: Record<string, number>) {
+  jar.set(
+    VISIT_COOKIE,
+    JSON.stringify({
+      v: 1,
+      drawnAt: Math.floor(Date.now() / 1000),
+      stock: counts,
+      promotion: null,
+    }),
+  )
+}
+
+const visitStock = (): Record<string, number> =>
+  JSON.parse(jar.get(VISIT_COOKIE) ?? '{}').stock
 
 const EXPIRED = 'Your cart expired. Add products again to start a new cart.'
 const NOT_IN_CART = 'This item is no longer in your cart.'
@@ -140,7 +163,7 @@ describe('addToCart', () => {
 
     await expect(
       addToCart(null, form({ productId: 'tshirt_001', quantity: '2' })),
-    ).resolves.toEqual({ ok: true, totalItems: 2 })
+    ).resolves.toEqual({ ok: true, totalItems: 2, line: { productId: 'tshirt_001', quantity: 2 } })
 
     expect(mocked.getCart).not.toHaveBeenCalled()
     expect(mocked.addCartItem).toHaveBeenCalledWith('new-token', 'tshirt_001', 2)
@@ -155,7 +178,7 @@ describe('addToCart', () => {
 
     await expect(
       addToCart(null, form({ productId: 'tshirt_001', quantity: '1' })),
-    ).resolves.toEqual({ ok: true, totalItems: 2 })
+    ).resolves.toEqual({ ok: true, totalItems: 2, line: { productId: 'tshirt_001', quantity: 2 } })
 
     expect(mocked.getCart).not.toHaveBeenCalled()
     expect(mocked.createCart).not.toHaveBeenCalled()
@@ -175,7 +198,7 @@ describe('addToCart', () => {
 
     await expect(
       addToCart(null, form({ productId: 'tshirt_001', quantity: '1' })),
-    ).resolves.toEqual({ ok: true, totalItems: 1 })
+    ).resolves.toEqual({ ok: true, totalItems: 1, line: { productId: 'tshirt_001', quantity: 1 } })
 
     expect(mocked.addCartItem.mock.calls).toEqual([
       ['expired', 'tshirt_001', 1],
@@ -200,6 +223,7 @@ describe('addToCart', () => {
       ok: false,
       error: 'This product is no longer available.',
       totalItems: 0,
+      line: { productId: 'gone_001', quantity: 0 },
     })
 
     expect(mocked.addCartItem).toHaveBeenCalledTimes(2)
@@ -237,6 +261,7 @@ describe('addToCart', () => {
       ok: false,
       error: 'This product is no longer available.',
       totalItems: 1,
+      line: { productId: 'gone_001', quantity: 0 },
     })
 
     expect(jar.get(CART_COOKIE)).toBe('live')
@@ -309,6 +334,7 @@ describe('updateQuantity', () => {
     await expect(updateQuantity('tshirt_001', quantity)).resolves.toEqual({
       ok: true,
       totalItems: quantity,
+      line: { productId: 'tshirt_001', quantity },
     })
     expect(mocked.updateCartItem).toHaveBeenCalledWith(
       'live',
@@ -321,7 +347,11 @@ describe('updateQuantity', () => {
     jar.set(CART_COOKIE, 'live')
     mocked.updateCartItem.mockResolvedValue(cart(2))
 
-    await expect(updateQuantity('tshirt_001', 2)).resolves.toEqual({ ok: true, totalItems: 2 })
+    await expect(updateQuantity('tshirt_001', 2)).resolves.toEqual({
+      ok: true,
+      totalItems: 2,
+      line: { productId: 'tshirt_001', quantity: 2 },
+    })
 
     expectCookieSlid('live')
     expect(refresh).toHaveBeenCalledTimes(1)
@@ -346,6 +376,7 @@ describe('updateQuantity', () => {
       ok: false,
       error: NOT_IN_CART,
       totalItems: 0,
+      line: { productId: 'tshirt_001', quantity: 0 },
     })
 
     expect(mocked.getCart).toHaveBeenCalledTimes(1)
@@ -423,7 +454,11 @@ describe('removeItem', () => {
     jar.set(CART_COOKIE, 'live')
     mocked.removeCartItem.mockResolvedValue(cart(0))
 
-    await expect(removeItem('tshirt_001')).resolves.toEqual({ ok: true, totalItems: 0 })
+    await expect(removeItem('tshirt_001')).resolves.toEqual({
+      ok: true,
+      totalItems: 0,
+      line: { productId: 'tshirt_001', quantity: 0 },
+    })
 
     expect(mocked.removeCartItem).toHaveBeenCalledWith('live', 'tshirt_001')
     expectCookieSlid('live')
@@ -438,6 +473,7 @@ describe('removeItem', () => {
       ok: false,
       error: NOT_IN_CART,
       totalItems: 1,
+      line: { productId: 'tshirt_001', quantity: 1 },
     })
     expect(jar.get(CART_COOKIE)).toBe('live')
 
@@ -501,5 +537,127 @@ describe('placeOrder', () => {
 
     expect(jar.has(CART_COOKIE)).toBe(false)
     expect(mocked.removeCartItem).not.toHaveBeenCalled()
+  })
+})
+
+describe('the visit caps every write', () => {
+  it('refuses an add above the draw before calling the API', async () => {
+    jar.set(CART_COOKIE, 'live')
+    seedVisit({ tshirt_001: 3 })
+
+    await expect(
+      addToCart(null, form({ productId: 'tshirt_001', quantity: '4' })),
+    ).resolves.toEqual({ ok: false, error: 'Only 3 available.' })
+
+    expect(mocked.addCartItem).not.toHaveBeenCalled()
+    expect(mocked.createCart).not.toHaveBeenCalled()
+  })
+
+  it('says out of stock rather than "only 0 available"', async () => {
+    jar.set(CART_COOKIE, 'live')
+    seedVisit({ tshirt_001: 0 })
+
+    await expect(
+      addToCart(null, form({ productId: 'tshirt_001', quantity: '1' })),
+    ).resolves.toEqual({ ok: false, error: 'This product is out of stock.' })
+  })
+
+  it('allows an add up to the draw, with the same one call as before', async () => {
+    jar.set(CART_COOKIE, 'live')
+    seedVisit({ tshirt_001: 3 })
+    mocked.addCartItem.mockResolvedValue(cart(3))
+
+    await expect(
+      addToCart(null, form({ productId: 'tshirt_001', quantity: '3' })),
+    ).resolves.toEqual({
+      ok: true,
+      totalItems: 3,
+      line: { productId: 'tshirt_001', quantity: 3 },
+    })
+
+    expect(mocked.addCartItem).toHaveBeenCalledTimes(1)
+    expect(mocked.updateCartItem).not.toHaveBeenCalled()
+  })
+
+  it('draws a product the visit does not cover, and keeps the count', async () => {
+    jar.set(CART_COOKIE, 'live')
+    seedVisit({ other_001: 5 })
+    mockedStock.getStock.mockResolvedValue({
+      productId: 'tshirt_001',
+      stock: 2,
+      inStock: true,
+      lowStock: true,
+    })
+
+    await expect(
+      addToCart(null, form({ productId: 'tshirt_001', quantity: '3' })),
+    ).resolves.toEqual({ ok: false, error: 'Only 2 available.' })
+
+    expect(mockedStock.getStock).toHaveBeenCalledWith('tshirt_001')
+    expect(visitStock()).toEqual({ other_001: 5, tshirt_001: 2 })
+  })
+
+  it('sets a line the API left above the draw back, and says why', async () => {
+    jar.set(CART_COOKIE, 'live')
+    seedVisit({ tshirt_001: 2 })
+    // The cart already held two from an earlier visit, so one more is three.
+    mocked.addCartItem.mockResolvedValue(cart(3))
+    mocked.updateCartItem.mockResolvedValue(cart(2))
+
+    await expect(
+      addToCart(null, form({ productId: 'tshirt_001', quantity: '1' })),
+    ).resolves.toEqual({
+      ok: false,
+      error: 'Only 2 available.',
+      totalItems: 2,
+      line: { productId: 'tshirt_001', quantity: 2 },
+    })
+
+    expect(mocked.updateCartItem).toHaveBeenCalledWith('live', 'tshirt_001', 2)
+  })
+
+  it('refuses a quantity change above the draw before calling the API', async () => {
+    jar.set(CART_COOKIE, 'live')
+    seedVisit({ tshirt_001: 4 })
+
+    await expect(updateQuantity('tshirt_001', 5)).resolves.toEqual({
+      ok: false,
+      error: 'Only 4 available.',
+    })
+    expect(mocked.updateCartItem).not.toHaveBeenCalled()
+  })
+
+  it('enforces nothing for a visitor with no visit', async () => {
+    jar.set(CART_COOKIE, 'live')
+    mocked.addCartItem.mockResolvedValue(cart(99))
+
+    await expect(
+      addToCart(null, form({ productId: 'tshirt_001', quantity: '99' })),
+    ).resolves.toMatchObject({ ok: true })
+    expect(mockedStock.getStock).not.toHaveBeenCalled()
+  })
+})
+
+describe('placeOrder and the visit', () => {
+  it('takes the order off the visit and empties the cart', async () => {
+    jar.set(CART_COOKIE, 'live')
+    seedVisit({ tshirt_001: 5 })
+    mocked.getCart.mockResolvedValue(cart(2))
+
+    await expect(redirectTarget(placeOrder)).resolves.toBe('/checkout')
+
+    expect(visitStock()).toEqual({ tshirt_001: 3 })
+    expect(jar.has(CART_COOKIE)).toBe(false)
+  })
+
+  it('sends a cart holding more than the draw back to be fixed', async () => {
+    jar.set(CART_COOKIE, 'live')
+    seedVisit({ tshirt_001: 1 })
+    mocked.getCart.mockResolvedValue(cart(2))
+
+    await expect(redirectTarget(placeOrder)).resolves.toBe('/cart')
+
+    expect(visitStock()).toEqual({ tshirt_001: 1 })
+    expect(jar.has(CART_COOKIE)).toBe(true)
   })
 })

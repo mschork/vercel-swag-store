@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { SortableGrid } from '@/components/listing/sortable-grid'
 import { ProductCard } from '@/components/product-card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -39,15 +40,21 @@ export type GridVariant = keyof typeof VARIANTS
  * preloading; the home page leaves it at 0 because the hero is the LCP. The
  * category names come from the cached list, so a card can show "Bags" rather
  * than the slug.
+ *
+ * `slot` renders under a card, inside the list item but outside the link, so a
+ * grid can carry a control without putting a button inside a link. Only the
+ * cart page's favourites row uses it.
  */
 export async function ProductGrid({
   products,
   variant,
   preloadCount = 0,
+  slot,
 }: {
   products: readonly Product[]
   variant: GridVariant
   preloadCount?: number
+  slot?: (product: Product) => ReactNode
 }) {
   const { grid, sizes } = VARIANTS[variant]
   const categories = await getCategories()
@@ -63,6 +70,7 @@ export async function ProductGrid({
             sizes={sizes}
             preload={index < preloadCount}
           />
+          {slot?.(product)}
         </li>
       ))}
     </ul>

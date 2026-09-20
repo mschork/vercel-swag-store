@@ -1,11 +1,13 @@
 import { readFileSync } from 'node:fs'
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
+import { seedVisit } from './visit'
 
 /**
  * Visual regression: four pages in light and dark at 375 and 1280. A diff
- * fails the test and writes the comparison into `test-results/`. The promo
- * strip, the stock line and the cart badge are masked, and the cart page is
- * captured with one seeded line, so no shot depends on live data.
+ * fails the test and writes the comparison into `test-results/`. The cart
+ * badge is masked and the cart page is captured with one seeded line; the
+ * promo strip and the stock line come from a seeded visit, so they are the
+ * same every run and are shot rather than masked.
  *
  * Snapshots are named per platform; the committed set is macOS. Generate
  * another platform's set there with `--update-snapshots`. The home and cart
@@ -16,13 +18,22 @@ test.describe.configure({ timeout: 180_000 })
 
 const STOCK_LINE = /^(In stock|Only \d+ left|Out of stock|Stock unavailable)$/
 
+/** What the seeded visit holds of the shot product, so its line reads the same. */
+const SEEDED_STOCK = 12
+
+/**
+ * Comfortably above the low-stock threshold, so no card carries a badge. The
+ * whole catalogue is seeded, not just the shot product: a partial visit would
+ * be topped up with live draws, and a product that came back low would badge
+ * a card differently from one run to the next.
+ */
+const OTHERS_STOCK = 20
+
 /** Regions that legitimately differ between runs. */
 function masks(page: Page) {
   return [
-    page.locator('[aria-label="Current promotion"]'),
     page.locator('body > div[aria-hidden="true"]').first(),
     page.getByRole('banner').getByRole('img', { name: /^Cart/ }),
-    page.getByRole('main').getByText(STOCK_LINE),
   ]
 }
 
@@ -47,10 +58,7 @@ async function shoot(page: Page, name: string) {
   })
 }
 
-/**
- * One fixed product, so a screenshot always shows the same photo and copy.
- * The stock line is masked, so a disabled Add to Cart is the same shot.
- */
+/** One fixed product, so a screenshot always shows the same photo and copy. */
 const PRODUCT = '/products/matte-black-insulated-tumbler'
 const PRODUCT_ID = 'tumbler_001'
 
@@ -92,17 +100,38 @@ async function seedCart(context: BrowserContext) {
   ])
 }
 
+let catalogue: Promise<string[]> | null = null
+
+/** Every product id, read straight from the API rather than through the store. */
+function catalogueIds(): Promise<string[]> {
+  catalogue ??= (async () => {
+    const { base, token } = api()
+    const response = await fetch(`${base}/products?limit=100`, {
+      headers: { 'x-vercel-protection-bypass': token },
+    })
+    const body = (await response.json()) as { data: { id: string }[] }
+    return body.data.map((product) => product.id)
+  })()
+  return catalogue
+}
+
 async function openProduct(page: Page) {
   await page.goto(PRODUCT)
-  const stock = page.getByRole('main').getByText(STOCK_LINE)
-  await expect(stock).toBeVisible()
-  return (await stock.textContent()) !== 'Out of stock'
+  await expect(page.getByRole('main').getByText(STOCK_LINE)).toHaveText('In stock')
 }
 
 for (const width of [375, 1280] as const) {
   for (const colorScheme of ['light', 'dark'] as const) {
     test.describe(`${width} ${colorScheme}`, () => {
       test.use({ viewport: { width, height: 900 }, colorScheme })
+
+      test.beforeEach(async ({ context }) => {
+        const ids = await catalogueIds()
+        await seedVisit(context, {
+          ...Object.fromEntries(ids.map((id) => [id, OTHERS_STOCK])),
+          [PRODUCT_ID]: SEEDED_STOCK,
+        })
+      })
 
       test('home', async ({ page }) => {
         await page.goto('/')

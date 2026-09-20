@@ -11,15 +11,21 @@ import { Separator } from '@/components/ui/separator'
  * Checkout form. The form's action is the `placeOrder` Server Action, so it
  * posts natively when hydration is slow or has failed. Sticky beside a long
  * list from lg.
+ *
+ * `blocked` means a line holds more than there is of it. Checkout is disabled
+ * and says why; the action refuses the same order, so a native post made
+ * before hydration lands back on this page rather than going through.
  */
 export function CartSummary({
   totalItems,
   subtotal,
   currency,
+  blocked,
 }: {
   totalItems: number
   subtotal: number
   currency: string
+  blocked: boolean
 }) {
   return (
     <section
@@ -42,17 +48,27 @@ export function CartSummary({
           </dd>
         </div>
       </dl>
-      <form action={placeOrder}>
-        <CheckoutButton />
+      <form action={placeOrder} className="flex flex-col gap-2">
+        <CheckoutButton blocked={blocked} />
+        {blocked ? (
+          <p role="status" className="text-sm leading-6 text-danger">
+            Reduce the lines above to the quantities available before checking out.
+          </p>
+        ) : null}
       </form>
     </section>
   )
 }
 
-function CheckoutButton() {
+function CheckoutButton({ blocked }: { blocked: boolean }) {
   const { pending } = useFormStatus()
   return (
-    <Button type="submit" size="lg" disabled={pending} className="h-11 w-full">
+    <Button
+      type="submit"
+      size="lg"
+      disabled={pending || blocked}
+      className="h-11 w-full"
+    >
       Checkout
     </Button>
   )

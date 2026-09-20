@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { CardStock } from '@/components/card-stock'
 import { PendingScope } from '@/components/pending-scope'
 import { Price } from '@/components/price'
 import { ProductImage } from '@/components/product-image'
@@ -13,6 +14,10 @@ import { cn } from '@/lib/utils'
  * once. `sizes` comes from the grid (`components/product-grid.tsx`). The class
  * strings are written out in full for each shape because Tailwind only sees
  * literal class names.
+ *
+ * `CardStock` sits over the photo opposite the price and is the only part of
+ * the card that is not known at build; it reads the visit on the client, so
+ * every grid stays prerendered.
  */
 export type CardShape = 'responsive' | 'card'
 
@@ -81,6 +86,7 @@ export function ProductCard({
         >
           <Price cents={product.price} currency={product.currency} size="sm" className="text-xs" />
         </PendingScope>
+        <CardStock productId={product.id} />
       </div>
       <div className={cn('flex min-w-0 flex-col gap-1', c.text)}>
         {c.inlinePrice ? (

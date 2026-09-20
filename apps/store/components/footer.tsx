@@ -4,6 +4,7 @@ import { FOOTER_FALLBACK } from '@/lib/content/fallbacks'
 import { loadOptional } from '@/lib/load-optional'
 import { getSiteSettings } from '@/lib/sanity/content'
 import { socialLinks } from '@/lib/social-links'
+import { ResetVisit } from './visit/reset-visit'
 import { Container } from './container'
 
 /**
@@ -57,11 +58,14 @@ async function SocialLinks() {
 export function Footer() {
   return (
     <footer className="mt-12 border-t border-border text-sm text-fg-secondary md:mt-16">
-      <Container className="flex flex-col gap-4 py-8 sm:flex-row sm:items-center sm:justify-between">
-        <p>
-          © <CopyrightYear /> <FooterText />
-        </p>
-        <SocialLinks />
+      <Container className="flex flex-col gap-6 py-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            © <CopyrightYear /> <FooterText />
+          </p>
+          <SocialLinks />
+        </div>
+        <ResetVisit />
       </Container>
     </footer>
   )
