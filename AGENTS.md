@@ -63,8 +63,37 @@ working/              local-only documents (unredacted API reference, notes); gi
 - Tailwind v4 with tokens in `app/globals.css` under `@theme`; no inline colour values in components.
 - Components under `components/ui` are shadcn-generated and may be edited; components under `components/` are ours.
 - Tests: Vitest files next to the code as `*.test.ts`; Playwright under `apps/store/e2e`.
-- Comments: a doc block says what the symbol is, then only the constraint the code cannot show. Over six lines needs a reason. Present tense; no epic tags, no history, no rejected alternatives; rationale that needs more room goes in `docs/adr/`.
+- Comments: see "Writing a comment" below.
 - Commit messages: `E0N: imperative summary`.
+
+## Writing a comment
+
+A doc block says what the symbol is in one sentence, then only the constraint a
+reader cannot see from the code. Over six lines needs a reason.
+
+1. The first sentence says what the thing is. Stop there when the code shows the rest.
+2. Keep a "why" only when deleting it would let someone break the code. One sentence each.
+3. State what the code does. Use a negative only where the negative is the contract:
+   "never cached", "never logged", "never `NEXT_PUBLIC_`", "Never `createOrReplace`".
+4. Present tense, current state. No epic tags, no "before X existed", no "was rejected",
+   no incident reports. Git and the specs hold the history.
+5. One home per fact. Say it at the definition; elsewhere, name the symbol.
+6. Measurements belong in the code as named constants, not in prose. Never hard-code a
+   count the API owns.
+7. Point to a document by path when the rationale lives there: `docs/adr/000N-...`,
+   `(CONTEXT.md)`, or at most one epic spec per file, in its top block. No bare `(E10)`,
+   no "rule 6" (say the rule), no "see the PR", no `specs/callout.md` or
+   `specs/improvements.md`: those are presentation notes and the code stands without them.
+8. Plain words. No emphasis markers, no figures of speech, no "deliberately", "simply"
+   or "actually".
+9. Wrap at 80 columns.
+
+A rejected alternative goes in `docs/adr/`, not in a comment. The exception is an
+alternative so obvious that the next reader will try it: one sentence, in the code.
+
+Examples to copy: `apps/store/lib/bearer.ts`, `apps/store/lib/format.ts`,
+`packages/demand/src/constants.ts`, and the field comments in
+`apps/store/lib/api/client.ts`.
 
 ## When unsure
 
