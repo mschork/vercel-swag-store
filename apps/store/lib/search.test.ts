@@ -151,7 +151,7 @@ describe('mergeResults', () => {
 
   it('lets a category product take a slot from a hit that only mentions it', () => {
     // The stated cost of ranking by category: "keychain" is a real hit and
-    // still loses its place to a product that is actually in the category.
+    // still loses its place to a product that is in the category.
     const merged = mergeResults(
       [inCat('tote'), elsewhere('pin'), elsewhere('keychain')],
       [inCat('tote'), inCat('drawstring'), inCat('backpack')],

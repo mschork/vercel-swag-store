@@ -17,8 +17,8 @@ import './globals.css'
 
 /**
  * Root metadata prefers the `siteSettings` document and falls back to the
- * API's `/store/config` `seo` block (E03). Both reads are cached, so the
- * metadata is resolved at build and the shell stays prerendered.
+ * API's `/store/config` `seo` block. Both reads are cached, so the metadata
+ * is resolved at build and the shell stays prerendered.
  */
 const geistSans = Geist({
   subsets: ['latin'],
@@ -63,11 +63,9 @@ export const viewport: Viewport = {
 }
 
 /**
- * Header, promo strip, page, footer. The strip is the one dynamic hole every
- * route has (E10); its box reserves its height so the page never moves when
- * it streams in. `main` is full width so a page can bleed to the edges;
- * content sits in `Container`. The cart count provider is the shell's only
- * client state: the badge's number, which actions update without a re-read.
+ * The promo strip is the shell's one dynamic hole; its box reserves its height
+ * so the page never moves when it streams in. `CartCountProvider` holds the
+ * badge's count, which actions update without a re-read.
  */
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
@@ -89,7 +87,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
           </main>
           <Footer />
         </CartCountProvider>
-        {/* Draft mode only (E17): nothing for a visitor, not even the script. */}
+        {/* Draft mode only: nothing for a visitor, not even the script. */}
         <Suspense fallback={null}>
           <DraftMode />
         </Suspense>

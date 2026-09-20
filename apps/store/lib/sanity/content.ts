@@ -22,9 +22,8 @@ import {
 
 /**
  * Every Sanity read the pages make. All of them answer `null` when the
- * document is missing or the call fails, because every page ships a fallback
- * and an empty dataset must render exactly what the store rendered before
- * Sanity existed (specs/E09-sanity-integration.md).
+ * document is missing or the call fails; every page ships a fallback, so an
+ * empty dataset still renders.
  *
  * Tags mirror the webhook's: `sanity:<type>` for a list, plus `sanity:<id>`
  * for a document the editor opens by name.
@@ -42,7 +41,7 @@ export function getSiteSettings() {
 /**
  * The same document for `generateMetadata`: titles, descriptions and Open
  * Graph values are exported to machines, so in draft mode they come without
- * stega's invisible characters (E17).
+ * stega's invisible characters.
  */
 export function getSiteSettingsForMetadata() {
   return loadOptional('Site settings (metadata)', () =>
@@ -106,10 +105,10 @@ export function getFavouriteProducts(limit: number) {
 }
 
 /**
- * The category document behind a product listing, by the API slug it mirrors
- * (E18). The second tag is the document's id, which is what the publish
- * webhook expires. `null` for a missing document or a failed call: the listing
- * is complete without an intro.
+ * The category document behind a product listing, by the API slug it mirrors.
+ * The second tag is the document's id, which is what the publish webhook
+ * expires. `null` for a missing document or a failed call: the listing is
+ * complete without an intro.
  */
 export function getCategoryDocument(apiSlug: string) {
   return loadOptional(`Category document for ${apiSlug}`, () =>

@@ -13,11 +13,11 @@ import type { Cart } from './types'
  */
 
 /**
- * The cart namespace is the slow one: it answers in seconds where the rest of
- * the API answers in well under one, so its calls wait longer than the
- * client's default before giving up. Everything that waits on a cart call,
- * in the store and in the e2e tests, is sized from this. A write aborted
- * early can still land on the API while the store reports a failure.
+ * The cart namespace answers in seconds where the rest of the API answers in
+ * well under one, so its calls wait longer than the client's default before
+ * giving up. Everything that waits on a cart call, in the store and in the e2e
+ * tests, is sized from this. A write aborted early can still land on the API
+ * while the store reports a failure.
  */
 export const CART_TIMEOUT_MS = 10_000
 

@@ -6,12 +6,11 @@ export interface FavouriteRow {
 }
 
 /**
- * Turns the ranked ids from Sanity into API products, keeping Sanity's order
- * (E09). The API is the source of truth for everything shown, so a favourite
- * the API no longer returns is dropped rather than rendered from the mirror,
- * and a row without an id cannot match anything. `exclude` drops products the
- * page already shows, which is how the cart page leaves out what is in the
- * cart.
+ * Turns the ranked ids from Sanity into API products, keeping Sanity's order.
+ * The API is the source of truth for everything shown, so a favourite the API
+ * no longer returns is dropped rather than rendered from the mirror, and a row
+ * without an id cannot match anything. `exclude` drops products the page
+ * already shows, which is how the cart page leaves out what is in the cart.
  */
 export function favouriteProducts(
   rows: readonly FavouriteRow[],

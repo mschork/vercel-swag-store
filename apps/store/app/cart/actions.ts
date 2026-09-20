@@ -16,14 +16,13 @@ import { clearCartToken, getCartToken, setCartToken } from '@/lib/cart/cookie'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
 
 /**
- * Cart Server Actions (specs/E06-cart.md, specs/E16-cart-api-improvements.md).
- * Each one validates its input, calls the API with the token from the
- * httpOnly cookie and answers with user-facing copy and the cart's item
- * count, never its lines or token. The count lets the header badge update
- * without reading the cart again (the badge skips its read while rendering an
- * action's response). `refresh()` re-renders the cart page from the server's
- * view in the same round trip. After a successful write the cookie is set
- * again, so its one-day expiry slides with the API cart's.
+ * Cart Server Actions (specs/E06-cart.md). Each one validates its input, calls
+ * the API with the token from the httpOnly cookie and answers with user-facing
+ * copy and the cart's item count, never its lines or token. The count lets the
+ * header badge update without reading the cart again. `refresh()` re-renders
+ * the cart page from the server's view in the same round trip. After a
+ * successful write the cookie is set again, so its one-day expiry slides with
+ * the API cart's.
  */
 
 /**
@@ -97,7 +96,7 @@ export async function addToCart(
   return write(token, add(token), { ...copy, onExpired: addToNewCart })
 }
 
-/** Sets a line's quantity; 0 removes the line, as the API does. */
+/** Changes a line's quantity through `updateCartItem` (lib/api/cart.ts). */
 export async function updateQuantity(
   productId: string,
   quantity: number,
@@ -137,7 +136,7 @@ export async function removeItem(productId: string): Promise<CartActionResult> {
  * The demo order, bound to the Checkout form. Only a cart with lines can be
  * ordered; anything else goes back to `/cart`, which shows the true state.
  * Ordering drops the cookie and nothing more: the API has no clear-cart
- * endpoint and its cart expires on its own (specs/improvements.md).
+ * endpoint and its cart expires on its own.
  * `redirect` throws, so it is never called inside a `try`.
  */
 export async function placeOrder(): Promise<void> {
@@ -209,7 +208,7 @@ async function afterNotFound(
   return { ok: false, error: copy.gone, totalItems: cart.totalItems }
 }
 
-/** Forgets an expired cart; the refresh re-renders `/cart` to its empty state. */
+/** Forgets an expired cart; the refresh re-renders `/cart` as empty. */
 async function expired(): Promise<CartActionResult> {
   await clearCartToken()
   refresh()

@@ -2,10 +2,8 @@ import { defineQuery } from 'next-sanity'
 
 /**
  * Every GROQ query the store runs, in one file so `sanity typegen` can find
- * them and give each one a result type.
- *
- * Images ask for `metadata.lqip`, the tiny blurred version Sanity stores with
- * every asset, which `next/image` uses as its placeholder.
+ * them and give each one a result type. Images ask for `metadata.lqip`, which
+ * `lib/sanity/image.ts` turns into the `next/image` placeholder.
  */
 
 const IMAGE = `{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio }`
@@ -46,7 +44,7 @@ export const productQuery = defineQuery(`
   }
 `)
 
-/** A category's intro for its product listing, by the API slug the document mirrors (E18). */
+/** A category's intro for its product listing, by the API slug the document mirrors. */
 export const categoryQuery = defineQuery(`
   *[_type == "category" && apiSlug == $apiSlug][0]{ _id, intro }
 `)
