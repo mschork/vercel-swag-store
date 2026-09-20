@@ -25,6 +25,7 @@ With mirrors, every link is an ordinary Sanity reference. The Studio gets search
 
 - The API stays the source of truth at render time. The store reads catalogue fields from the API and never from the mirror; `mergeProduct` copies only editorial fields across, proven by `merge.test.ts`.
 - Mirrored fields are `readOnly` in the schema, so an editor sees which product they are editing and cannot change a price in a place that has no effect.
+- A category document has the product document's shape since E18: the mirrored fields stay read only, and beside them sits the one thing an editor writes, the intro for that category's product listing. The sync never touches it.
 - A script keeps the mirrors current, run by hand in this epic. E15 replaces the trigger with a scheduled Sanity Function; the logic does not change.
 - A product removed from the API leaves its document behind, flagged rather than deleted, so editorial work is never destroyed by an API answer.
 - The dataset carries 28 product and 13 category documents that no editor created. The Studio's desk hides them behind their own lists, and the create menu offers only the editorial types.
