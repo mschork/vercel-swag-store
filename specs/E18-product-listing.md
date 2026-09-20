@@ -111,14 +111,14 @@ The seed script writes one intro per category the API returns, keyed by slug, wi
 
 Slice 1
 
-- [ ] Build output lists `/products` and every `/products/category/<slug>` as prerendered paths; the header's cart badge is their only dynamic hole.
-- [ ] `/products` renders every product the API returns; a category page only its own; counts match.
-- [ ] Chips navigate without JavaScript; the active chip is marked and in view; the row scrolls on a phone without the page scrolling sideways.
-- [ ] The sort re-orders the DOM, is announced, and is absent without JavaScript.
+- [x] Build output lists `/products` and every `/products/category/<slug>` as prerendered paths; the header's cart badge is their only dynamic hole.
+- [x] `/products` renders every product the API returns; a category page only its own; counts match.
+- [x] Chips navigate without JavaScript; the active chip is marked and in view; the row scrolls on a phone without the page scrolling sideways.
+- [x] The sort re-orders the DOM, is announced, and is absent without JavaScript.
 - [ ] Unknown category 404s; an empty category shows the empty state.
-- [ ] Header shows Home, Products, Search with the glyph, and fits at 320px; "View all" and the breadcrumb point at the listing.
-- [ ] Sitemap lists `/products` and every category page.
-- [ ] No regression in the home, search or favourites grids.
+- [x] Header shows Home, Products, Search with the glyph, and fits at 320px; "View all" and the breadcrumb point at the listing.
+- [x] Sitemap lists `/products` and every category page.
+- [x] No regression in the home, search or favourites grids.
 
 Slice 2
 
