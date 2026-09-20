@@ -14,7 +14,7 @@ Ids contain no dots. A dot makes everything before it a document path, which cha
 
 ### Mirrors
 
-- `category`: `apiSlug` (string, `_id` is `category-<apiSlug>`), `name`, `syncedAt`, `missing` (boolean). All read only.
+- `category`: mirrored and read only: `apiSlug` (string, `_id` is `category-<apiSlug>`), `name`, `syncedAt`, `missing` (boolean). Editorial: `intro` (text, at most 200 characters), shown on the category's product listing (E18).
 - `product`: mirrored and read only: `apiId` (string, `_id` is `product-<apiId>`), `slug`, `name`, `category` (reference to `category`), `price` (cents), `featured`, `image` (the API's first photo as a URL, for the document preview), `syncedAt`, `missing`. Editorial: `extendedDescription` (Portable Text), `care` (Portable Text), `gallery[]` (image with required alt, hotspot), `faqs[]` (references to `faq`).
 
 ### Editorial
