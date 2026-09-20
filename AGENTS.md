@@ -63,6 +63,7 @@ working/              local-only documents (unredacted API reference, notes); gi
 - Tailwind v4 with tokens in `app/globals.css` under `@theme`; no inline colour values in components.
 - Components under `components/ui` are shadcn-generated and may be edited; components under `components/` are ours.
 - Tests: Vitest files next to the code as `*.test.ts`; Playwright under `apps/store/e2e`.
+- Comments: a doc block says what the symbol is, then only the constraint the code cannot show. Over six lines needs a reason. Present tense; no epic tags, no history, no rejected alternatives; rationale that needs more room goes in `docs/adr/`.
 - Commit messages: `E0N: imperative summary`.
 
 ## When unsure
