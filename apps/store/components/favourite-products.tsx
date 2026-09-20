@@ -7,15 +7,12 @@ import { favouriteProducts } from '@/lib/sanity/favourites'
 const MAX_FAVOURITES = 4
 
 /**
- * The products testimonials name most (E09). Sanity ranks them, counting
- * published entries per product, and the API supplies every fact on the card,
- * so a product the API has dropped never appears. Both reads are cached and
+ * The products testimonials name most. Sanity ranks them, counting published
+ * entries per product, and the API supplies every fact on the card, so a
+ * product the API has dropped never appears. Both reads are cached and
  * tagged, so this stays part of the static shell and a published entry
- * refreshes it.
- *
- * No testimonials means no section at all: the page then looks exactly
- * as it did before this existed. The cart page renders the same row and passes
- * the products already in the cart as `exclude`.
+ * refreshes it. Renders nothing without testimonials. The cart page renders
+ * the same row and passes the products already in the cart as `exclude`.
  */
 export async function FavouriteProducts({
   heading,

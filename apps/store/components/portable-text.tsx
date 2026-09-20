@@ -6,17 +6,12 @@ import Link from 'next/link'
 
 /**
  * Sanity rich text as the store renders it. The schema allows paragraphs,
- * bold, italic and links (E08), and this renders exactly that set: anything
- * else an editor smuggles in through the API is ignored rather than rendered
- * as raw markup.
+ * bold, italic and links, and this renders exactly that set: anything else in
+ * the API's response is ignored rather than rendered as raw markup.
  *
  * Internal links use `Link` so they navigate on the client; external ones get
- * the usual safety attributes.
- *
- * The paragraphs take the width they are given: whoever renders the text owns
- * its measure, so a heading or a rule beside it is never wider than the text.
- * Line breaks are the browser's to balance; where `text-wrap: pretty` is not
- * supported the text wraps as before.
+ * the usual safety attributes. The paragraphs take the width they are given,
+ * so whoever renders the text owns its measure.
  */
 const components: PortableTextComponents = {
   block: {

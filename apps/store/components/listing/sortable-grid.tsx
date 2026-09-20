@@ -20,8 +20,8 @@ const subscribe = () => () => {}
 /**
  * Re-orders cards the server already rendered (specs/E18-product-listing.md).
  * The list items move in the DOM, never with CSS `order`, so reading order,
- * tab order and visual order stay one thing. The choice is component state on
- * purpose: a sort is a view of the products on this page, not another page.
+ * tab order and visual order stay one thing. The choice is component state: a
+ * sort is a view of the products on this page, not another page.
  *
  * The select exists only after hydration, so without JavaScript there is no
  * control that does nothing. Its row is always rendered, with the count in it,

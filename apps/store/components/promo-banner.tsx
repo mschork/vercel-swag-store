@@ -18,9 +18,7 @@ const RESERVED_BOX =
  * and a line that does not fit scrolls (`PromoMarquee`). `getPromotion` is
  * never cached and this renders inside `<Suspense>` in the root layout, so it
  * is the one dynamic hole every page has. Without a promotion, and after a
- * failed call, the reserved box stays empty so nothing below it moves. The box
- * is accent-coloured in every state, so the band holds its colour while the
- * strip loads.
+ * failed call, the reserved box stays empty so nothing below it moves.
  */
 export async function PromoBanner() {
   const promotion = await loadOptional('PromoBanner: promotion', getPromotion)

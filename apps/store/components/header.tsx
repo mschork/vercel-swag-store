@@ -15,7 +15,7 @@ type NavItem = {
   icon?: ReactNode
 }
 
-/** Drawn like the cart glyph: 24px box, 1.5 stroke, round caps. Decorative; the label names the link. */
+/** Decorative; the link's label names it. */
 const SearchGlyph = (
   <svg
     aria-hidden="true"
@@ -45,11 +45,10 @@ const NAV: readonly NavItem[] = [
 ]
 
 /**
- * With three links the row is 2px too wide at 320px, so below sm a link with
- * a glyph shows the glyph alone; the label stays in the DOM as its name. The
- * glyph is inline and nudged onto the text, never a flex item: an inline-flex
- * wrapper takes its baseline from the SVG and lifts the word above its
- * neighbours.
+ * Below sm a link with a glyph shows the glyph alone; the label stays in the
+ * DOM as its name. The glyph is inline and nudged onto the text, never a flex
+ * item: an inline-flex wrapper takes its baseline from the SVG and lifts the
+ * word above its neighbours.
  */
 const navLabel = ({ icon, label }: NavItem) =>
   icon ? (
@@ -72,12 +71,10 @@ function NavList({ children }: { children: (item: NavItem) => ReactNode }) {
 }
 
 /**
- * Full width and sticky (E10); the content aligns to the column. The nav sits
- * in a Suspense boundary because `NavLink` reads `usePathname()`. On static
- * routes the pathname is known at prerender and the boundary resolves in the
- * shell. On the fallback shell of a dynamic route (a product slug not listed
- * at build) it is not, and without the boundary the build fails; there the
- * plain links are prerendered and the current-page marker streams in.
+ * Full width and sticky; the content aligns to the column. The nav sits in a
+ * Suspense boundary because `NavLink` reads `usePathname()`, which is unknown
+ * at prerender on a dynamic route's fallback shell; without the boundary the
+ * build fails.
  */
 export function Header() {
   return (

@@ -10,15 +10,9 @@ const STEP_BUTTON =
 /**
  * A native number input between minus and plus buttons. The input carries
  * `name`, `min`, `max` and `required`, so the form submits it and the browser
- * enforces the range even before hydration. With JavaScript the shown value is
- * always clamped to the range (only an empty field is left alone while typing,
- * and blur fills it with the minimum), the buttons disable at the bounds, and a
- * polite live region announces the value, because focus stays on the button
- * that changed it.
- *
- * With `onCommit` the stepper saves as it goes (the cart rows): a minus or plus
- * click commits at once, a typed value on blur or Enter, and a value is never
- * committed twice in a row.
+ * enforces the range before hydration. With JavaScript the buttons disable at
+ * the bounds and a polite live region announces the value, because focus stays
+ * on the button that changed it. With `onCommit` the stepper saves as it goes.
  */
 export function QuantityStepper({
   name,
