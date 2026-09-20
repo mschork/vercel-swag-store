@@ -14,8 +14,9 @@ export interface ValidatedClusters {
 }
 
 /**
- * Nothing the model says is written unchecked: every gap id must have been
- * claimed, every slug must exist today, and no idea may repeat a product.
+ * Checks the model's output before anything is written: every gap id must
+ * have been claimed, every slug must exist today, and no idea may repeat a
+ * product. Anything else is dropped.
  */
 export function validateClusters(output: ModelOutput, context: ValidationContext): ValidatedClusters {
   const claimed = new Set(context.gapIds)

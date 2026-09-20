@@ -1,13 +1,13 @@
 import { documentEventHandler } from '@sanity/functions'
 
 /**
- * Wakes the demand analysis when a search gap matters (E13, slice 4). The
- * blueprint's filter decides when: a `new` gap whose count just changed and
- * has reached the threshold. This handler only makes the call.
+ * Wakes the demand analysis when a search gap matters. The blueprint's filter
+ * decides when: a `new` gap whose count just changed and has reached the
+ * threshold. This handler only makes the call.
  *
- * It fires on every increment past the threshold, not just the crossing, so a
- * lost call heals itself on the next search; the workflow's lock makes the
- * extra calls free. It writes nothing, so it can never trigger itself.
+ * It fires on every increment past the threshold, so a lost call is made again
+ * on the next search, and the workflow's lock absorbs the extra calls.
+ * Read-only, so its own run cannot match the filter.
  *
  * `STORE_URL` and `DEMAND_ANALYSE_SECRET` are set with
  * `sanity functions env add gap-threshold <KEY> <value>`, never in the
