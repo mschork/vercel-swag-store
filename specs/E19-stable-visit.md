@@ -80,7 +80,9 @@ Pages cannot set cookies, so the visit is opened by `POST /api/visit`, called on
 ### Reading it
 
 - `lib/visit/cookie.ts`, server-only: `getVisit()`, `setVisit()`, `clearVisit()`. Same split as `lib/cart/cookie.ts`.
-- `lib/visit/remaining.ts`, pure and safe for client components: `remaining(draw, inCart)`, `availability(remaining)` returning the existing `StockStatus` shape from `lib/stock-status.ts`, which now takes a count instead of the API's `StockInfo`. The low-stock threshold is a named constant of 5, which is where the API's own `lowStock` flag turns over.
+- `lib/stock-status.ts` keeps everything a stock line, Offer and button derive from a count: `stockStatus(draw, inCart)` replaces the version that took the API's `StockInfo`, and `LOW_STOCK_THRESHOLD` is 5, which is where the API's own `lowStock` flag turns over. It stays one module rather than gaining a second beside it.
+- `lib/visit/limits.ts`, pure, with no zod and nothing server-only, so the cart page can say what the actions enforce: `exceedsDraw(quantity, draw)` and `tooMany(draw)`.
+- `lib/visit/draw.ts`, server-only: `drawFor(productId)`, the count the actions check against. It draws and stores a product the visit does not cover yet, and answers `null` when there is nothing to enforce: no visit at all, which happens only with JavaScript off, or a draw that failed.
 - `lib/visit/open.ts`, client-safe: the typed `openVisit()` and `resetVisit()` that call the handler. No `fetch` in a component.
 - `lib/api/stock.ts` and `lib/api/promotions.ts` are unchanged: never cached, one call each. Only their callers change.
 
@@ -89,9 +91,9 @@ Pages cannot set cookies, so the visit is opened by `POST /api/visit`, called on
 The pattern is `CartCountProvider` again.
 
 - `VisitProvider` wraps the layout beside `CartCountProvider`. It holds `stock` and `inCart`, both keyed by product id, and the pinned promotion. It keeps no data of its own.
-- `VisitSeed` is a server component in the root layout inside `<Suspense fallback={null}>`. It runs on a full load and on `refresh()`, not on a client-side navigation, because the root layout is preserved across those; the provider is therefore the client's source of truth and a seed that finds no cookie never resets it. It reads the visit cookie and the cart through the request-memoized `loadCart`, so it adds no API call to a request that renders the badge. Inside an action's response it skips the cart, as the badge does. It renders a client leaf that seeds the provider and, when the cookie is absent or lacks a catalogue id, calls `openVisit()` once. The guard that keeps that to one call is a ref, because the repo's `react-hooks/set-state-in-effect` rule rejects a `setState` in an effect body.
+- `VisitSeed` is a server component in the root layout inside `<Suspense fallback={null}>`. It runs on a full load and on `refresh()`, not on a client-side navigation, because the root layout is preserved across those; the provider is therefore the client's source of truth and a seed that finds no cookie never resets it. It reads the visit cookie and the cart through the request-memoized `loadCart`, so it adds no API call to a request that renders the badge. Inside an action's response it skips the cart, as the badge does. It compares the visit against the cached catalogue and renders a client leaf that seeds the provider and, when the cookie is absent or the visit does not cover every product, calls `openVisit()` once. The guard that keeps that to one call is a ref, because the repo's `react-hooks/set-state-in-effect` rule rejects a `setState` in an effect body.
 - Cart actions answer with the touched line as well as the count: `{ ok: true, totalItems, line: { productId, quantity } }`. The provider applies it, so remaining moves at once and without a read. The result still never carries the token or the other lines.
-- `useRemaining(productId)` returns `number | undefined`; `undefined` means the visit has not arrived.
+- `useProductStock(productId, serverDraw?)` returns the product's draw and how many of it the cart holds. The draw is `undefined` before the visit arrives and `null` when the visit has no count for it; `serverDraw` is what the server read in this render, so a page that knows the count paints it without waiting for hydration.
 
 The shell stays prerendered. The layout already reads a cookie inside a boundary for the badge; this is a second read of the same kind.
 
@@ -140,8 +142,8 @@ Visible result: an out-of-stock product is badged wherever it appears, and the c
 
 Visible result: adding from the row puts the product in the cart, and the refresh replaces its card with the next available favourite.
 
-- `ProductGrid` gains an optional per-card slot rendered in the list item after the card, outside the link. Only `CartContents` uses it.
-- `QuickAddForm`: a native `<form action>` posting `addToCart` with the product id and a quantity of 1, a small button, the E16 spinner, and an error line. No stepper. It needs no stock read of its own, because the row holds only products with remaining above 0 and the action enforces the draw.
+- `ProductGrid` gains an optional `slot(product)` rendered in the list item after the card, outside the link, so the card stays one link and no button sits inside it. `FavouriteProducts` forwards it and only `CartContents` passes one.
+- `QuickAddForm`: a native `<form action>` posting `addToCart` with the product id and a quantity of 1, an outline button the width of the card, the E16 spinner, and an error line. No stepper. It needs no stock read of its own, because the row holds only products with remaining above 0 and the action enforces the draw. It shares `AddingCount` with the product page's form, so both count the badge up and the stock down the same way.
 - The added card leaves the row when `refresh()` lands, and the next available favourite takes its place. The swap is not animated; React's view transitions are still experimental in Next 16.
 
 ## Documents
@@ -159,19 +161,19 @@ These land on `main`, each with the slice that makes it true, so no document des
 
 ## Acceptance criteria
 
-- [ ] A product's stock is the same on every reload and on every surface for 24 hours, then is drawn again.
-- [ ] The banner shows the same promotion for the whole visit.
-- [ ] Every count in the visit is an answer from `GET /products/{id}/stock` and the promotion an answer from `GET /promotions`; nothing is generated by the store.
-- [ ] A new visitor costs one stock call per product and one promotion call, once. No page render calls either endpoint.
-- [ ] Build output marks every page as a partial prerender, as before.
-- [ ] No cart request and no stock request originates from the browser; the browser calls only `/api/visit`.
-- [ ] A cart line never exceeds its draw, whatever is posted to the actions.
-- [ ] An add within the draw makes the same number of cart calls as before this epic.
-- [ ] An order reduces the visitor's inventory by its lines.
-- [ ] An out-of-stock product is badged on the home, listing, search and favourites grids, and the favourites row on `/cart` never shows one.
-- [ ] Remaining follows every cart action without a cart read, including a failed add.
-- [ ] The footer's reset draws a fresh visit without a reload of its own.
-- [ ] With the `visit` cookie set, the e2e suite has no stock-dependent skip and no masked stock line.
+- [x] A product's stock is the same on every reload and on every surface for 24 hours, then is drawn again.
+- [x] The banner shows the same promotion for the whole visit.
+- [x] Every count in the visit is an answer from `GET /products/{id}/stock` and the promotion an answer from `GET /promotions`; nothing is generated by the store.
+- [x] A new visitor costs one stock call per product and one promotion call, once. No page render calls either endpoint.
+- [x] Build output marks every page as a partial prerender, as before.
+- [x] No cart request and no stock request originates from the browser; the browser calls only `/api/visit`.
+- [x] A cart line never exceeds its draw, whatever is posted to the actions.
+- [x] An add within the draw makes the same number of cart calls as before this epic.
+- [x] An order reduces the visitor's inventory by its lines.
+- [x] An out-of-stock product is badged on the home, listing, search and favourites grids, and the favourites row on `/cart` never shows one.
+- [x] Remaining follows every cart action without a cart read, including a failed add.
+- [x] The footer's reset draws a fresh visit without a reload of its own.
+- [x] With the `visit` cookie set, the e2e suite has no stock-dependent skip and no masked stock line.
 
 ## Out of scope
 
