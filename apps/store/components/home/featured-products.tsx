@@ -43,7 +43,7 @@ export async function FeaturedProducts({
           {heading}
         </h2>
         <Link
-          href="/search"
+          href="/products"
           className="text-sm text-fg-secondary underline-offset-4 hover:text-fg hover:underline"
         >
           {linkLabel}
