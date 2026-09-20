@@ -8,9 +8,9 @@ import { expect, test, type Page } from '@playwright/test'
  */
 
 /**
- * The API's cart endpoints answer in two to three seconds each, and a first
- * add is two of them, so cart assertions wait far longer than Playwright's
- * five-second default and each flow gets a generous test budget.
+ * The cart API is slow (`lib/api/cart.ts`) and a first add is two calls, so
+ * cart assertions wait far longer than Playwright's five-second default and
+ * each flow gets a generous test budget.
  */
 const SAVED = { timeout: 30_000 }
 

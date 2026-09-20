@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test'
  * Smoke for the home page against a production build. The promo outage case
  * (API unreachable, page renders without the banner) is a server-side
  * condition this test cannot create; it is verified by starting the server
- * with an unreachable `API_BASE_URL` (see the E04 PR).
+ * with an unreachable `API_BASE_URL`.
  */
 test('home renders the hero, the featured grid and at least six product cards', async ({
   page,

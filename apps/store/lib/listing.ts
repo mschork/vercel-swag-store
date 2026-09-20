@@ -44,7 +44,7 @@ export function sortProducts<T extends { price: number }>(
   return copy.sort((a, b) => direction * (a.price - b.price))
 }
 
-/** "1 product", "28 products": the count is the length of what is rendered (rule 6). */
+/** "1 product", "12 products": the count is the length of what is rendered. */
 export function productCountLabel(count: number): string {
   return count === 1 ? '1 product' : `${count} products`
 }

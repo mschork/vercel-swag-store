@@ -6,15 +6,17 @@ import type { Cart } from './types'
 /**
  * Cart calls. Live data, never cached. The token is an explicit argument so
  * this module never touches `cookies()` and stays unit-testable; cookie
- * handling lives in `app/cart/actions.ts` (E06). Nothing here retries: every
- * cart call is a mutation or is cheap enough to fail fast.
+ * handling lives in `app/cart/actions.ts`. Every call is single-attempt:
+ * a write must not repeat, and a read is cheap enough to fail fast.
  *
  * The API's `{itemId}` path segment is the product id, not a line-item id.
  */
 
 /**
- * The cart namespace answers in 1.5 to 3 s (specs/callout.md), so its calls
- * wait longer than the client's default before giving up. A write aborted
+ * The cart namespace is the slow one: it answers in seconds where the rest of
+ * the API answers in well under one, so its calls wait longer than the
+ * client's default before giving up. Everything that waits on a cart call,
+ * in the store and in the e2e tests, is sized from this. A write aborted
  * early can still land on the API while the store reports a failure.
  */
 export const CART_TIMEOUT_MS = 10_000

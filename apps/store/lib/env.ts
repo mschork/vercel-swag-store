@@ -8,7 +8,6 @@ import { parseStudioOrigins } from './security-headers'
  * imports this module at startup so a missing or malformed variable stops the
  * server before the first request instead of failing inside a render.
  *
- * Sanity variables are added here by E09; E02 validates only what it uses.
  * `API_BYPASS_TOKEN` stays required even while the API is not enforcing
  * Deployment Protection: the documented contract is that it is.
  */
