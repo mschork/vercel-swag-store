@@ -49,7 +49,7 @@ A category the API lists but that holds no products keeps its chip.
 
 ### Grid
 
-`ProductGrid` gains a `listing` variant: row cards below md, 3 columns from md, 4 from lg, with the matching `sizes`. `preloadCount` covers the first row, because on these pages the grid is the largest paint. The grid's list markup is split so `sortable-grid` can own the `<ul>` while `ProductGrid` keeps owning column classes and `sizes`.
+`ProductGrid` gains a `listing` variant: 2 columns below md, 3 from md, 4 from lg, with the matching `sizes`. It is the one variant that is not row cards below md: rows suit five search results, but a whole catalogue of them is a long, half-empty scroll. `ProductCard` takes a `shape` prop for this, `responsive` (rows below md, the default) or `card` (the grid card at every width), and the variant sets it. `preloadCount` covers the first row, because on these pages the grid is the largest paint. The grid's list markup is split so `sortable-grid` can own the `<ul>` while `ProductGrid` keeps owning column classes and `sizes`.
 
 ### Empty category
 
