@@ -25,12 +25,13 @@
   --radius-sm: 4px;
   --radius-lg: 8px;
 
-  /* E10 type scale: 14 / 16 body, 20 / 24 / 32 / 48 headings. Tailwind's
-   * defaults cover all but the 32, which replaces the default 30. */
+  /* Type scale: 14 / 16 body, 20 / 24 / 32 / 48 headings. Tailwind's defaults
+   * cover all but the 32, which replaces the default 30. */
   --text-3xl: 2rem;
   --text-3xl--line-height: 2.5rem;
 
-  /* The promo strip's marquee; `--marquee-duration` is set per strip from the text's width. */
+  /* The promo strip's marquee; `--marquee-duration` is set per strip from
+   * the text's width. */
   --animate-marquee: marquee var(--marquee-duration, 20s) linear infinite;
   @keyframes marquee {
     to {
@@ -44,10 +45,9 @@
 
 /*
  * shadcn's semantic names, defined from the tokens above so generated
- * components under components/ui work unedited and follow the theme. shadcn's
- * own `--color-accent` (a hover surface) is deliberately not aliased: `accent`
- * here is the store's one accent colour. No `.dark` variant: the theme is the
- * media query alone (specs/callout.md).
+ * components under components/ui work unedited and follow the theme. `accent`
+ * is the store's accent colour; shadcn's hover-surface `--color-accent` is
+ * unused. Dark mode follows the media query.
  */
 @theme inline {
   --color-background: var(--color-bg);
@@ -95,10 +95,10 @@
 }
 
 /*
- * The FAQ disclosures on a product page (E09). `details` toggles instantly on
- * its own; `::details-content` is what lets the closed state have a height to
- * animate from. Browsers without it, and anyone who asks for less motion, get
- * the plain toggle, which was always the fallback.
+ * The FAQ disclosures on a product page. `details` toggles on its own;
+ * `::details-content` is what lets the closed state have a height to animate
+ * from. Browsers without it, and anyone who asks for less motion, get the
+ * plain toggle.
  */
 @media (prefers-reduced-motion: no-preference) {
   @supports selector(::details-content) {

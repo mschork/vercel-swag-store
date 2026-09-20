@@ -47,7 +47,7 @@ export interface Catalogue {
   categories: PromptCategory[]
 }
 
-/** The whole catalogue through the cached readers, which page with `hasNextPage` (rule 6). */
+/** The whole catalogue through the cached readers, which page with `hasNextPage`. */
 export async function catalogue(): Promise<Catalogue> {
   const [products, categories] = await Promise.all([getAllProducts(), getCategories()])
   return {

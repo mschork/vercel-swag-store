@@ -4,16 +4,10 @@
  * inline scripts instead of using nonces; see
  * `docs/adr/0001-csp-unsafe-inline-scripts.md` for why.
  *
- * `X-Robots-Tag` rides along because it applies to exactly the same route set:
- * the store is a demo of invented products, so nothing it serves belongs in a
- * search index. A header, unlike a meta tag, also covers `sitemap.xml` and the
- * Open Graph image routes (specs/callout.md). `allowIndexing` drops it; it
- * exists only so a Lighthouse run can score SEO without the header
- * (`ALLOW_INDEXING=true` at build time), and is off everywhere else.
- *
- * `frame-ancestors` is `'none'` unless `PRESENTATION_STUDIO_ORIGINS` names the
- * Studios that may frame the store for live editing (E17). Nothing else in the
- * policy moves: the overlay talks to the Studio by `postMessage`, not to Sanity.
+ * `X-Robots-Tag` rides along because it covers the same route set, including
+ * `sitemap.xml` and the Open Graph image routes; `allowIndexing` drops it so a
+ * Lighthouse run can score SEO. `frame-ancestors` is `'none'` unless
+ * `PRESENTATION_STUDIO_ORIGINS` names the Studios that may frame the store.
  */
 
 /** Hosts that may serve product images; `next.config.ts` derives `remotePatterns` from it. */
@@ -30,7 +24,6 @@ export type SecurityHeaderOptions = {
   /**
    * Adds `'unsafe-eval'` to `script-src`. Development only: React's dev build
    * uses `eval()` to reconstruct server stack traces and warns without it.
-   * Production React never calls `eval()`, so the directive stays out there.
    */
   allowEval: boolean
   /** Leaves out `X-Robots-Tag: noindex`. For a measurement run only. */
@@ -40,12 +33,11 @@ export type SecurityHeaderOptions = {
 }
 
 /**
- * `PRESENTATION_STUDIO_ORIGINS`: comma-separated, exact origins. A wildcard is
- * refused on purpose (`https://*.vercel.app` would let any Vercel site frame
- * the store), and so is anything with a path, because `frame-ancestors`
- * matches origins. Throws with the offending entry, which is never a secret.
- * `next.config.ts` and `lib/env.ts` both call it, so a bad value stops the
- * build and the server alike.
+ * `PRESENTATION_STUDIO_ORIGINS`: comma-separated, exact origins. No wildcards
+ * (`https://*.vercel.app` would let any Vercel site frame the store) and no
+ * paths, because `frame-ancestors` matches origins. Throws with the offending
+ * entry, which is never a secret. `next.config.ts` and `lib/env.ts` both call
+ * it, so a bad value stops the build and the server alike.
  */
 export function parseStudioOrigins(raw: string | undefined): string[] {
   const entries = (raw ?? '')

@@ -74,7 +74,7 @@ function form(entries: Record<string, string>): FormData {
 const notFound = (message: string) =>
   new ApiError(404, 'NOT_FOUND', message, '/cart')
 
-/** The target of the redirect `run` throws, read from Next's redirect digest. */
+/** The target of the redirect `run` throws, from Next's redirect digest. */
 async function redirectTarget(run: () => Promise<unknown>): Promise<string> {
   try {
     await run()

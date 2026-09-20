@@ -15,8 +15,8 @@ export async function getStoreConfig(): Promise<StoreConfig> {
 }
 
 /**
- * Not cached: a health check that is served from cache reports nothing.
- * Used by the opt-in integration test; no page renders it (see specs/callout.md).
+ * Live on every call, so it reports the API's current health. Used by the
+ * opt-in integration test; no page renders it.
  */
 export async function getHealth(): Promise<Health> {
   const { data } = await fetchApi('/health', { cache: 'live', schema: HealthSchema })

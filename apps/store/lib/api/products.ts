@@ -7,7 +7,7 @@ import { ApiError, fetchApi } from './client'
 import { ProductListMetaSchema, ProductSchema } from './schemas'
 import type { Product, ProductListResult } from './types'
 
-/** Query parameters of `GET /products`. `category` is any string (rule 6: no hard-coded category list). */
+/** Query parameters of `GET /products`. `category` is any string the API accepts. */
 export interface ProductListParams {
   page?: number
   limit?: number
@@ -81,14 +81,11 @@ export async function getFeaturedProducts({
  * One product by id or slug (the API accepts either), or `null` when the API
  * does not know it. Pages turn `null` into `notFound()`.
  *
- * The 404 is mapped inside the cached scope on purpose: an error thrown out of
- * a `"use cache"` function reaches the caller in a production build as a
- * generic error carrying only a digest, so the caller cannot tell a missing
- * product from an outage. A found product keeps the `catalog` lifetime; a
- * `null` gets the short `minutes` profile, so a product the API gains later
- * appears within about a minute, a mistyped slug does not occupy the cache for
- * long, and repeated hits on one bad URL still spare the API. Any other failure
- * is thrown and never cached.
+ * The 404 is mapped inside the cached scope because an error thrown out of a
+ * `"use cache"` function reaches the caller in production as a digest, which
+ * cannot be told apart from an outage. A found product keeps the `catalog`
+ * lifetime; a `null` gets the short `minutes` profile. Any other failure is
+ * thrown and never cached.
  */
 export async function findProduct(idOrSlug: string): Promise<Product | null> {
   'use cache'
@@ -133,8 +130,8 @@ const productPath = (idOrSlug: string) =>
 
 /**
  * The whole catalogue, for the sitemap and `getAllProductSlugs`. Pages through
- * the API with the largest page size until `hasNextPage` is false (rule 6: no
- * assumed product count); cached so every caller shares one entry.
+ * the API with the largest page size until `hasNextPage` is false; cached so
+ * every caller shares one entry.
  */
 export async function getAllProducts(): Promise<Product[]> {
   'use cache'
@@ -153,9 +150,9 @@ export async function getAllProducts(): Promise<Product[]> {
 }
 
 /**
- * One category's products, in the API's order, for the product listing (E18).
- * A plain filter over the cached `getAllProducts`, so every listing page shares
- * one cache entry; the category on each product is the API's own (rule 1).
+ * One category's products, in the API's order, for the product listing. A
+ * plain filter over the cached `getAllProducts`, so every listing page shares
+ * one cache entry; the category on each product is the API's own.
  */
 export async function getProductsInCategory(slug: string): Promise<Product[]> {
   const products = await getAllProducts()
