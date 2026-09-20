@@ -7,12 +7,56 @@ import { Logo } from './logo'
 import { NavLink } from './nav-link'
 import { StickyHeader } from './sticky-header'
 
-type NavItem = { href: '/' | '/search'; label: string }
+type NavItem = {
+  href: '/' | '/products' | '/search'
+  label: string
+  /** Also current on every path under this prefix. */
+  currentUnder?: string
+  icon?: ReactNode
+}
 
+/** Drawn like the cart glyph: 24px box, 1.5 stroke, round caps. Decorative; the label names the link. */
+const SearchGlyph = (
+  <svg
+    aria-hidden="true"
+    viewBox="0 0 24 24"
+    width="18"
+    height="18"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="shrink-0"
+  >
+    <circle cx="10.5" cy="10.5" r="6.5" />
+    <path d="m20 20-4.9-4.9" />
+  </svg>
+)
+
+/**
+ * "Products" stays current on the category pages of the listing, not on a
+ * product page, which is a step further in (specs/E18-product-listing.md).
+ */
 const NAV: readonly NavItem[] = [
   { href: '/', label: 'Home' },
-  { href: '/search', label: 'Search' },
+  { href: '/products', label: 'Products', currentUnder: '/products/category/' },
+  { href: '/search', label: 'Search', icon: SearchGlyph },
 ]
+
+/**
+ * With three links the row is 2px too wide at 320px, so below sm a link with
+ * a glyph shows the glyph alone; the label stays in the DOM as its name.
+ */
+const navLabel = ({ icon, label }: NavItem) =>
+  icon ? (
+    <span className="inline-flex items-center gap-1.5">
+      {icon}
+      <span className="max-sm:sr-only">{label}</span>
+    </span>
+  ) : (
+    label
+  )
 
 function NavList({ children }: { children: (item: NavItem) => ReactNode }) {
   return (
@@ -42,16 +86,20 @@ export function Header() {
             <Suspense
               fallback={
                 <NavList>
-                  {({ href, label }) => (
-                    <Link href={href} className="text-fg-secondary hover:text-fg">
-                      {label}
+                  {(item) => (
+                    <Link href={item.href} className="text-fg-secondary hover:text-fg">
+                      {navLabel(item)}
                     </Link>
                   )}
                 </NavList>
               }
             >
               <NavList>
-                {({ href, label }) => <NavLink href={href}>{label}</NavLink>}
+                {(item) => (
+                  <NavLink href={item.href} currentUnder={item.currentUnder}>
+                    {navLabel(item)}
+                  </NavLink>
+                )}
               </NavList>
             </Suspense>
           </nav>

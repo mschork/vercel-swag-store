@@ -152,6 +152,16 @@ export async function getAllProducts(): Promise<Product[]> {
   return products
 }
 
+/**
+ * One category's products, in the API's order, for the product listing (E18).
+ * A plain filter over the cached `getAllProducts`, so every listing page shares
+ * one cache entry; the category on each product is the API's own (rule 1).
+ */
+export async function getProductsInCategory(slug: string): Promise<Product[]> {
+  const products = await getAllProducts()
+  return products.filter((product) => product.category === slug)
+}
+
 /** Every product slug, for `generateStaticParams`; a plain map over the cached `getAllProducts`. */
 export async function getAllProductSlugs(): Promise<string[]> {
   const products = await getAllProducts()

@@ -24,6 +24,7 @@ import { findProduct, getAllProductSlugs } from '@/lib/api/products'
 import { getStoreConfig } from '@/lib/api/store'
 import { PRODUCT_HEADINGS_FALLBACK, type ProductHeadings } from '@/lib/content/fallbacks'
 import { publicEnv } from '@/lib/env.public'
+import { categoryPath } from '@/lib/listing'
 import { openGraphDefaults } from '@/lib/metadata'
 import {
   getTestimonialsForProduct,
@@ -118,7 +119,7 @@ export default async function ProductPage({ params }: Props) {
     { name: 'Home', href: '/' },
     {
       name: categoryName,
-      href: `/search?category=${encodeURIComponent(product.category)}`,
+      href: categoryPath(product.category),
     },
   ]
   const crumbs = [
