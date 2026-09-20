@@ -9,8 +9,28 @@ Products, categories and store configuration as the API reports them. Cached and
 _Avoid_: Static data, master data
 
 **Live data**:
-Stock, promotion and cart. Fetched on every request and never cached, because the API changes them per request or per visitor.
+Stock, promotion and cart. Never cached, because the API changes them per request or per visitor. The cart is read per request; stock and the promotion are read once per visit and held in the visit.
 _Avoid_: Dynamic data, realtime data
+
+**Visit**:
+What the store remembers about one visitor for 24 hours, held in the `visit` cookie: their stock draws and their pinned promotion. It exists because the API redraws both on every request, so without it no number could be shown twice (`docs/adr/0006-the-stable-visit.md`).
+_Avoid_: Session, user state, inventory cookie
+
+**Stock draw**:
+One answer from the stock endpoint for one product. The store asks once per product per visit and keeps it.
+_Avoid_: Stock level, stock count, inventory number
+
+**Inventory**:
+The visit's stock draws, keyed by product id.
+_Avoid_: Stock map, warehouse
+
+**Remaining**:
+A product's draw minus the quantity of it in the visitor's cart. This is the number every surface shows and enforces, so emptying the cart puts the stock back.
+_Avoid_: Available, free stock, left
+
+**Pinned promotion**:
+The one promotion a visit holds, chosen the first time the store asks the promotions endpoint in that visit. The API rotates four of them per request; the banner shows this one all visit.
+_Avoid_: Current promotion, active offer
 
 **Shell**:
 The part of a route that is prerendered at build and identical for every visitor: header, footer, page frame and cached catalogue content.

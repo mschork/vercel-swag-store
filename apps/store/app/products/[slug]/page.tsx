@@ -15,10 +15,8 @@ import {
   Testimonials,
 } from '@/components/product/enrichment'
 import { ProductGallery } from '@/components/product/gallery'
-import {
-  StockAndCart,
-  StockSkeleton,
-} from '@/components/product/stock-and-cart'
+import { StockAndCart } from '@/components/product/stock-and-cart'
+import { StockSkeleton } from '@/components/product/stock-skeleton'
 import { findCategory } from '@/lib/api/categories'
 import { findProduct, getAllProductSlugs } from '@/lib/api/products'
 import { getStoreConfig } from '@/lib/api/store'

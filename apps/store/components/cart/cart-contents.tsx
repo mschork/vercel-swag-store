@@ -7,7 +7,9 @@ import { FAVOURITES_FALLBACK } from '@/lib/content/fallbacks'
 import { loadCart } from '@/lib/cart/get-cart'
 import { toLines } from '@/lib/cart/lines'
 import { getHomePage } from '@/lib/sanity/content'
+import { getVisit } from '@/lib/visit/cookie'
 import { CartView } from './cart-view'
+import { QuickAddForm } from './quick-add-form'
 import { EmptyCart } from './empty-cart'
 
 /**
@@ -20,31 +22,48 @@ import { EmptyCart } from './empty-cart'
  * cart gets it unfiltered; a cart with lines gets it without the products
  * already in it. Only the exclusion is dynamic: the ranking and the catalogue
  * are cached.
+ *
+ * The visitor's draws travel with the lines, so the first paint already caps
+ * each stepper and says which line holds more than there is. They also decide
+ * the favourites row: it offers only what the visitor could actually buy.
  */
 export async function CartContents() {
-  const result = await loadCart('Cart')
+  const [result, visit] = await Promise.all([loadCart('Cart'), getVisit()])
   if (!result) return <CartUnavailable />
   const { cart } = result
   const items = cart?.items ?? []
+  const draws = Object.fromEntries(
+    items.map((item) => [item.productId, visit?.stock[item.productId] ?? null]),
+  )
+  // A row that cross-sells something unbuyable wastes the only place on the
+  // page where the visitor is ready to add one more thing.
+  const soldOut = Object.entries(visit?.stock ?? {})
+    .filter(([, count]) => count === 0)
+    .map(([productId]) => productId)
   return (
     <>
       {cart && items.length > 0 ? (
-        <CartView lines={toLines(cart)} currency={cart.currency} />
+        <CartView lines={toLines(cart)} currency={cart.currency} serverDraws={draws} />
       ) : (
         <EmptyCart />
       )}
-      <Favourites exclude={items.map((item) => item.productId)} />
+      <Favourites exclude={[...items.map((item) => item.productId), ...soldOut]} />
     </>
   )
 }
 
-/** The favourites row with the heading the home page document owns. */
+/**
+ * The favourites row with the heading the home page document owns, and an Add
+ * to Cart under each card. This is the one place in the store that sells from
+ * a grid, because it is the one grid that knows what the visitor can buy.
+ */
 async function Favourites({ exclude }: { exclude: readonly string[] }) {
   const content = await getHomePage()
   return (
     <FavouriteProducts
       heading={content?.favourites?.heading || FAVOURITES_FALLBACK.heading}
       exclude={exclude}
+      slot={(product) => <QuickAddForm productId={product.id} name={product.name} />}
     />
   )
 }

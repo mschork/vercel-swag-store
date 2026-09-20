@@ -8,6 +8,8 @@ import { DraftMode } from '@/components/draft-mode'
 import { Footer } from '@/components/footer'
 import { Header } from '@/components/header'
 import { PromoBanner, PromoBannerSkeleton } from '@/components/promo-banner'
+import { VisitProvider } from '@/components/visit/visit-provider'
+import { VisitSeed } from '@/components/visit/visit-seed'
 import { getStoreConfig } from '@/lib/api/store'
 import { getSiteSettingsForMetadata } from '@/lib/sanity/content'
 import { hasImage, sanityImageProps } from '@/lib/sanity/image'
@@ -63,9 +65,10 @@ export const viewport: Viewport = {
 }
 
 /**
- * The promo strip is the shell's one dynamic hole; its box reserves its height
- * so the page never moves when it streams in. `CartCountProvider` holds the
- * badge's count, which actions update without a re-read.
+ * The promo strip's box reserves its height so the page never moves when it
+ * streams in. `CartCountProvider` holds the badge's count and `VisitProvider`
+ * the visitor's stock draws and pinned promotion, both updated by actions
+ * without a re-read.
  */
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
@@ -78,14 +81,20 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
           Skip to content
         </a>
         <CartCountProvider>
-          <Header />
-          <Suspense fallback={<PromoBannerSkeleton />}>
-            <PromoBanner />
-          </Suspense>
-          <main id="main" className="w-full flex-1">
-            {children}
-          </main>
-          <Footer />
+          <VisitProvider>
+            {/* Seeds the visit's stock and promotion; renders nothing. */}
+            <Suspense fallback={null}>
+              <VisitSeed />
+            </Suspense>
+            <Header />
+            <Suspense fallback={<PromoBannerSkeleton />}>
+              <PromoBanner />
+            </Suspense>
+            <main id="main" className="w-full flex-1">
+              {children}
+            </main>
+            <Footer />
+          </VisitProvider>
         </CartCountProvider>
         {/* Draft mode only: nothing for a visitor, not even the script. */}
         <Suspense fallback={null}>

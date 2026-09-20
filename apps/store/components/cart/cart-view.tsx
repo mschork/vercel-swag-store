@@ -2,6 +2,7 @@
 
 import { useEffect, useOptimistic, useState } from 'react'
 import { useCartCount } from '@/components/cart/cart-count'
+import { useVisit } from '@/components/visit/visit-provider'
 import {
   applyDrafts,
   applyLineChange,
@@ -10,6 +11,7 @@ import {
   type Drafts,
   type Line,
 } from '@/lib/cart/lines'
+import { exceedsDraw } from '@/lib/visit/limits'
 import { CartLine } from './cart-line'
 import { CartSummary } from './cart-summary'
 import { EmptyCart } from './empty-cart'
@@ -21,14 +23,22 @@ import { EmptyCart } from './empty-cart'
  * quantities a row shows during its pause before saving. Messages are kept
  * here, keyed by product, because a row removed optimistically unmounts and
  * has to show why if the removal fails.
+ *
+ * Each row's cap is the visitor's draw: what the provider holds, or what the
+ * server read for `serverDraws` until it does. A row above its cap, which
+ * happens when the visit was reset or redrawn while the cart lived on, says so
+ * and keeps Checkout disabled until it is reduced or removed.
  */
 export function CartView({
   lines,
   currency,
+  serverDraws,
 }: {
   lines: Line[]
   currency: string
+  serverDraws: Readonly<Record<string, number | null>>
 }) {
+  const { draw: heldDraw } = useVisit()
   const [optimisticLines, applyChange] = useOptimistic(lines, applyLineChange)
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({})
   const [drafts, setDrafts] = useState<Drafts>({})
@@ -48,6 +58,10 @@ export function CartView({
 
   const shownLines = applyDrafts(optimisticLines, drafts)
   const { totalItems, subtotal } = cartTotals(shownLines)
+  const drawOf = (productId: string) => heldDraw(productId) ?? serverDraws[productId] ?? null
+  const overDrawn = shownLines.some((line) =>
+    exceedsDraw(line.quantity, drawOf(line.productId)),
+  )
 
   useEffect(() => {
     setCartPage(totalItems)
@@ -64,6 +78,7 @@ export function CartView({
             key={line.productId}
             line={line}
             currency={currency}
+            draw={drawOf(line.productId)}
             error={errors[line.productId] ?? null}
             onChange={applyChange}
             onDraft={draft}
@@ -75,6 +90,7 @@ export function CartView({
         totalItems={totalItems}
         subtotal={subtotal}
         currency={currency}
+        blocked={overDrawn}
       />
     </div>
   )

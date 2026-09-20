@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test'
+import { catalogueIds, seedVisit } from './visit'
 
 /**
  * Smoke for the product listing against a production build
@@ -103,4 +104,29 @@ test.describe('without JavaScript', () => {
     await expect(page).toHaveURL('/products/category/hats')
     await expect(page.getByRole('heading', { level: 1, name: 'Hats' })).toBeVisible()
   })
+})
+
+test('cards say when a product is out of stock or nearly gone', async ({
+  page,
+  context,
+}) => {
+  const ids = await catalogueIds(page, context)
+  expect(ids.length).toBeGreaterThan(2)
+  const [soldOut = '', nearlyGone = '', ...rest] = ids
+  await seedVisit(context, {
+    [soldOut]: 0,
+    [nearlyGone]: 3,
+    ...Object.fromEntries(rest.map((id) => [id, 20])),
+  })
+  await page.goto('/products')
+
+  // Exactly the two seeded products are badged, whatever order the listing uses.
+  const badges = page.getByRole('main').getByText(/^(Out of stock|Only \d+ left)$/)
+  await expect(badges).toHaveCount(2)
+  await expect(badges.filter({ hasText: 'Out of stock' })).toHaveCount(1)
+  await expect(badges.filter({ hasText: 'Only 3 left' })).toHaveCount(1)
+
+  // The badge is the client's; the prerendered shell carries no stock at all.
+  const shell = await (await fetch('http://localhost:3000/products')).text()
+  expect(shell).not.toMatch(/Out of stock|Only \d+ left/)
 })

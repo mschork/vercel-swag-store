@@ -19,6 +19,7 @@ import {
 } from '@/lib/cart/coalesce'
 import type { Line, LineChange } from '@/lib/cart/lines'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
+import { exceedsDraw, tooMany } from '@/lib/visit/limits'
 import { cn } from '@/lib/utils'
 
 /**
@@ -26,10 +27,16 @@ import { cn } from '@/lib/utils'
  * only the last value, so going from 1 to 5 is one request; leaving the page
  * during the pause saves at once. The status line is always rendered, so
  * screen readers announce a message when one appears.
+ *
+ * `draw` is what the visit says there is of the product, and caps the stepper.
+ * A line already above it keeps its real quantity in the control, because a
+ * row that silently showed fewer than the cart holds would be a lie; it says
+ * how many there are instead, and the summary refuses to check out.
  */
 export function CartLine({
   line,
   currency,
+  draw,
   error,
   onChange,
   onDraft,
@@ -37,12 +44,15 @@ export function CartLine({
 }: {
   line: Line
   currency: string
+  draw: number | null
   error: string | null
   onChange: (change: LineChange) => void
   onDraft: (productId: string, quantity: number | null, onlyIf?: number) => void
   onResult: (productId: string, error: string | null) => void
 }) {
   const { productId } = line
+  const overDrawn = exceedsDraw(line.quantity, draw)
+  const message = error ?? (overDrawn && draw !== null ? tooMany(draw) : null)
   const [pending, startTransition] = useTransition()
   const { confirm } = useCartCount()
 
@@ -129,7 +139,7 @@ export function CartLine({
             <QuantityStepper
               name="quantity"
               min={1}
-              max={CART_MAX_QUANTITY}
+              max={Math.max(draw ?? CART_MAX_QUANTITY, line.quantity)}
               defaultValue={line.quantity}
               labelClassName="sr-only md:not-sr-only"
               onCommit={change}
@@ -150,10 +160,10 @@ export function CartLine({
         role="status"
         className={cn(
           'text-sm leading-6 text-danger',
-          error ? 'mt-2' : 'sr-only',
+          message ? 'mt-2' : 'sr-only',
         )}
       >
-        {error}
+        {message}
       </p>
     </li>
   )

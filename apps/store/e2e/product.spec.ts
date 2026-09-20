@@ -1,11 +1,17 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type BrowserContext, type Page } from '@playwright/test'
+import { openWithStock } from './visit'
 
 /**
  * Smoke for the product page against a production build. The product comes
- * from the home grid rather than a hard-coded slug. Stock is live and changes
- * between requests, so each check follows whatever stock line rendered.
+ * from the home grid rather than a hard-coded slug, and the visit cookie says
+ * how much of it there is, so no test depends on what the API drew.
  */
-async function openFirstFeaturedProduct(page: Page) {
+const STOCK_LINE = /^(In stock|Only \d+ left|Out of stock|All \d+ are in your cart)$/
+
+/** Scoped to `main`: React streams a hidden copy of the hole to the end of the body. */
+const stockLine = (page: Page) => page.getByRole('main').getByText(STOCK_LINE)
+
+async function firstFeaturedHref(page: Page): Promise<string> {
   await page.goto('/')
   const href = await page
     .getByRole('region', { name: 'Featured' })
@@ -14,51 +20,68 @@ async function openFirstFeaturedProduct(page: Page) {
     .getByRole('link')
     .getAttribute('href')
   if (!href) throw new Error('No product link in the featured grid')
-  await page.goto(href)
-  // Scoped to `main`: React streams a hidden copy of the hole to the end of
-  // the body before revealing it, so an unscoped match finds two.
-  const stock = page
-    .getByRole('main')
-    .getByText(/^(In stock|Only \d+ left|Out of stock)$/)
-  await expect(stock).toBeVisible()
-  return { stock, inStock: (await stock.textContent()) !== 'Out of stock' }
+  return href
 }
 
-test('shows name, price, live stock and an Add to Cart button that follows it', async ({
+/** Opens the first featured product holding `stock` of it. */
+async function openFeatured(page: Page, context: BrowserContext, stock: number) {
+  const href = await firstFeaturedHref(page)
+  await openWithStock(page, context, href, stock)
+  await expect(stockLine(page)).toBeVisible()
+}
+
+test('shows name, price, stock and an Add to Cart button that follows it', async ({
   page,
+  context,
 }) => {
-  const { inStock } = await openFirstFeaturedProduct(page)
+  await openFeatured(page, context, 4)
+  await expect(stockLine(page)).toHaveText('Only 4 left')
   const name = await page.getByRole('heading', { level: 1 }).textContent()
   expect(name).toBeTruthy()
   await expect(page.getByText(/^\$\d{1,3}(,\d{3})*\.\d{2}$/)).toBeVisible()
   await expect(
     page.getByRole('img', { name: name ?? '', exact: true }),
   ).toBeVisible()
-  const button = page.getByRole('button', { name: 'Add to Cart', exact: true })
-  if (inStock) await expect(button).toBeEnabled()
-  else await expect(button).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Add to Cart', exact: true })).toBeEnabled()
 })
 
-test('quantity cannot exceed stock', async ({ page }) => {
-  const { stock, inStock } = await openFirstFeaturedProduct(page)
-  test.skip(!inStock, 'The product is out of stock on this request')
+test('says so and disables Add to Cart when the visit holds none', async ({
+  page,
+  context,
+}) => {
+  await openFeatured(page, context, 0)
+  await expect(stockLine(page)).toHaveText('Out of stock')
+  await expect(
+    page.getByRole('button', { name: 'Add to Cart', exact: true }),
+  ).toBeDisabled()
+})
+
+test('shows the same count on every reload', async ({ page, context }) => {
+  await openFeatured(page, context, 11)
+  for (let reload = 0; reload < 3; reload++) {
+    await page.reload()
+    await expect(stockLine(page)).toHaveText('In stock')
+  }
+})
+
+test('quantity cannot exceed stock', async ({ page, context }) => {
+  await openFeatured(page, context, 4)
   const quantity = page.getByLabel('Quantity', { exact: true })
-  const max = await quantity.getAttribute('max')
+  await expect(quantity).toHaveAttribute('max', '4')
   await quantity.fill('999')
-  await expect(quantity).toHaveValue(max ?? '')
+  await expect(quantity).toHaveValue('4')
   await expect(
     page.getByRole('button', { name: 'Increase quantity' }),
   ).toBeDisabled()
-  const low = (await stock.textContent())?.match(/^Only (\d+) left$/)
-  if (low) expect(max).toBe(low[1])
 })
 
 test('adding confirms at once, and View cart waits for the write', async ({
   page,
+  context,
 }) => {
   test.setTimeout(120_000)
-  const { inStock } = await openFirstFeaturedProduct(page)
-  test.skip(!inStock, 'The product is out of stock on this request')
+  // Five, so one add lands under the low-stock threshold and the line names it.
+  await openFeatured(page, context, 5)
   // The optimistic path needs the hydrated form, not the no-JS post.
   await page.waitForLoadState('networkidle')
   await page.getByRole('button', { name: 'Add to Cart', exact: true }).click()
@@ -72,17 +95,36 @@ test('adding confirms at once, and View cart waits for the write', async ({
   // The cart API is slow (`lib/api/cart.ts`).
   await expect(viewCart).toHaveAttribute('href', '/cart', { timeout: 30_000 })
   await expect(status).toBeVisible()
-  // The button returns to its label. Stock is random per request and can be
-  // 0, which disables it.
   await expect(
     page.getByRole('button', { name: 'Add to Cart', exact: true }),
-  ).toBeVisible()
+  ).toBeEnabled()
+  // The line counts the add down without reading the cart again.
+  await expect(stockLine(page)).toHaveText('Only 4 left')
 })
 
-test('a failed add retracts its confirmation and says why', async ({ page }) => {
+test('says the cart holds them all once the whole draw is added', async ({
+  page,
+  context,
+}) => {
   test.setTimeout(120_000)
-  const { inStock } = await openFirstFeaturedProduct(page)
-  test.skip(!inStock, 'The product is out of stock on this request')
+  await openFeatured(page, context, 2)
+  await page.waitForLoadState('networkidle')
+  await page.getByLabel('Quantity', { exact: true }).fill('2')
+  await page.getByLabel('Quantity', { exact: true }).blur()
+  await page.getByRole('button', { name: 'Add to Cart', exact: true }).click()
+  // The line flips as the add is sent; the button waits for the slow write.
+  await expect(stockLine(page)).toHaveText('All 2 are in your cart', { timeout: 5_000 })
+  await expect(
+    page.getByRole('button', { name: 'Add to Cart', exact: true }),
+  ).toBeDisabled({ timeout: 30_000 })
+})
+
+test('a failed add retracts its confirmation and says why', async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(120_000)
+  await openFeatured(page, context, 9)
   await page.waitForLoadState('networkidle')
   // A product the API does not know: the write answers 404 with a live cart.
   await page
@@ -101,3 +143,23 @@ test('a failed add retracts its confirmation and says why', async ({ page }) => 
   const badge = page.getByRole('banner').getByRole('img', { name: /^Cart/ })
   await expect(badge).not.toHaveAccessibleName(/[1-9]/)
 })
+
+test('the footer reset draws a whole new visit', async ({ page, context }) => {
+  const href = await firstFeaturedHref(page)
+  await openWithStock(page, context, href, 3)
+  await expect(stockLine(page)).toHaveText('Only 3 left')
+
+  await page.getByRole('button', { name: 'Reset the demo' }).click()
+
+  // The seeded visit named one product; a drawn one names the whole catalogue.
+  await expect
+    .poll(async () => Object.keys(await visitStock(context)).length, { timeout: 30_000 })
+    .toBeGreaterThan(1)
+})
+
+/** The stock map in the browser's visit cookie. */
+async function visitStock(context: BrowserContext): Promise<Record<string, number>> {
+  const cookie = (await context.cookies()).find((candidate) => candidate.name === 'visit')
+  if (!cookie) return {}
+  return JSON.parse(decodeURIComponent(cookie.value)).stock as Record<string, number>
+}

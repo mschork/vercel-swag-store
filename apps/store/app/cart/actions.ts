@@ -14,6 +14,10 @@ import { ApiError } from '@/lib/api/client'
 import type { Cart } from '@/lib/api/types'
 import { clearCartToken, getCartToken, setCartToken } from '@/lib/cart/cookie'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
+import { getVisit, setVisit } from '@/lib/visit/cookie'
+import { drawFor } from '@/lib/visit/draw'
+import { exceedsDraw, tooMany } from '@/lib/visit/limits'
+import { afterOrder } from '@/lib/visit/visit'
 
 /**
  * Cart Server Actions (specs/E06-cart.md). Each one validates its input, calls
@@ -23,15 +27,26 @@ import { CART_MAX_QUANTITY } from '@/lib/quantity'
  * the cart page from the server's view in the same round trip. After a
  * successful write the cookie is set again, so its one-day expiry slides with
  * the API cart's.
+ *
+ * The API accepts any quantity of anything, so the limit a visitor sees is
+ * enforced here or nowhere: every write is checked against their visit
+ * (specs/E19-stable-visit.md).
  */
+
+/** The product the action touched and the quantity the cart now holds of it. */
+export interface CartLineResult {
+  productId: string
+  quantity: number
+}
 
 /**
  * `totalItems` is on every success, and on a failure whenever the action
- * read the cart, as it does after a 404.
+ * read the cart, as it does after a 404. `line` travels with it so the client
+ * can move a product's remaining stock without reading the cart again.
  */
 export type CartActionResult =
-  | { ok: true; totalItems: number }
-  | { ok: false; error: string; totalItems?: number }
+  | { ok: true; totalItems: number; line: CartLineResult }
+  | { ok: false; error: string; totalItems?: number; line?: CartLineResult }
 export type AddToCartState = CartActionResult | null
 
 const EXPIRED = 'Your cart expired. Add products again to start a new cart.'
@@ -75,6 +90,12 @@ export async function addToCart(
     gone: 'This product is no longer available.',
     failed: 'This item could not be added. Try again.',
   }
+
+  // Checked before the write, so an add the visit cannot cover costs no call.
+  const draw = await drawFor(productId)
+  if (exceedsDraw(quantity, draw) && draw !== null) {
+    return { ok: false, error: tooMany(draw) }
+  }
   const add = (token: string) => () => addCartItem(token, productId, quantity)
 
   // Into a new cart: its 404 can only mean the product, so nothing retries.
@@ -87,13 +108,13 @@ export async function addToCart(
       console.error('[cart] could not open a cart', error)
       return { ok: false, error: copy.failed }
     }
-    return write(token, add(token), copy)
+    return write(token, productId, add(token), { ...copy, draw })
   }
 
   // Write first; only a 404 whose re-check finds no cart opens a new one.
   const token = await getCartToken()
   if (!token) return addToNewCart()
-  return write(token, add(token), { ...copy, onExpired: addToNewCart })
+  return write(token, productId, add(token), { ...copy, draw, onExpired: addToNewCart })
 }
 
 /** Changes a line's quantity through `updateCartItem` (lib/api/cart.ts). */
@@ -112,10 +133,15 @@ export async function updateQuantity(
   }
   const token = await getCartToken()
   if (!token) return expired()
+  const draw = await drawFor(input.data.productId)
+  if (exceedsDraw(input.data.quantity, draw) && draw !== null) {
+    return { ok: false, error: tooMany(draw) }
+  }
   return write(
     token,
+    input.data.productId,
     () => updateCartItem(token, input.data.productId, input.data.quantity),
-    { gone: NOT_IN_CART, failed: 'The quantity could not be changed. Try again.' },
+    { gone: NOT_IN_CART, failed: 'The quantity could not be changed. Try again.', draw },
   )
 }
 
@@ -126,7 +152,7 @@ export async function removeItem(productId: string): Promise<CartActionResult> {
   }
   const token = await getCartToken()
   if (!token) return expired()
-  return write(token, () => removeCartItem(token, input.data), {
+  return write(token, input.data, () => removeCartItem(token, input.data), {
     gone: NOT_IN_CART,
     failed: 'This item could not be removed. Try again.',
   })
@@ -141,7 +167,15 @@ export async function removeItem(productId: string): Promise<CartActionResult> {
  */
 export async function placeOrder(): Promise<void> {
   const token = await getCartToken()
-  if (!token || !(await hasLines(token))) redirect('/cart')
+  const cart = token ? await orderableCart(token) : null
+  if (!cart) redirect('/cart')
+  const visit = await getVisit()
+  if (visit) {
+    if (cart.items.some((item) => exceedsDraw(item.quantity, visit.stock[item.productId] ?? null))) {
+      redirect('/cart')
+    }
+    await setVisit(afterOrder(visit, cart.items))
+  }
   await clearCartToken()
   redirect('/checkout')
 }
@@ -156,6 +190,11 @@ async function openCart(): Promise<string> {
 type WriteOptions = {
   gone: string
   failed: string
+  /**
+   * What the visit says there is of the product, or `null` when the store
+   * could not find out. A line the API leaves above it is set back.
+   */
+  draw?: number | null
   /**
    * What to do when a 404 turns out to be an expired cart. Defaults to
    * forgetting it; `addToCart` passes a single add into a new cart instead.
@@ -172,6 +211,7 @@ type WriteOptions = {
  */
 async function write(
   token: string,
+  productId: string,
   run: () => Promise<Cart>,
   copy: WriteOptions,
 ): Promise<CartActionResult> {
@@ -181,18 +221,57 @@ async function write(
   } catch (error) {
     unstable_rethrow(error)
     if (error instanceof ApiError && error.status === 404) {
-      return afterNotFound(token, copy)
+      return afterNotFound(token, productId, copy)
     }
     console.error('[cart] write failed', error)
     return { ok: false, error: copy.failed }
   }
   await setCartToken(token)
+  const corrected = await capLine(token, cart, productId, copy.draw)
   refresh()
-  return { ok: true, totalItems: cart.totalItems }
+  if (corrected) return corrected
+  return { ok: true, totalItems: cart.totalItems, line: lineOf(cart, productId) }
+}
+
+/**
+ * Sets a line back to the draw when the API left it above one, which happens
+ * when a product was already in the cart from an earlier visit. The second
+ * slow call is paid only on a violation; an add within the draw costs exactly
+ * what it did before this epic.
+ */
+async function capLine(
+  token: string,
+  cart: Cart,
+  productId: string,
+  draw: number | null | undefined,
+): Promise<CartActionResult | null> {
+  if (draw === undefined || draw === null) return null
+  const line = lineOf(cart, productId)
+  if (!exceedsDraw(line.quantity, draw)) return null
+  try {
+    const capped = await updateCartItem(token, productId, draw)
+    return {
+      ok: false,
+      error: tooMany(draw),
+      totalItems: capped.totalItems,
+      line: lineOf(capped, productId),
+    }
+  } catch (error) {
+    unstable_rethrow(error)
+    console.error('[cart] could not set an over-drawn line back', error)
+    return { ok: false, error: tooMany(draw), totalItems: cart.totalItems, line }
+  }
+}
+
+/** A product's quantity in the cart the API just returned; 0 once it is gone. */
+function lineOf(cart: Cart, productId: string): CartLineResult {
+  const item = cart.items.find((line) => line.productId === productId)
+  return { productId, quantity: item?.quantity ?? 0 }
 }
 
 async function afterNotFound(
   token: string,
+  productId: string,
   copy: WriteOptions,
 ): Promise<CartActionResult> {
   let cart: Cart | null
@@ -205,7 +284,12 @@ async function afterNotFound(
   }
   if (!cart) return copy.onExpired ? copy.onExpired() : expired()
   refresh()
-  return { ok: false, error: copy.gone, totalItems: cart.totalItems }
+  return {
+    ok: false,
+    error: copy.gone,
+    totalItems: cart.totalItems,
+    line: lineOf(cart, productId),
+  }
 }
 
 /** Forgets an expired cart; the refresh re-renders `/cart` as empty. */
@@ -215,13 +299,14 @@ async function expired(): Promise<CartActionResult> {
   return { ok: false, error: EXPIRED, totalItems: 0 }
 }
 
-async function hasLines(token: string): Promise<boolean> {
+/** The cart to order, or `null` when there is nothing orderable. */
+async function orderableCart(token: string): Promise<Cart | null> {
   try {
     const cart = await getCart(token)
-    return (cart?.items.length ?? 0) > 0
+    return cart && cart.items.length > 0 ? cart : null
   } catch (error) {
     unstable_rethrow(error)
     console.error('[cart] could not read the cart to place the order', error)
-    return false
+    return null
   }
 }
