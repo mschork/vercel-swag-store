@@ -13,6 +13,8 @@
 
 The SEO score is capped by choice. Every response carries `X-Robots-Tag: noindex`, because a store of invented products under the Vercel name should not compete with vercel.com in search (`specs/callout.md`). Every other SEO audit passes; with the header off the category scores 100, measured below. A build sets `ALLOW_INDEXING=true` to leave the header out, and production never does.
 
+That 100 is measured on the indexable pages: home, the listings and the product pages. The cart and the checkout page say `noindex` in their own metadata whatever the header does, which is right for pages nobody should find in a search engine, so Lighthouse's "blocked from indexing" audit fails there by design and the category reads 66. Search results say it too, in metadata that streams into the body, where Lighthouse does not look.
+
 ## Local, 17 Sep 2026
 
 `next start` on a production build, Lighthouse 13, mobile, median of five runs per variant. Local runs have no network latency, so the largest paint is optimistic and any saving that depends on bandwidth does not show. They are useful for comparing two builds of the same app, not for judging the deployed site.
