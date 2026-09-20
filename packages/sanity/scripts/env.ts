@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
  * Environment for the scripts, from the process or from the files this repo
  * keeps out of git: the store's `.env.local` for the API, `working/secrets.local`
  * for the Sanity write token. The token is never in Vercel: these scripts run
- * on a machine, by a person (specs/E08-sanity-content-model.md).
+ * on a machine, by a person.
  */
 const root = join(dirname(fileURLToPath(import.meta.url)), '../../..')
 

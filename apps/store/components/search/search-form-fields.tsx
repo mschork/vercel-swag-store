@@ -14,9 +14,8 @@ export const ALL_CATEGORIES = ''
  * The form's markup, written once and rendered twice: by the server as the
  * Suspense fallback (uncontrolled, no handlers, a plain GET that works without
  * JavaScript) and by the client leaf with values and handlers. One copy, so
- * the swap at hydration cannot shift the layout.
- *
- * No `"use client"`: the file follows whichever graph imports it.
+ * the swap at hydration cannot shift the layout. It runs as server or client
+ * code, following its importer.
  */
 export function SearchFormFields({
   categories,

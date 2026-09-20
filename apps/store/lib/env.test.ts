@@ -26,7 +26,7 @@ describe('serverEnv', () => {
       // Both revalidation secrets are optional: unset, their routes refuse.
       CATALOG_REVALIDATE_SECRET: undefined,
       SANITY_REVALIDATE_SECRET: undefined,
-      // Unset, nobody may frame the store (E17).
+      // Unset, nobody may frame the store.
       PRESENTATION_STUDIO_ORIGINS: [],
     })
   })
@@ -43,7 +43,7 @@ describe('serverEnv', () => {
     await expect(loadEnv()).rejects.toThrow(/\.env\.example/)
   })
 
-  it('parses the Studio origins and refuses a wildcard (E17)', async () => {
+  it('parses the Studio origins and refuses a wildcard', async () => {
     vi.stubEnv('PRESENTATION_STUDIO_ORIGINS', 'https://a.example,https://b.example')
     expect((await loadEnv()).serverEnv.PRESENTATION_STUDIO_ORIGINS).toEqual([
       'https://a.example',

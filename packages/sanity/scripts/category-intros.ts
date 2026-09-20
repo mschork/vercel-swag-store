@@ -1,10 +1,9 @@
 import { categoryId } from './sync.ts'
 
 /**
- * Placeholder intros for the categories the API had when E18 was written,
- * keyed by slug (specs/E18-product-listing.md). Generated copy for an editor
- * to replace. A category missing from this list simply gets no intro, and the
- * listing renders without one.
+ * Placeholder intros keyed by category slug, for an editor to replace. A
+ * category with no copy here gets no intro, and its listing renders without
+ * one.
  */
 export const CATEGORY_INTROS: Readonly<Record<string, string>> = {
   bottles: 'Insulated steel for the desk, the gym and the long deploy. Cold stays cold, hot stays hot.',
@@ -28,9 +27,7 @@ type IntroTransaction = {
 
 /**
  * Queues one intro per given category slug that has copy here. `setIfMissing`
- * and nothing else: a re-run never replaces what an editor wrote, and an
- * editor who empties the field gets the placeholder back only by choice of
- * re-running the seed.
+ * and nothing else, so a re-run never replaces what an editor wrote.
  */
 export function queueCategoryIntros(transaction: IntroTransaction, slugs: readonly string[]) {
   let queued = 0

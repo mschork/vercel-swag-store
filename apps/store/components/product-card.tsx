@@ -6,23 +6,13 @@ import type { Product } from '@/lib/api/types'
 import { cn } from '@/lib/utils'
 
 /**
- * One product in a grid; shared by the home page and search (E10). Two
- * shapes, one anatomy: below md a row (photo at 42% of the width, then price,
- * name and category beside it, no hover); from md a grid card with the price
- * as a pill on the photo and the name and category under it. The whole card
- * is the link. On hover, and while the card's navigation is pending, the pill
- * inverts to the accent and the frame's border strengthens; Tailwind's
- * `hover:` only applies on devices that can hover.
- *
- * The price renders in both places and each is `display: none` in the other
- * shape, so assistive technology reads it once. `sizes` comes from the grid,
- * which owns the column count it follows from (`components/product-grid.tsx`).
- */
-/**
- * `responsive` is the shape described above. `card` is the grid card at every
- * width, for the product listing, whose two columns on a phone show the whole
- * catalogue in half the scrolling (E18). The class strings are written out in
- * full for each shape because Tailwind only sees literal class names.
+ * One product in a grid. `responsive` is a row below md and a grid card from
+ * md, with the price as a pill on the photo; `card` is the grid card at every
+ * width. The whole card is the link. The price renders in both places and each
+ * is `display: none` in the other shape, so assistive technology reads it
+ * once. `sizes` comes from the grid (`components/product-grid.tsx`). The class
+ * strings are written out in full for each shape because Tailwind only sees
+ * literal class names.
  */
 export type CardShape = 'responsive' | 'card'
 

@@ -11,18 +11,11 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 /**
- * Add to Cart as a Server Action form. `max` is live stock and `disabled` is
- * set when the product is out of stock or its stock is unknown. The form
- * stays a native Server Action form, so it works before hydration.
- *
- * With JavaScript the add is optimistic. At submit the status line says
- * "Added." and the header badge counts the new items, while the button shows
- * a spinner and "Adding…" until the API answers. "View cart" stays inert
- * until then, because a cart page opened before the write lands would show a
- * cart without it and nothing would correct that. The answer carries the
- * cart's count, which becomes the badge's confirmed count; a failed add
- * replaces the message with the reason and the badge drops back. The status
- * line keeps its height so nothing moves when it fills.
+ * Add to Cart as a Server Action form. `max` is live stock; `disabled` is set
+ * when the product is out of stock or its stock is unknown. It stays a native
+ * Server Action form, so it works before hydration. With JavaScript the add is
+ * optimistic, and "View cart" stays inert until the write lands: a cart page
+ * opened before then would show a cart without it and nothing would correct it.
  */
 export function AddToCartForm({
   productId,

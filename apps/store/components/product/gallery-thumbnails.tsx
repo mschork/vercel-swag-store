@@ -5,9 +5,8 @@ import { useState } from 'react'
 import { GalleryImage } from './gallery-image'
 
 /**
- * The gallery for a product with more than one image (from E09's enrichment;
- * API products have one). The selected image is local state; the first one is
- * the preloaded LCP candidate.
+ * The gallery for a product with more than one image. The selected image is
+ * local state; the first one is the preloaded LCP candidate.
  */
 export function GalleryThumbnails({
   images,

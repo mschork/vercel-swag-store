@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 }
 
 /**
- * Where a demo order lands. Still fully static: it reads no cookies, because
+ * Where a demo order lands. Fully static: it reads no cookies, because
  * `placeOrder` drops the cart before redirecting here, and the Sanity read is
  * cached like every other. The copy comes from the `checkoutPage` document
- * when it exists, and from E06's fallback otherwise.
+ * when it exists, and from `CHECKOUT_FALLBACK` otherwise.
  */
 export default async function CheckoutPage() {
   const content = await getCheckoutPage()

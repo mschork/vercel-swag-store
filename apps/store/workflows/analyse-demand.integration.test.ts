@@ -4,7 +4,7 @@ import { start } from 'workflow/api'
 import { analyseDemand } from './analyse-demand'
 
 /**
- * The lock against the real runtime (E13). A burst of calls from the
+ * The lock against the real runtime. A burst of calls from the
  * `gap-threshold` Function must collapse into one analysis, and the lock must
  * be free again once that run is over.
  *

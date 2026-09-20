@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'Browse every product in the store.',
 }
 
-/** The whole catalogue, prerendered (specs/E18-product-listing.md). */
+/** The whole catalogue, prerendered. */
 export default function ProductsPage() {
   return <ProductListing category={null} />
 }

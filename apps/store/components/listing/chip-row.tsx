@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 
 type Side = 'left' | 'right'
 
-/** Drawn like the header glyphs: 24px box, 1.5 stroke, round caps. */
 function Chevron({ side }: { side: Side }) {
   return (
     <svg
@@ -24,20 +23,12 @@ function Chevron({ side }: { side: Side }) {
 }
 
 /**
- * The chips' scrolling row (specs/E18-product-listing.md). Two jobs beyond
- * markup, both only where the row scrolls, which is below md:
- *
- * - On mount it moves to the current chip, without animation and without
- *   touching the page's own scroll; a category far down the list would
- *   otherwise open with its own chip out of sight.
- * - A chevron sits on each side that hides chips, and scrolls that way when
- *   pressed. It is a pointer affordance only (`tabIndex={-1}`, hidden from
- *   assistive technology): the chips themselves are links in tab order, and
- *   focusing one scrolls it into view. A solid patch, not a fade, because the
- *   design uses no gradients (specs/decisions.md).
- *
- * Without JavaScript the row starts at "All", shows no chevrons and still
- * scrolls; the heading names the category.
+ * The chips' scrolling row (specs/E18-product-listing.md). Below md, where it
+ * scrolls, it does two things beyond markup: on mount it moves to the current
+ * chip without touching the page's own scroll, and a chevron on each side that
+ * hides chips scrolls that way when pressed. The chevrons are pointer-only
+ * (`tabIndex={-1}`, hidden from assistive technology) because the chips are
+ * links in tab order and focusing one scrolls it into view.
  */
 export function ChipRow({ children }: { children: React.ReactNode }) {
   const row = useRef<HTMLUListElement>(null)

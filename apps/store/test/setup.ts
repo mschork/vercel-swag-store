@@ -1,8 +1,8 @@
 import { vi } from 'vitest'
 
-// Cached data functions call these from `next/cache`; they exist only inside
-// the Next runtime. Stubbing them lets tests call the same functions the app
-// calls (see specs/callout.md).
+// Cached data functions call these from `next/cache`, which exists only
+// inside the Next runtime. Stubbing them lets tests call the same functions
+// the app calls.
 vi.mock('next/cache', () => ({
   cacheTag: vi.fn(),
   cacheLife: vi.fn(),

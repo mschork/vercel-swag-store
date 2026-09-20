@@ -6,8 +6,8 @@ import { validateClusters } from '@repo/demand/validate'
 import * as steps from '@/lib/demand/steps'
 
 /**
- * Failed searches into product ideas (specs/E13-search-gap-loop.md, slice 3),
- * as durable steps: a crash or a redeploy resumes where it stopped, and each
+ * Failed searches into product ideas (specs/E13-search-gap-loop.md), as
+ * durable steps: a crash or a redeploy resumes where it stopped, and each
  * step retries on its own. Started only by POST /api/demand/analyse.
  */
 
@@ -65,7 +65,7 @@ export async function analyseDemand({ settle = true }: { settle?: boolean } = {}
       const counts = await write({ runId, gaps, clusters, unmentioned })
       return { claimed: gaps.length, ...counts }
     } catch (error) {
-      // No gap is ever left in `analysing`; the run still shows as failed.
+      // Releases every claimed gap; the run still shows as failed.
       await release(runId)
       throw error
     }

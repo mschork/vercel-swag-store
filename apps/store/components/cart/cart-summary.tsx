@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator'
  * Totals for the lines on screen, optimistic changes included, and the
  * Checkout form. The form's action is the `placeOrder` Server Action, so it
  * posts natively when hydration is slow or has failed. Sticky beside a long
- * list from lg (E10).
+ * list from lg.
  */
 export function CartSummary({
   totalItems,

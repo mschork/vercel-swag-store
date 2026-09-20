@@ -4,7 +4,7 @@ import { syncedFields } from './shared'
 /**
  * A mirror of one API category, written by the sync script
  * (docs/adr/0003-sanity-mirrors-api-products-and-categories.md), plus the one
- * thing an editor writes: the intro for the category's product listing (E18).
+ * thing an editor writes: the intro for the category's product listing.
  * The mirror lets an FAQ point at a category and a product be matched to it;
  * the store still reads every catalogue fact from the API.
  */

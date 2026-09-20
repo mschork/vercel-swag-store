@@ -5,10 +5,10 @@ import { normaliseGap, recordGap } from '@repo/demand'
 import { getWriteClient } from '@/lib/sanity/write-client'
 
 /**
- * Counts a search that found nothing (E13), once the response has been sent,
- * so the visitor never waits for it. Called from `SearchResults`, which is
- * already the page's dynamic hole, so reading `headers()` here costs the
- * static shell nothing.
+ * Counts a search that found nothing, once the response has been sent, so the
+ * visitor never waits for it. Called from `SearchResults`, which is already
+ * the page's dynamic hole, so reading `headers()` here costs the static shell
+ * nothing.
  *
  * Never cached, and never throws: a lost count is fine, a broken search page
  * is not. Neither the token nor the query is ever logged.

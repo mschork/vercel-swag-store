@@ -3,10 +3,10 @@ import { documentEventHandler } from '@sanity/functions'
 import { applyDecision, type IdeaStatus } from '@repo/demand'
 
 /**
- * Finishes an editor's decision on a product idea (E13, slice 5). The Studio's
- * Accept and Reject actions set the status; the blueprint's filter fires this
- * when the status changes to `accepted` or `rejected`. It stamps the decision
- * date and promotes the idea's search gaps when it was accepted.
+ * Finishes an editor's decision on a product idea. The Studio's Accept and
+ * Reject actions set the status; the blueprint's filter fires this when the
+ * status changes to `accepted` or `rejected`. It stamps the decision date and
+ * promotes the idea's search gaps when it was accepted.
  *
  * Its own write changes `decidedAt`, not `status`, so it cannot trigger itself,
  * and `applyDecision` writes nothing for an idea that already has a date.

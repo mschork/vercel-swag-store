@@ -1,6 +1,6 @@
 /**
  * Heading, one line of text, and whatever comes after (links, buttons,
- * chips). The frame the cart and the search results share (E10).
+ * chips). The frame the cart and the search results share.
  */
 export function EmptyState({
   title,

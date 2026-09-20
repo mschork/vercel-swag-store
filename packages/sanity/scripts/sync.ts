@@ -3,12 +3,9 @@ import { required } from './env.ts'
 
 /**
  * Mirrors the API's categories and products into Sanity
- * (docs/adr/0003-sanity-mirrors-api-products-and-categories.md).
- *
- * Only catalogue fields are written, so an editor's work is never touched: the
- * script patches the mirrored fields and sets them on create, and leaves
- * everything else alone. Documents whose product or category the API no longer
- * returns are flagged rather than deleted.
+ * (docs/adr/0003-sanity-mirrors-api-products-and-categories.md). Documents
+ * whose product or category the API no longer returns are flagged rather than
+ * deleted.
  *
  * Run with `pnpm --filter @repo/sanity sync`.
  */

@@ -11,15 +11,15 @@ import { CartView } from './cart-view'
 import { EmptyCart } from './empty-cart'
 
 /**
- * The cart page's dynamic hole. Three outcomes, kept apart on purpose: no cart
- * (never created, expired, or no lines) is the empty state; a failed cart call
- * says the cart could not be loaded, because "your cart is empty" would be
- * false (specs/callout.md); otherwise the client view takes the lines.
+ * The cart page's dynamic hole. Three outcomes: no cart (never created,
+ * expired, or no lines) is the empty state; a failed cart call says the cart
+ * could not be loaded, because "your cart is empty" would be false; otherwise
+ * the client view takes the lines.
  *
- * Under all of them, the same favourites row the home page shows (E09). An
- * empty cart gets it unfiltered; a cart with lines gets it without the products
- * already in it, so the row never suggests something the shopper just added.
- * Only the exclusion is dynamic: the ranking and the catalogue are cached.
+ * Under all of them, the same favourites row the home page shows. An empty
+ * cart gets it unfiltered; a cart with lines gets it without the products
+ * already in it. Only the exclusion is dynamic: the ranking and the catalogue
+ * are cached.
  */
 export async function CartContents() {
   const result = await loadCart('Cart')
@@ -60,9 +60,9 @@ function CartUnavailable() {
 }
 
 /**
- * Mirrors `CartView`: two rows beside the summary from 768px, stacked below.
- * A row's name takes two lines below lg, where most names wrap, and the row
- * reserves them, so the rows match the skeleton whatever the name.
+ * Mirrors `CartView`: rows beside the summary from md, stacked below. A row's
+ * name takes two lines below lg and the row reserves them, so the rows match
+ * the skeleton whatever the name.
  */
 export function CartSkeleton() {
   return (

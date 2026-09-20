@@ -23,12 +23,9 @@ import { cn } from '@/lib/utils'
 
 /**
  * One line of the cart. Quantity changes wait for a short pause and then save
- * only the last value, so going from 1 to 5 is one request. During the pause
- * the row shows the value as a draft; while a save runs the row dims but keeps
- * taking clicks, and a newer value simply follows the running one. Leaving
- * the page during the pause saves at once. Remove drops any waiting value and
- * saves immediately. The status line is always rendered, so screen readers
- * announce a message when one appears.
+ * only the last value, so going from 1 to 5 is one request; leaving the page
+ * during the pause saves at once. The status line is always rendered, so
+ * screen readers announce a message when one appears.
  */
 export function CartLine({
   line,

@@ -16,8 +16,9 @@ import type { Cluster } from './model-schema.ts'
 
 /**
  * Every read and write of the loop's documents, over a client the caller
- * builds: the store (token from its env), a Sanity Function (`context.clientOptions`)
- * or E14's agent. GROQ for these types lives here and nowhere else.
+ * builds: the store (token from its env), a Sanity Function
+ * (`context.clientOptions`) or the agent. GROQ for these types lives here and
+ * nowhere else.
  */
 export type DemandClient = Pick<SanityClient, 'fetch' | 'transaction' | 'delete'>
 

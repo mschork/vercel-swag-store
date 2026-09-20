@@ -4,7 +4,7 @@ import { expect, type Page, test } from '@playwright/test'
  * Smoke for `/search` against a production build. The results-outage case (API
  * unreachable, the form survives and the region says so) is a server-side
  * condition this test cannot create; it is verified by starting the server
- * with an unreachable `API_BASE_URL` (see the E07 PR).
+ * with an unreachable `API_BASE_URL`.
  */
 
 const results = (page: Page) =>
@@ -16,11 +16,10 @@ const categorySelect = (page: Page) =>
   page.getByRole('combobox', { name: 'Category' })
 
 /**
- * Opens a search URL and waits for the live form to have taken over from the
- * server-rendered one. The two are identical markup, and only the live one
+ * Opens a search URL and waits for the live form to take over from the
+ * server-rendered one. Both render the same markup and only the live one
  * adopts the URL's values, so a filled-in query is the signal that the
- * debounce and the select are wired up. Without it a test can act on the
- * plain GET form and get a plain GET.
+ * debounce and the select are wired up.
  */
 async function gotoLive(page: Page, query: string) {
   await page.goto(`/search?q=${encodeURIComponent(query)}`)
@@ -62,8 +61,8 @@ test('the named category outranks a product that only mentions it', async ({
   await page.goto('/search?q=bag')
   await expect(page.getByRole('heading', { name: '5 results' })).toBeVisible()
   await expect(results(page)).toContainText('Includes everything in Bags')
-  // The enamel pin and the keychain are real hits: both descriptions mention a
-  // bag. They belong below the bags, not above them.
+  // The enamel pin and the keychain are real hits: both descriptions mention
+  // a bag. Ranking puts them below the bags.
   await expect(cards(page).nth(0)).toContainText('Black Canvas Tote Bag')
   await expect(cards(page).nth(1)).toContainText('Black Drawstring Bag')
   await expect(cards(page).nth(2)).toContainText('Minimal Black Backpack')
@@ -85,7 +84,7 @@ test('two characters do not search', async ({ page }) => {
   await expect(cards(page)).toHaveCount(3)
 
   await queryBox(page).fill('be')
-  // Long enough for the 300 ms debounce to have fired had it been allowed to.
+  // Longer than the debounce, so a search would have fired by now.
   await page.waitForTimeout(1000)
   await expect(page).toHaveURL('/search?q=hat')
   await expect(cards(page)).toHaveCount(3)
@@ -119,10 +118,11 @@ test('the category select filters, and combined with text it narrows', async ({
   await expect(results(page)).toContainText('No products match "bucket" in Bags')
 })
 
-test('a query with no matches offers the categories', async ({ page }) => {
+test('a query with no matches offers the categories and says the miss is recorded', async ({
+  page,
+}) => {
   await gotoLive(page, 'umbrella')
   await expect(results(page)).toContainText('No products match "umbrella"')
-  // E13 counts the miss, and the page says so.
   await expect(results(page)).toContainText(
     "We keep track of what people look for and don't find.",
   )
@@ -133,7 +133,7 @@ test('a query with no matches offers the categories', async ({ page }) => {
   await results(page).getByRole('link', { name: 'Clear search' }).click()
   await expect(page).toHaveURL('/search')
   await expect(page.getByRole('heading', { name: 'Featured' })).toBeVisible()
-  // The form follows a link that changed the URL behind its back.
+  // The form follows a link that changed the URL.
   await expect(queryBox(page)).toHaveValue('')
 })
 
@@ -163,9 +163,8 @@ test.describe('without JavaScript', () => {
     await categorySelect(page).selectOption('hats')
     await page.getByRole('button', { name: 'Search' }).click()
     await expect(page).toHaveURL('/search?q=beanie&category=hats')
-    // The results stream into a Suspense boundary, which React reveals with an
-    // inline script, so they stay hidden here; the same trade-off as the cart
-    // and promo holes (`specs/callout.md`).
+    // React reveals a streamed Suspense boundary with an inline script, so
+    // without JavaScript the form is all that shows.
     await expect(queryBox(page)).toBeVisible()
   })
 })

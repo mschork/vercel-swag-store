@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 /**
  * The workflow as a plain function: outside the compiler `"use workflow"` and
  * `"use step"` are inert strings, so this checks the orchestration only. The
- * lock against a real runtime is an integration concern (E13 spec, Tests).
+ * lock against a real runtime is covered by the integration test beside this
+ * file.
  */
 const mocks = vi.hoisted(() => ({
   conflict: null as { runId: string } | null,
