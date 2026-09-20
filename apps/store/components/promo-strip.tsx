@@ -2,6 +2,7 @@
 
 import type { Promotion } from '@/lib/api/types'
 import { useVisit } from '@/components/visit/visit-provider'
+import { useHydrated } from '@/lib/use-hydrated'
 import { PromoMarquee } from './promo-marquee'
 
 /**
@@ -17,11 +18,13 @@ export const RESERVED_BOX =
  * The promotion's words. A client leaf so the strip fills in as soon as a
  * first-time visitor's visit opens, without waiting for a page load;
  * `serverPromotion` is what the cookie held in this render, and is used until
- * the provider has a visit of its own.
+ * the provider has a visit of its own, and while hydrating, so the first
+ * client render repeats the server's HTML.
  */
 export function PromoStrip({ serverPromotion }: { serverPromotion: Promotion | null }) {
   const { promotion: held } = useVisit()
-  const promotion = held === undefined ? serverPromotion : held
+  const hydrated = useHydrated()
+  const promotion = !hydrated || held === undefined ? serverPromotion : held
   if (!promotion) return <div className={RESERVED_BOX} />
   return (
     <aside aria-label="Current promotion" className={RESERVED_BOX}>

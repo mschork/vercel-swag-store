@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from 'react'
 import type { Promotion } from '@/lib/api/types'
+import { useHydrated } from '@/lib/use-hydrated'
 import { openVisit, resetVisit } from '@/lib/visit/open'
 
 /** What the server read from the visit cookie, or `null` when there was none. */
@@ -142,14 +143,17 @@ export function useVisit(): VisitApi {
 /**
  * A product's draw and the quantity of it in the cart. `serverDraw` is what
  * the server read in this render, and is used until the provider has a visit
- * of its own, so the first paint carries the real number.
+ * of its own, so the first paint carries the real number. It is also used
+ * while hydrating: a boundary that streams in late can find the provider
+ * already holding a first visit's draws, which the server's HTML never saw.
  */
 export function useProductStock(
   productId: string,
   serverDraw?: number | null,
 ): { draw: number | null | undefined; inCart: number } {
   const { draw, inCart } = useVisit()
-  const held = draw(productId)
+  const hydrated = useHydrated()
+  const held = hydrated ? draw(productId) : undefined
   return { draw: held === undefined ? serverDraw : held, inCart: inCart(productId) }
 }
 
