@@ -4,7 +4,7 @@ Branch: `epic/E05-pdp`. Depends on: E02, E03. Blocks: E06 (needs the Add to Cart
 
 ## Goal
 
-`/products/[slug]` prerendered from cached product data, with real-time stock streamed into a Suspense hole and an Add to Cart form whose enabled state follows stock.
+`/products/[slug]` prerendered from cached product data, with the visitor's stock streamed into a Suspense hole and an Add to Cart form whose enabled state follows what is left of it. The count comes from the `visit` cookie, drawn from the API once per visitor (E19), so it is the same on every reload.
 
 ## Scope
 
@@ -22,7 +22,7 @@ Branch: `epic/E05-pdp`. Depends on: E02, E03. Blocks: E06 (needs the Add to Cart
 
 ### Structured data and crawl files
 
-- PDP renders a `<script type="application/ld+json">` with `Product` (name, image, description, sku = id, brand "Vercel Swag Store") and `Offer` (price in major units, `priceCurrency`, `availability` from the stock result, rendered inside the same Suspense boundary so it reflects live stock) and a `BreadcrumbList`.
+- PDP renders a `<script type="application/ld+json">` with `Product` (name, image, description, sku = id, brand "Vercel Swag Store") and `Offer` (price in major units, `priceCurrency`, `availability` from the visitor's draw and omitted when there is none, rendered inside the same Suspense boundary) and a `BreadcrumbList`. Availability follows the draw alone, never the cart, so it describes the product rather than the visitor.
 - `app/sitemap.ts`: home, search, and every product slug from `getAllProductSlugs()`; `lastModified` from `createdAt`. Cached like the catalogue.
 - `app/robots.ts`: allow all, disallow `/api/`, point at the sitemap. Crawling is allowed everywhere else so the site-wide `noindex` header is read.
 
@@ -33,9 +33,9 @@ Branch: `epic/E05-pdp`. Depends on: E02, E03. Blocks: E06 (needs the Add to Cart
 
 ### Stock and cart `components/product/stock-and-cart.tsx`
 
-- Async server component: `const stock = await getStock(productId)` (never cached). Passes `stock` to the client form.
-- Renders `<StockIndicator stock />`: "In stock", "Only N left" when `lowStock`, "Out of stock" when `!inStock`. Colour plus text plus icon-free; never colour alone.
-- Renders `<AddToCartForm productId max={stock.stock} disabled={!stock.inStock} />`.
+- Async server component: reads the visit cookie (never cached) and passes the product's draw to a client leaf, which subtracts what the visitor's cart holds. With no visit yet it passes nothing and the leaf keeps the skeleton until one opens.
+- Renders `<StockIndicator>`: "In stock", "Only N left" at 5 or fewer, "Out of stock" at a draw of 0, "All N are in your cart" when the cart holds the whole draw, "Stock unavailable" when the visit has no count for the product. Colour plus text plus icon-free; never colour alone.
+- Renders `<AddToCartForm>` with `max` and `disabled` taken from what remains.
 
 ### Add to Cart form `components/product/add-to-cart-form.tsx`
 
@@ -47,13 +47,13 @@ Branch: `epic/E05-pdp`. Depends on: E02, E03. Blocks: E06 (needs the Add to Cart
 ### Tests
 
 - Vitest: `QuantityStepper` clamps to `[min, max]` and disables plus at max.
-- Playwright (E12 runs it; write the test here): PDP renders name, price, stock text, and the button state matches stock.
+- Playwright (E12 runs it; write the test here): with the visit cookie seeded, the PDP renders name, price and a known stock line, and the button state matches it.
 
 ## Acceptance criteria
 
 - [x] All product slugs prerendered at build; build output shows `/products/[slug]` as static with one dynamic Suspense boundary.
-- [x] Stock line reflects the live API on every request (verify by reloading twice and seeing values change).
-- [x] Button text "Add to Cart", disabled when out of stock, quantity cannot exceed stock.
+- [x] Stock line reflects the visitor's draw, which the API supplied and which stays the same on every reload for a day.
+- [x] Button text "Add to Cart", disabled when nothing is left, quantity cannot exceed what remains.
 - [x] Unknown slug returns a 404 page with the shell intact.
 - [x] OG image for a product renders in a social debugger.
 
