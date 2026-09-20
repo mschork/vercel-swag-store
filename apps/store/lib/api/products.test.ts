@@ -17,6 +17,7 @@ import {
   getFeaturedProducts,
   getProduct,
   getProducts,
+  getProductsInCategory,
 } from './products'
 
 let fetchMock: ReturnType<typeof mockFetch>
@@ -167,6 +168,29 @@ describe('getAllProductSlugs', () => {
       }),
     )
     await expect(getAllProductSlugs()).resolves.toEqual(['one', 'two'])
+  })
+})
+
+describe('getProductsInCategory', () => {
+  const catalogue = () =>
+    ok(
+      [
+        product({ id: 'a', category: 'hats' }),
+        product({ id: 'b', category: 'mugs' }),
+        product({ id: 'c', category: 'hats' }),
+      ],
+      { pagination: pagination({ total: 3 }) },
+    )
+
+  it('returns only that category, in the API order', async () => {
+    fetchMock.mockResolvedValueOnce(catalogue())
+    const products = await getProductsInCategory('hats')
+    expect(products.map((item) => item.id)).toEqual(['a', 'c'])
+  })
+
+  it('returns an empty list for a category with no products', async () => {
+    fetchMock.mockResolvedValueOnce(catalogue())
+    await expect(getProductsInCategory('books')).resolves.toEqual([])
   })
 })
 
