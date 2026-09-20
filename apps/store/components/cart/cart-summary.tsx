@@ -39,10 +39,8 @@ export function CartSummary({
           <dt className="text-fg-secondary">Items</dt>
           <dd className="font-mono tabular-nums">{totalItems}</dd>
         </div>
-        {/* The rule between the rows, as a plain div. `Separator` put a
-            `separator` role inside a description list, which axe fails, and
-            drew nothing at all: its `data-horizontal:` classes never matched
-            Base UI's `data-orientation` attribute. This renders. */}
+        {/* The rule between the rows. A plain div, because a description list
+            may hold only `dt`, `dd` and `div`: a `separator` role fails axe. */}
         <div aria-hidden="true" className="h-px w-full shrink-0 bg-border" />
         <div className="flex justify-between gap-4 text-base font-medium">
           <dt>Subtotal</dt>
