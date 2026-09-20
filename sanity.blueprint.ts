@@ -12,7 +12,10 @@ import { ANALYSE_THRESHOLD } from './packages/demand/src/constants.ts'
  * first deploy with `sanity functions env add <function> <KEY> <value>`.
  */
 
-/** The project id is public (it is in every page's image URLs); it comes from the env or the Studio's .env. */
+/**
+ * The project id is public: it is in every page's image URLs. It comes from
+ * the env or the Studio's .env.
+ */
 function projectId(): string {
   const fromEnv = process.env.SANITY_STUDIO_PROJECT_ID
   if (fromEnv) return fromEnv

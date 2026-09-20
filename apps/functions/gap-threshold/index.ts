@@ -22,7 +22,10 @@ export const handler = documentEventHandler<{ _id: string }>(async ({ context, e
   console.log(`[gap-threshold] analysis requested after ${event.data._id}`)
 })
 
-/** Throws on anything but a 2xx, so a failure shows in `sanity functions logs`. The secret is never logged. */
+/**
+ * Throws on anything but a 2xx, so a failure shows in `sanity functions logs`.
+ * The secret is never logged.
+ */
 export async function wakeAnalysis(storeUrl: string | undefined, secret: string | undefined): Promise<void> {
   if (!storeUrl || !secret) throw new Error('STORE_URL and DEMAND_ANALYSE_SECRET must be set on the function.')
   const response = await fetch(new URL('/api/demand/analyse', storeUrl), {
