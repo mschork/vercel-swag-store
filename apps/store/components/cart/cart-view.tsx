@@ -11,6 +11,7 @@ import {
   type Drafts,
   type Line,
 } from '@/lib/cart/lines'
+import { useHydrated } from '@/lib/use-hydrated'
 import { exceedsDraw } from '@/lib/visit/limits'
 import { CartLine } from './cart-line'
 import { CartSummary } from './cart-summary'
@@ -25,9 +26,12 @@ import { EmptyCart } from './empty-cart'
  * has to show why if the removal fails.
  *
  * Each row's cap is the visitor's draw: what the provider holds, or what the
- * server read for `serverDraws` until it does. A row above its cap, which
- * happens when the visit was reset or redrawn while the cart lived on, says so
- * and keeps Checkout disabled until it is reduced or removed.
+ * server read for `serverDraws` until it does. While hydrating it is always
+ * `serverDraws`: a first visit's draws can reach the provider before the cart
+ * streams in, and rendering from them would not match the server's HTML. A
+ * row above its cap, which happens when the visit was reset or redrawn while
+ * the cart lived on, says so and keeps Checkout disabled until it is reduced
+ * or removed.
  */
 export function CartView({
   lines,
@@ -43,6 +47,7 @@ export function CartView({
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({})
   const [drafts, setDrafts] = useState<Drafts>({})
   const { setCartPage } = useCartCount()
+  const hydrated = useHydrated()
 
   const draft = (productId: string, quantity: number | null, onlyIf?: number) =>
     setDrafts((current) => setDraft(current, productId, quantity, onlyIf))
@@ -58,7 +63,8 @@ export function CartView({
 
   const shownLines = applyDrafts(optimisticLines, drafts)
   const { totalItems, subtotal } = cartTotals(shownLines)
-  const drawOf = (productId: string) => heldDraw(productId) ?? serverDraws[productId] ?? null
+  const drawOf = (productId: string) =>
+    (hydrated ? heldDraw(productId) : undefined) ?? serverDraws[productId] ?? null
   const overDrawn = shownLines.some((line) =>
     exceedsDraw(line.quantity, drawOf(line.productId)),
   )

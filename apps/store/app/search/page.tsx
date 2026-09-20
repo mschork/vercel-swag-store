@@ -14,11 +14,17 @@ import { normaliseQuery } from '@/lib/search'
 
 type Props = PageProps<'/search'>
 
+const DESCRIPTION = 'Search the store by name and narrow the results by category.'
+
 /**
  * Awaits `searchParams`, so the metadata streams in rather than being part of
  * the prerender; the page itself stays a partial prerender. Results are never
  * indexed: they are a slice of the catalogue under an arbitrary URL, and the
  * product pages are the pages worth finding.
+ *
+ * Streamed metadata lands in the body, where a tool that reads only the head
+ * finds no description. The description does not depend on the query, so the
+ * page renders it in the static shell and this leaves it out.
  */
 export async function generateMetadata({
   searchParams,
@@ -26,8 +32,8 @@ export async function generateMetadata({
   const { q } = await searchParams
   const query = normaliseQuery(Array.isArray(q) ? q[0] : q)
   return query
-    ? { title: `Results for "${query}"`, robots: { index: false } }
-    : { title: 'Search' }
+    ? { title: `Results for "${query}"`, description: null, robots: { index: false } }
+    : { title: 'Search', description: null }
 }
 
 /**
@@ -39,6 +45,8 @@ export async function generateMetadata({
 export default function SearchPage({ searchParams }: Props) {
   return (
     <SearchTransition>
+      {/* React moves it into the head of the prerendered shell. */}
+      <meta name="description" content={DESCRIPTION} />
       <Container className="flex flex-col gap-6 py-8 md:gap-8 md:py-12">
         <h1 className="text-3xl font-medium tracking-tight">Search</h1>
         <SearchForm />

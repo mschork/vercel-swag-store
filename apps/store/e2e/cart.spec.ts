@@ -223,6 +223,34 @@ test('the cart refuses more than the visit holds, and blocks checkout', async ({
   await expect(page.getByRole('button', { name: 'Checkout' })).toBeEnabled(SAVED)
 })
 
+test('a first visit whose draws arrive before the cart hydrates cleanly', async ({
+  page,
+  context,
+}) => {
+  await openInStockProduct(page, context, 3)
+  await page.waitForLoadState('networkidle')
+  await addToCart(page)
+  await expect(badge(page, 'Cart, 1 item')).toBeVisible(SAVED)
+
+  // No visit, so the server renders the line and the favourites without a
+  // draw, and the visit that opens says everything is sold out: the client
+  // knows before the cart streams in, and its first render still has to
+  // repeat the server's HTML.
+  await context.clearCookies({ name: 'visit' })
+  await page.route('**/api/visit', async (route) => {
+    const response = await route.fetch()
+    const body = (await response.json()) as { stock?: Record<string, number> }
+    const stock = Object.fromEntries(Object.keys(body.stock ?? {}).map((id) => [id, 0]))
+    await route.fulfill({ response, json: { ...body, stock } })
+  })
+  const errors: string[] = []
+  page.on('pageerror', (error) => errors.push(error.message))
+
+  await page.goto('/cart')
+  await expect(page.getByRole('button', { name: 'Checkout' })).toBeDisabled(SAVED)
+  expect(errors).toEqual([])
+})
+
 test('the cart cross-sells only what can be bought', async ({ page, context }) => {
   const ids = await catalogueIds(page, context)
   const favourites = (target: Page) =>
