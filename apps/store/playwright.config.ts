@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
 /**
- * Smoke tests against a production build (`next build && next start`). E12
- * wires this into CI; locally: `pnpm exec playwright test`.
+ * Smoke tests against a production build (`next build && next start`).
+ * Locally: `pnpm exec playwright test`.
  */
 export default defineConfig({
   testDir: './e2e',

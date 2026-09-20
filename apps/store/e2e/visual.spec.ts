@@ -11,9 +11,8 @@ import { expect, test, type BrowserContext, type Page } from '@playwright/test'
  * page is captured with one line in it, seeded through the API so the shot
  * never depends on live stock or on a slow Add to Cart.
  *
- * Playwright names snapshots per platform, so these are macOS files. CI runs
- * on Linux and needs its own set, generated there with `--update-snapshots`
- * (E12 wires the job).
+ * Snapshots are named per platform; the committed set is macOS. Generate
+ * another platform's set there with `--update-snapshots`.
  *
  * The home and cart shots include the favourites row, which the testimonials
  * decide. Adding or removing a testimonial can change which products it

@@ -6,9 +6,7 @@ import { z } from 'zod'
  * boundaries where zod is allowed (see AGENTS.md); `types.ts` infers the
  * TypeScript types from these so there is a single source of truth.
  *
- * zod v4 `z.object` strips unknown keys instead of failing, so new API fields
- * never break parsing. `z.looseObject` was rejected: its index signature makes
- * every inferred type accept any key and breaks `Omit`, see the PR.
+ * `z.object` strips unknown keys, so new API fields never break parsing.
  */
 
 const cents = z.int().nonnegative().describe('Amount in cents; format with formatPrice()')

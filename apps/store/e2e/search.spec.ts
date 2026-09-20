@@ -4,7 +4,7 @@ import { expect, type Page, test } from '@playwright/test'
  * Smoke for `/search` against a production build. The results-outage case (API
  * unreachable, the form survives and the region says so) is a server-side
  * condition this test cannot create; it is verified by starting the server
- * with an unreachable `API_BASE_URL` (see the E07 PR).
+ * with an unreachable `API_BASE_URL`.
  */
 
 const results = (page: Page) =>
