@@ -17,7 +17,8 @@
     "draft-care": "node --experimental-strip-types scripts/draft-care.ts",
     "migrate-testimonials": "node --experimental-strip-types scripts/migrate-testimonials.ts",
     "seed-demand": "node --experimental-strip-types scripts/seed-demand.ts",
-    "typegen": "pnpm --filter studio typegen"
+    "typegen": "pnpm --filter studio typegen",
+    "test": "vitest run"
   },
   "dependencies": {
     "@repo/demand": "workspace:*",
@@ -27,7 +28,8 @@
     "@repo/config": "workspace:*",
     "@types/node": "^26.6.1",
     "sanity": "^6.13.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.0"
   },
   "peerDependencies": {
     "sanity": "^6"

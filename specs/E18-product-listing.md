@@ -122,10 +122,10 @@ Slice 1
 
 Slice 2
 
-- [ ] An editor's intro shows under the category heading and as the meta description; publishing updates the page through the webhook.
-- [ ] No intro, no document or no Sanity: the page equals slice 1.
+- [x] An editor's intro shows under the category heading and as the meta description; publishing updates the page through the webhook.
+- [x] No intro, no document or no Sanity: the page equals slice 1.
 - [ ] In draft mode the intro is click-to-edit, and the category document shows its location in the Studio.
-- [ ] A sync run leaves `intro` untouched; the seed never overwrites one.
+- [x] A sync run leaves `intro` untouched; the seed never overwrites one.
 
 ## Out of scope
 

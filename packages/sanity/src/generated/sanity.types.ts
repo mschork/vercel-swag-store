@@ -204,6 +204,7 @@ export type Category = {
   _createdAt: string
   _updatedAt: string
   _rev: string
+  intro?: string
   name: string
   apiSlug: string
   syncedAt?: string
@@ -535,6 +536,14 @@ export type ProductQueryResult = {
     answer: RichText
     order: number
   }> | null
+} | null
+
+// Source: ../store/lib/sanity/queries.ts
+// Variable: categoryQuery
+// Query: *[_type == "category" && apiSlug == $apiSlug][0]{ _id, intro }
+export type CategoryQueryResult = {
+  _id: string
+  intro: string | null
 } | null
 
 // Source: ../store/lib/sanity/queries.ts
