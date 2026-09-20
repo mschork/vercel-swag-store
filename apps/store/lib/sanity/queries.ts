@@ -46,6 +46,11 @@ export const productQuery = defineQuery(`
   }
 `)
 
+/** A category's intro for its product listing, by the API slug the document mirrors (E18). */
+export const categoryQuery = defineQuery(`
+  *[_type == "category" && apiSlug == $apiSlug][0]{ _id, intro }
+`)
+
 /** Testimonials naming this product, newest first. */
 export const testimonialsForProductQuery = defineQuery(`
   *[_type == "testimonial" && consent == true && references($productDocId)]

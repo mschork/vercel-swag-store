@@ -3,16 +3,30 @@ import { syncedFields } from './shared'
 
 /**
  * A mirror of one API category, written by the sync script
- * (docs/adr/0003-sanity-mirrors-api-products-and-categories.md). It exists so
- * an FAQ can point at a category and a product can be matched to it; nothing
- * here is editable, and the store reads categories from the API.
+ * (docs/adr/0003-sanity-mirrors-api-products-and-categories.md), plus the one
+ * thing an editor writes: the intro for the category's product listing (E18).
+ * The mirror lets an FAQ point at a category and a product be matched to it;
+ * the store still reads every catalogue fact from the API.
  */
 export const category = defineType({
   name: 'category',
   title: 'Category',
   type: 'document',
-  groups: [{ name: 'catalogue', title: 'From the catalogue', default: true }],
+  groups: [
+    { name: 'listing', title: 'Listing page', default: true },
+    { name: 'catalogue', title: 'From the catalogue' },
+  ],
   fields: [
+    defineField({
+      name: 'intro',
+      title: 'Intro',
+      description:
+        "One or two sentences under the heading of this category's page. Also used as the page's description for search engines.",
+      type: 'text',
+      rows: 2,
+      group: 'listing',
+      validation: (rule) => rule.max(200),
+    }),
     defineField({
       name: 'name',
       title: 'Name',

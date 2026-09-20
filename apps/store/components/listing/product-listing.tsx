@@ -15,18 +15,29 @@ const PRELOAD_COUNT = 4
  * The product listing: every product, or one category's
  * (specs/E18-product-listing.md). Everything it reads is cached catalogue
  * data, and nothing here reads the request, so both routes that render it are
- * prerendered whole.
+ * prerendered whole. The intro is the one editorial line; the products never
+ * depend on it.
  */
-export async function ProductListing({ category }: { category: Category | null }) {
+export async function ProductListing({
+  category,
+  intro,
+}: {
+  category: Category | null
+  /** The category intro an editor wrote, if any; the page is complete without it. */
+  intro?: string | null
+}) {
   const [products, categories] = await Promise.all([
     category ? getProductsInCategory(category.slug) : getAllProducts(),
     getCategories(),
   ])
   return (
     <Container className="flex flex-col gap-6 py-8 md:gap-8 md:py-12">
-      <h1 className="text-3xl font-medium tracking-tight">
-        {category ? category.name : 'All products'}
-      </h1>
+      <div className="flex flex-col gap-3">
+        <h1 className="text-3xl font-medium tracking-tight">
+          {category ? category.name : 'All products'}
+        </h1>
+        {intro ? <p className="max-w-prose text-pretty text-fg-secondary">{intro}</p> : null}
+      </div>
       <CategoryChips categories={categories} current={category?.slug ?? null} />
       {products.length > 0 ? (
         <SortableProductGrid

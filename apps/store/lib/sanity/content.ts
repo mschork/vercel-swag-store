@@ -1,5 +1,6 @@
 import 'server-only'
 import type {
+  CategoryQueryResult,
   CheckoutPageQueryResult,
   FavouriteProductsQueryResult,
   HomePageQueryResult,
@@ -10,6 +11,7 @@ import type {
 import { loadOptional } from '@/lib/load-optional'
 import { sanityFetch } from './fetch'
 import {
+  categoryQuery,
   checkoutPageQuery,
   favouriteProductsQuery,
   homePageQuery,
@@ -99,6 +101,34 @@ export function getFavouriteProducts(limit: number) {
       query: favouriteProductsQuery,
       params: { limit },
       tags: ['sanity:testimonial', 'sanity:product'],
+    }),
+  )
+}
+
+/**
+ * The category document behind a product listing, by the API slug it mirrors
+ * (E18). The second tag is the document's id, which is what the publish
+ * webhook expires. `null` for a missing document or a failed call: the listing
+ * is complete without an intro.
+ */
+export function getCategoryDocument(apiSlug: string) {
+  return loadOptional(`Category document for ${apiSlug}`, () =>
+    sanityFetch<CategoryQueryResult>({
+      query: categoryQuery,
+      params: { apiSlug },
+      tags: ['sanity:category', `sanity:category-${apiSlug}`],
+    }),
+  )
+}
+
+/** The same document for `generateMetadata`, without stega (see `getSiteSettingsForMetadata`). */
+export function getCategoryDocumentForMetadata(apiSlug: string) {
+  return loadOptional(`Category document for ${apiSlug} (metadata)`, () =>
+    sanityFetch<CategoryQueryResult>({
+      query: categoryQuery,
+      params: { apiSlug },
+      tags: ['sanity:category', `sanity:category-${apiSlug}`],
+      stega: false,
     }),
   )
 }

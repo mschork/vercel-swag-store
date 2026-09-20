@@ -1,4 +1,5 @@
 import { createClient } from '@sanity/client'
+import { queueCategoryIntros } from './category-intros.ts'
 import { required } from './env.ts'
 import { syncCatalogue } from './sync.ts'
 
@@ -147,11 +148,13 @@ async function seed() {
       faqs: [{ _type: 'reference', _key: 'laptop-fit', _ref: 'faq-laptop-fit' }],
     },
   })
+  const intros = queueCategoryIntros(editorial, catalogue.categorySlugs)
   await editorial.commit()
 
   console.log(
     `Seeded: ${catalogue.categories} categories, ${catalogue.products} products, ` +
-      '3 pages, 4 questions, 2 enriched products. Testimonials need a photo, so add those in the Studio.',
+      `3 pages, 4 questions, 2 enriched products, ${intros} category intros. ` +
+      'Testimonials need a photo, so add those in the Studio.',
   )
 }
 
