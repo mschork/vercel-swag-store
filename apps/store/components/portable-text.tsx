@@ -15,10 +15,13 @@ import Link from 'next/link'
  *
  * The paragraphs take the width they are given: whoever renders the text owns
  * its measure, so a heading or a rule beside it is never wider than the text.
+ * Line breaks are the browser's to balance; where `text-wrap: pretty` is not
+ * supported the text wraps as before.
  */
 const components: PortableTextComponents = {
   block: {
-    normal: ({ children }) => <p className="leading-7">{children}</p>,
+    // `text-pretty` keeps a last line from ending on one short word ("it.").
+    normal: ({ children }) => <p className="leading-7 text-pretty">{children}</p>,
   },
   marks: {
     strong: ({ children }) => <strong className="font-medium">{children}</strong>,
