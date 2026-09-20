@@ -99,7 +99,7 @@ The shell stays prerendered. The layout already reads a cookie inside a boundary
 
 ## Spike
 
-Done on 20 Sep 2026 on a throwaway branch; nothing from it merges and the findings go into the slice 1 PR. They are kept in `.scratch/E19-spike/findings.md`.
+Done on 20 Sep 2026 on a throwaway branch; nothing from it merges. The findings:
 
 1. The cookie the route handler sets reaches the seed after `router.refresh()`, after a reload and in a second tab, but not after a client-side navigation, because the root layout is preserved across those. The provider holds the draws, so nothing on screen is wrong.
 2. Build output marks every page ◐ with the seed in the layout, as before.
