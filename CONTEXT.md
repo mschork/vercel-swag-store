@@ -33,8 +33,12 @@ The editorial fields on a product document: the longer description, the care tex
 _Avoid_: Product content, extra content, overrides
 
 **Category document**:
-The Sanity mirror of one API category. It exists so an FAQ can point at a category and a product can be matched to it.
+The Sanity mirror of one API category, plus the intro an editor writes for its product listing. The mirror lets an FAQ point at a category and a product be matched to it.
 _Avoid_: Sanity category, taxonomy term
+
+**Category intro**:
+The one short sentence or two an editor writes about a category, shown under the heading of that category's product listing. Optional; the listing is complete without it.
+_Avoid_: Category description, category enrichment, blurb
 
 **Testimonial**:
 What one person says about the products they are photographed with: a quote, their name and role, and the photo. Shown on the page of each product it names, under "What people say about it".
@@ -75,6 +79,10 @@ _Avoid_: Order confirmation, thank-you page, checkout (as a process)
 **Category**:
 The API's flat taxonomy of products. Owned by the API, never edited in Sanity.
 _Avoid_: Collection, tag, group
+
+**Product listing**:
+The page that shows every product the API returns, optionally narrowed to one category. For browsing; search is for finding.
+_Avoid_: Overview, shop, catalogue page, all products
 
 **Featured product**:
 A product the API flags as featured; a human choice, not a popularity measure.
