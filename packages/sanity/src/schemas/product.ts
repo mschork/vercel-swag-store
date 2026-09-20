@@ -7,8 +7,8 @@ import { imageField, syncedFields } from './shared'
  * catalogue fields are written by the sync script and read only: the store
  * takes name, price, category and the rest from the API, so a change here
  * would be invisible. Everything in the Enrichment tab is the editor's, and
- * every field of it is optional: a product with none renders exactly as it
- * did before Sanity existed.
+ * every field of it is optional: a product with none renders from the API
+ * alone.
  */
 export const product = defineType({
   name: 'product',

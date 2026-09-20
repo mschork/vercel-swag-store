@@ -2,16 +2,14 @@ import { createClient } from '@sanity/client'
 import { required } from './env.ts'
 
 /**
- * Drafts "How to use and care" copy for the products that have none.
+ * Drafts "How to use and care" copy for the products that have none. Each is a
+ * copy of the published mirror with `care` filled in, written to
+ * `drafts.<id>`, so the store shows nothing until an editor publishes it. A
+ * product that already has care copy, or a draft, is left alone, so a re-run
+ * is harmless.
  *
- * Drafts only: each is a copy of the published mirror with `care` filled in,
- * written to `drafts.<id>`, so the store shows nothing until an editor reads
- * it and presses Publish. A product that already has care copy, or already has
- * a draft, is left alone, which also makes re-running harmless.
- *
- * The copy is cautious on purpose. The API says what a product looks like, not
- * what it is made of, so nothing here promises a dishwasher, a temperature a
- * label might contradict, or a charging speed.
+ * The API says what a product looks like, not what it is made of, so an entry
+ * here promises no material, temperature or charging claim the API never made.
  *
  * Run with `pnpm --filter @repo/sanity draft-care`.
  */

@@ -15,7 +15,6 @@
     "sync": "node --experimental-strip-types scripts/sync.ts",
     "seed": "node --experimental-strip-types scripts/seed.ts",
     "draft-care": "node --experimental-strip-types scripts/draft-care.ts",
-    "migrate-testimonials": "node --experimental-strip-types scripts/migrate-testimonials.ts",
     "seed-demand": "node --experimental-strip-types scripts/seed-demand.ts",
     "typegen": "pnpm --filter studio typegen",
     "test": "vitest run"

@@ -7,13 +7,13 @@ import {
 } from 'sanity/presentation'
 
 /**
- * Where each document shows in the store (E17), so an editor can jump from a
+ * Where each document shows in the store, so an editor can jump from a
  * document to the page it appears on, and the Presentation tool knows which
  * document a page is mainly about.
  *
  * Only types an editor writes in are listed. A `category` is mostly a mirror
- * of the API, but its intro shows on its product listing (E18). `searchGap`
- * and `productIdea` have no entry on purpose: they never reach a page.
+ * of the API, but its intro shows on its product listing. `searchGap` and
+ * `productIdea` have no entry: they never reach a page.
  */
 
 const HOME = { title: 'Home page', href: '/' }

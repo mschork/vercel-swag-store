@@ -6,9 +6,9 @@ import { defineArrayMember, defineField, defineType } from 'sanity'
  */
 
 /**
- * Rich text as the store renders it (E08): paragraphs, bold, italic and
- * links. No headings, lists or images; pictures live in the fields built for
- * them, and the store's serializer supports exactly this set.
+ * Rich text as the store renders it: paragraphs, bold, italic and links.
+ * Pictures live in the fields built for them, and the store's serializer
+ * supports exactly this set.
  */
 export const portableText = defineType({
   name: 'richText',

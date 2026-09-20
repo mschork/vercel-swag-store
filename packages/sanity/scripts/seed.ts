@@ -6,7 +6,7 @@ import { syncCatalogue } from './sync.ts'
 /**
  * Fills a fresh dataset: the catalogue mirror, the three pages that exist
  * once, and enough editorial content that every part of the model is visible
- * on the site. The copy is placeholder (specs/improvements.md).
+ * on the site. The copy is placeholder.
  *
  * Idempotent: fixed ids, and `createIfNotExists` for everything an editor may
  * later change, so re-running never overwrites their words.

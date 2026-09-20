@@ -8,9 +8,9 @@ import { portableText } from './shared'
 import { checkoutPage, homePage, siteSettings } from './singletons'
 
 /**
- * Every type the Studio registers (E08). Products and categories mirror the
- * API and are written by `scripts/sync.ts`; search gaps and product ideas are
- * written by the search-gap loop (E13); the rest is an editor's.
+ * Every type the Studio registers. Products and categories mirror the API and
+ * are written by `scripts/sync.ts`; search gaps and product ideas are written
+ * by the search-gap loop; the rest is an editor's.
  */
 export const schemaTypes: SchemaTypeDefinition[] = [
   portableText,

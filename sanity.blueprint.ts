@@ -3,9 +3,9 @@ import { defineBlueprint, defineDocumentFunction } from '@sanity/blueprints'
 import { ANALYSE_THRESHOLD } from './packages/demand/src/constants.ts'
 
 /**
- * Everything Sanity runs for this repo, declared in code (E13, slice 4). It
- * sits at the repo root beside the lockfile, which is where Blueprints looks
- * in a pnpm monorepo. Preview with `sanity blueprints plan`, apply with
+ * Everything Sanity runs for this repo, declared in code. It sits at the repo
+ * root beside the lockfile, which is where Blueprints looks in a pnpm
+ * monorepo. Preview with `sanity blueprints plan`, apply with
  * `sanity blueprints deploy`.
  *
  * No secret belongs in this file. A Function's secrets are set after the
@@ -44,8 +44,7 @@ export default defineBlueprint({
         projection: '{_id}',
       },
     }),
-    // An editor accepted or rejected an idea in the Studio: stamp the date and
-    // move its gaps. Its own write leaves `status` alone, so it cannot re-fire.
+    // The Function's own write leaves `status` alone, so it cannot re-fire.
     defineDocumentFunction({
       name: 'idea-decided',
       src: './apps/functions/idea-decided',
