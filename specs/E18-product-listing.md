@@ -76,7 +76,7 @@ A real category with no products renders the shared `components/empty-state.tsx`
 
 - One new field: `intro`, `text` with 2 rows, optional, `max(200)`, in a new group "Listing page" that is the default group. Description: "One or two sentences under the heading of this category's page. Also used as the page's description for search engines."
 - The mirrored fields stay `readOnly` in "From the catalogue". The document now has the product document's shape: machine-written mirror, human-written copy (`docs/adr/0003`).
-- The sync writes only mirrored fields; a test proves a sync run leaves `intro` untouched.
+- The sync creates a category with its mirrored fields or patches only those, as it does for products. It used `createOrReplace` for categories while they had nothing of an editor's to lose; `queueCatalogue` in `scripts/sync.ts` holds the writes so a test can prove no editorial field is ever set and nothing is replaced.
 - Types regenerated with TypeGen.
 
 ### Read `lib/sanity/content.ts`
@@ -97,14 +97,14 @@ The intro is a paragraph under the h1, above the count, in the secondary text co
 
 ### Seed
 
-The seed script writes one intro per category the API returns, keyed by slug, with `setIfMissing` so an editor's text is never replaced. A category the seed has no copy for gets none. The copy is generated and flagged as such in the PR.
+The seed script writes one intro per category the API returns, keyed by slug, with `setIfMissing` so an editor's text is never replaced. A category the seed has no copy for gets none. The copy lives in `scripts/category-intros.ts`, is generated, and is flagged as such in the PR. The API has no category description to mirror or fall back to: a category is a slug, a name and a product count.
 
 ## Tests
 
 - Vitest `lib/listing.test.ts`: `sortProducts` for both directions, stability on equal prices, "Default" returning the input order, and no mutation of its input.
 - Vitest `lib/api/products.test.ts`: `getProductsInCategory` returns only that category, keeps API order, returns an empty list for a category with no products.
 - Vitest `app/sitemap.test.ts`: `/products` and one URL per category.
-- Vitest, slice 2: the category location resolver; the sync leaving `intro` alone; the seed using `setIfMissing`.
+- Vitest, slice 2, in `packages/sanity` (which gains a `test` script): the sync never replacing a document and never writing an editorial field; the seed using `setIfMissing`, skipping a category it has no copy for, and keeping every intro within 200 characters. The location resolver has no unit test, like the other resolvers in the Studio, which has no test runner.
 - Playwright `apps/store/e2e/listing.spec.ts`: `/products` shows as many cards as the API's total; a chip navigates to its category page, shows only that category's cards and is marked current; an unknown slug is a 404; "Price: low to high" puts the prices in ascending order and "Default" restores the first order; with JavaScript disabled the chips navigate and no sort control exists; the header's "Products" and the home page's "View all" arrive at `/products`. Located by role and accessible name, never by class.
 
 ## Acceptance criteria
