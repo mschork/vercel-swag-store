@@ -630,13 +630,64 @@ describe('the visit caps every write', () => {
     expect(mocked.updateCartItem).not.toHaveBeenCalled()
   })
 
-  it('enforces nothing for a visitor with no visit', async () => {
+  it('enforces nothing when a visitor with no visit cannot be given a draw', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
     jar.set(CART_COOKIE, 'live')
+    mockedStock.getStock.mockRejectedValue(new Error('the API is down'))
     mocked.addCartItem.mockResolvedValue(cart(99))
 
     await expect(
       addToCart(null, form({ productId: 'tshirt_001', quantity: '99' })),
     ).resolves.toMatchObject({ ok: true })
+    expect(jar.has(VISIT_COOKIE)).toBe(false)
+  })
+
+  it('opens a visit holding the product for an add with no visit', async () => {
+    jar.set(CART_COOKIE, 'live')
+    mockedStock.getStock.mockResolvedValue({ stock: 4 } as Awaited<ReturnType<typeof stock.getStock>>)
+
+    await expect(
+      addToCart(null, form({ productId: 'tshirt_001', quantity: '5' })),
+    ).resolves.toEqual({ ok: false, error: 'Only 4 available.' })
+    expect(visitStock()).toEqual({ tshirt_001: 4 })
+    expect(mocked.addCartItem).not.toHaveBeenCalled()
+  })
+
+  it('keeps the opening draw the form showed as the limit', async () => {
+    jar.set(CART_COOKIE, 'live')
+    mocked.addCartItem.mockResolvedValue(cart(2))
+
+    await expect(
+      addToCart(null, form({ productId: 'tshirt_001', quantity: '2', shown: '7' })),
+    ).resolves.toMatchObject({ ok: true })
+    expect(visitStock()).toEqual({ tshirt_001: 7 })
+    expect(mockedStock.getStock).not.toHaveBeenCalled()
+  })
+
+  it('lets the visit win over what the form showed', async () => {
+    jar.set(CART_COOKIE, 'live')
+    seedVisit({ tshirt_001: 1 })
+
+    await expect(
+      addToCart(null, form({ productId: 'tshirt_001', quantity: '2', shown: '99' })),
+    ).resolves.toEqual({ ok: false, error: 'Only 1 available.' })
+  })
+
+  it('draws fresh when what the form showed does not parse', async () => {
+    jar.set(CART_COOKIE, 'live')
+    mockedStock.getStock.mockResolvedValue({ stock: 4 } as Awaited<ReturnType<typeof stock.getStock>>)
+    mocked.addCartItem.mockResolvedValue(cart(1))
+
+    await addToCart(null, form({ productId: 'tshirt_001', quantity: '1', shown: '5000' }))
+    expect(visitStock()).toEqual({ tshirt_001: 4 })
+  })
+
+  it('opens no visit from a quantity change', async () => {
+    jar.set(CART_COOKIE, 'live')
+    mocked.updateCartItem.mockResolvedValue(cart(3))
+
+    await updateQuantity('tshirt_001', 3)
+    expect(jar.has(VISIT_COOKIE)).toBe(false)
     expect(mockedStock.getStock).not.toHaveBeenCalled()
   })
 })

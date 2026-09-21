@@ -4,13 +4,16 @@ import type { Cart } from '@/lib/api/types'
 import { loadCart } from '@/lib/cart/get-cart'
 import { loadOptional } from '@/lib/load-optional'
 import { getVisit } from '@/lib/visit/cookie'
+import { openingPromotion } from '@/lib/visit/opening'
 import { VisitSeedClient, type SeededVisit } from './visit-provider'
 
 /**
  * Hands the visit cookie and the cart to the provider, inside the layout's
  * Suspense boundary so the shell stays static. Reading the cookie costs
  * nothing; the cart is the slow part, and it comes from the request-memoized
- * `loadCart`, which the header badge has usually already paid for.
+ * `loadCart`, which the header badge has usually already paid for. Without a
+ * visit it hands over the promotion the banner shows, for the open call to
+ * hand back.
  *
  * Inside an action's response the cart read is skipped, as the badge skips
  * it: the action answers with the line it wrote, and the client applies that.
@@ -23,7 +26,9 @@ import { VisitSeedClient, type SeededVisit } from './visit-provider'
  */
 export async function VisitSeed() {
   const visit = await getVisit()
-  if (!visit) return <VisitSeedClient value={null} />
+  if (!visit) {
+    return <VisitSeedClient value={null} openingPromotion={(await openingPromotion()) ?? undefined} />
+  }
 
   const duringAction = (await headers()).has('next-action')
   const [result, products] = await Promise.all([

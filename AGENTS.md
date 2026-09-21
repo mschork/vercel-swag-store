@@ -22,7 +22,7 @@ A take-home assignment for Vercel: a "Vercel Swag Store" storefront in Next.js 1
 | Data | Function | Policy |
 |---|---|---|
 | Product list, product by slug, featured grid with top-up, categories, store config | `lib/api/products.ts`, `lib/api/categories.ts`, `lib/api/store.ts` | `"use cache"`, `cacheLife('catalog')` (custom profile in `next.config.ts`), `cacheTag('products')` etc. |
-| Stock for a product | `lib/api/stock.ts` | never cached; drawn once per visitor into the `visit` cookie by `POST /api/visit`; surfaces read the cookie inside `<Suspense>` |
+| Stock for a product | `lib/api/stock.ts` | never cached; drawn once per visitor into the `visit` cookie by `POST /api/visit`; surfaces read the cookie inside `<Suspense>`. Without a visit the product page's hole awaits one opening draw, which the browser hands back to that call (`lib/visit/opening.ts`) |
 | Promotion | `lib/api/promotions.ts` | never cached; pinned per visitor in the same cookie and read the same way |
 | Cart (all operations) | `lib/api/cart.ts`, `app/cart/actions.ts` | never cached; reads `cookies()`; Server Actions call `refresh()` from `next/cache`; nothing carries a cart tag, so `updateTag` / `revalidateTag` do not apply |
 | Sanity documents | `lib/sanity/fetch.ts` | `"use cache"`, `cacheTag('sanity', 'sanity:<type>', 'sanity:<id>')`; webhook revalidates; in draft mode, bypassed and read with the read token (E17) |

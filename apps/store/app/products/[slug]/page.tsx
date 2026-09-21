@@ -117,7 +117,7 @@ export default async function ProductPage({ params }: Props) {
             </p>
           </div>
           <p className="max-w-prose text-base text-fg-secondary">{product.description}</p>
-          <Suspense fallback={<StockSkeleton />}>
+          <Suspense fallback={<StockSkeleton pendingHole />}>
             <StockAndCart product={product} />
           </Suspense>
         </div>

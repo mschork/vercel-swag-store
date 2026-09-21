@@ -1,15 +1,21 @@
 import { Skeleton } from '@/components/ui/skeleton'
+import { OPENING_DRAW_MARKER } from '@/lib/visit/opening-limits'
 
 /**
  * Mirrors `StockAndCartClient` box for box (stock line, quantity label and
  * controls beside the button, confirmation line), so the details column keeps
  * its height while the stock streams in. Its own module because both the
  * server hole and the client leaf render it, and the leaf cannot import from
- * a module that reads cookies.
+ * a module that reads cookies. As the Suspense fallback it carries the
+ * opening-draw marker, since the hole behind it may hold one.
  */
-export function StockSkeleton() {
+export function StockSkeleton({ pendingHole = false }: { pendingHole?: boolean }) {
   return (
-    <div className="flex flex-col gap-4" aria-hidden="true">
+    <div
+      className="flex flex-col gap-4"
+      aria-hidden="true"
+      {...(pendingHole ? { [OPENING_DRAW_MARKER]: '' } : {})}
+    >
       <Skeleton className="h-6 w-24" />
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 md:flex-row md:items-end">

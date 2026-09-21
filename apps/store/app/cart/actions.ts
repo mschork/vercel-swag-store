@@ -58,6 +58,8 @@ const ProductId = z.string().trim().min(1)
 const AddToCartInput = z.object({
   productId: ProductId,
   quantity: z.coerce.number().int().positive(),
+  // The opening draw the form showed; a value that does not parse is ignored.
+  shown: z.coerce.number().int().min(0).max(CART_MAX_QUANTITY).optional().catch(undefined),
 })
 
 const UpdateQuantityInput = z.object({
@@ -76,6 +78,7 @@ export async function addToCart(
   const input = AddToCartInput.safeParse({
     productId: formData.get('productId'),
     quantity: formData.get('quantity'),
+    shown: formData.get('shown') ?? undefined,
   })
   if (!input.success) {
     return {
@@ -85,14 +88,14 @@ export async function addToCart(
         : 'This item could not be added.',
     }
   }
-  const { productId, quantity } = input.data
+  const { productId, quantity, shown } = input.data
   const copy = {
     gone: 'This product is no longer available.',
     failed: 'This item could not be added. Try again.',
   }
 
   // Checked before the write, so an add the visit cannot cover costs no call.
-  const draw = await drawFor(productId)
+  const draw = await drawFor(productId, { shown })
   if (exceedsDraw(quantity, draw) && draw !== null) {
     return { ok: false, error: tooMany(draw) }
   }
