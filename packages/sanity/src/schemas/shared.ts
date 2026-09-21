@@ -53,6 +53,7 @@ export function imageField(options: {
   name: string
   title: string
   description?: string
+  group?: string
 }) {
   return defineField({
     ...options,

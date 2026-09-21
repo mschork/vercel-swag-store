@@ -1,3 +1,4 @@
+import { TagIcon } from '@sanity/icons/Tag'
 import { defineField, defineType } from 'sanity'
 import { syncedFields } from './shared'
 
@@ -12,6 +13,7 @@ export const category = defineType({
   name: 'category',
   title: 'Category',
   type: 'document',
+  icon: TagIcon,
   groups: [
     { name: 'listing', title: 'Listing page', default: true },
     { name: 'catalogue', title: 'From the catalogue' },
@@ -45,6 +47,7 @@ export const category = defineType({
     }),
     ...syncedFields,
   ],
+  orderings: [{ name: 'name', title: 'Name', by: [{ field: 'name', direction: 'asc' }] }],
   preview: {
     select: { title: 'name', subtitle: 'apiSlug', missing: 'missing' },
     prepare: ({ title, subtitle, missing }) => ({

@@ -1,3 +1,4 @@
+import { HelpCircleIcon } from '@sanity/icons/HelpCircle'
 import { defineArrayMember, defineField, defineType } from 'sanity'
 
 /**
@@ -10,6 +11,7 @@ export const faq = defineType({
   name: 'faq',
   title: 'FAQ',
   type: 'document',
+  icon: HelpCircleIcon,
   fields: [
     defineField({
       name: 'question',

@@ -568,7 +568,7 @@ export type TestimonialsForProductQueryResult = Array<{
 
 // Source: ../store/lib/sanity/queries.ts
 // Variable: favouriteProductsQuery
-// Query: *[_type == "product" && missing != true && count(*[_type == "testimonial" && references(^._id)]) > 0]{    apiId,    "mentions": count(*[_type == "testimonial" && references(^._id)]),    "newest": *[_type == "testimonial" && references(^._id)] | order(publishedAt desc)[0].publishedAt  } | order(mentions desc, newest desc, apiId asc)
+// Query: *[_type == "product" && missing != true && count(*[_type == "testimonial" && consent == true && references(^._id)]) > 0]{    apiId,    "mentions": count(*[_type == "testimonial" && consent == true && references(^._id)]),    "newest": *[_type == "testimonial" && consent == true && references(^._id)] | order(publishedAt desc)[0].publishedAt  } | order(mentions desc, newest desc, apiId asc)
 export type FavouriteProductsQueryResult = Array<{
   apiId: string
   mentions: number

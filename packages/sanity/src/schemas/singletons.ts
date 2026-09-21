@@ -1,36 +1,68 @@
+import { CogIcon } from '@sanity/icons/Cog'
+import { CreditCardIcon } from '@sanity/icons/CreditCard'
+import { HomeIcon } from '@sanity/icons/Home'
 import { defineArrayMember, defineField, defineType } from 'sanity'
 import { imageField } from './shared'
 
 /** The three documents that exist once. Their ids are fixed by the seed script. */
 
+/** Where search results and link previews cut a title and a description. */
+const SEO_TITLE_LENGTH = 60
+const SEO_DESCRIPTION_LENGTH = 160
+
 export const siteSettings = defineType({
   name: 'siteSettings',
   title: 'Site settings',
   type: 'document',
+  icon: CogIcon,
+  groups: [
+    { name: 'seo', title: 'SEO and sharing', default: true },
+    { name: 'chrome', title: 'Header and footer' },
+    { name: 'productPage', title: 'Product page' },
+  ],
   fields: [
     defineField({
       name: 'storeName',
       title: 'Store name',
       type: 'string',
+      group: 'chrome',
       validation: (rule) => rule.required(),
     }),
-    defineField({ name: 'seoTitle', title: 'Default page title', type: 'string' }),
+    defineField({
+      name: 'seoTitle',
+      title: 'Default page title',
+      type: 'string',
+      group: 'seo',
+      validation: (rule) =>
+        rule
+          .max(SEO_TITLE_LENGTH)
+          .warning(`Search results cut a title after about ${SEO_TITLE_LENGTH} characters.`),
+    }),
     defineField({
       name: 'seoDescription',
       title: 'Default description',
       type: 'text',
       rows: 3,
       description: 'Used when a page has none of its own.',
+      group: 'seo',
+      validation: (rule) =>
+        rule
+          .max(SEO_DESCRIPTION_LENGTH)
+          .warning(
+            `Search results cut a description after about ${SEO_DESCRIPTION_LENGTH} characters.`,
+          ),
     }),
     imageField({
       name: 'ogImage',
       title: 'Sharing image',
       description: 'Shown when a link to the store is shared. 1200 by 630.',
+      group: 'seo',
     }),
     defineField({
       name: 'socialLinks',
       title: 'Social links',
       type: 'array',
+      group: 'chrome',
       description: 'Replaces the links the API returns when this list has any.',
       of: [
         defineArrayMember({
@@ -54,11 +86,12 @@ export const siteSettings = defineType({
         }),
       ],
     }),
-    defineField({ name: 'footerText', title: 'Footer text', type: 'string' }),
+    defineField({ name: 'footerText', title: 'Footer text', type: 'string', group: 'chrome' }),
     defineField({
       name: 'productPage',
       title: 'Product page headings',
       type: 'object',
+      group: 'productPage',
       description:
         'The headings above each block on a product page. Leave one empty and the page uses its own wording.',
       options: { collapsible: true, collapsed: true },
@@ -97,6 +130,7 @@ export const homePage = defineType({
   name: 'homePage',
   title: 'Home page',
   type: 'document',
+  icon: HomeIcon,
   fields: [
     defineField({
       name: 'hero',
@@ -173,6 +207,7 @@ export const checkoutPage = defineType({
   name: 'checkoutPage',
   title: 'Checkout page',
   type: 'document',
+  icon: CreditCardIcon,
   fields: [
     defineField({
       name: 'title',

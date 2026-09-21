@@ -21,16 +21,20 @@
   },
   "dependencies": {
     "@repo/demand": "workspace:*",
-    "@sanity/client": "^8.6.1"
+    "@sanity/client": "^8.6.1",
+    "@sanity/icons": "^5.2.2"
   },
   "devDependencies": {
     "@repo/config": "workspace:*",
     "@types/node": "^26.6.1",
+    "@types/react": "^19",
+    "react": "19.2.8",
     "sanity": "^6.13.2",
     "typescript": "^5",
     "vitest": "^5.0.0"
   },
   "peerDependencies": {
-    "sanity": "^6"
+    "sanity": "^6",
+    "react": "^19"
   }
 }
