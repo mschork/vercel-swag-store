@@ -9,20 +9,20 @@ Products, categories and store configuration as the API reports them. Cached and
 _Avoid_: Static data, master data
 
 **Live data**:
-Stock, promotion and cart. Never cached, because the API changes them per request or per visitor. The cart is read per request; stock and the promotion are read once per visit and held in the visit.
+Stock, promotion and cart. Never cached, because the API changes them per request or per visitor. Stock and the promotion are read once per visit and held in the visit; the cart is read from the cart mirror.
 _Avoid_: Dynamic data, realtime data
 
+**Session**:
+The random id in the one cookie the store sets. It identifies a browser and nothing more, and it is the key under which the store keeps that browser's visit and cart mirror (`docs/adr/0007-the-session-store.md`).
+_Avoid_: User, login, visitor id, session cart
+
 **Visit**:
-What the store remembers about one visitor for 24 hours, held in the `visit` cookie: their stock draws and their pinned promotion. It exists because the API redraws both on every request, so without it no number could be shown twice (`docs/adr/0006-the-stable-visit.md`).
+What the store remembers about one visitor for 24 hours, kept under their session: their stock draws and their pinned promotion. It exists because the API redraws both on every request, so without it no number could be shown twice (`docs/adr/0006-the-stable-visit.md`).
 _Avoid_: Session, user state, inventory cookie
 
 **Stock draw**:
 One answer from the stock endpoint for one product. The store asks once per product per visit and keeps it.
 _Avoid_: Stock level, stock count, inventory number
-
-**Opening draw**:
-A stock draw or promotion read made while rendering for a visitor who has no visit yet. It is shown in that HTML and handed to the visit when it opens, so the visit holds the number the visitor already read.
-_Avoid_: Live draw, first draw, server draw
 
 **Inventory**:
 The visit's stock draws, keyed by product id.
@@ -92,8 +92,16 @@ _Avoid_: Lost cart, session timeout, stale cart
 The number of items in the cart as the API last reported it. The header badge may run ahead of it while a change is saving, and falls back to it when the change fails or gets no answer.
 _Avoid_: Cart count, badge number, server count
 
+**Cart mirror**:
+The store's own copy of one cart as the API last answered it, kept under the session. Every surface reads the cart from it; every change is written to the API first and the answer replaces the mirror.
+_Avoid_: Cart cache, cached cart, local cart
+
+**Pending line**:
+A line the browser holds for an add whose save has not answered yet. Shown as saving, never counted as in the cart, and gone when the answer arrives.
+_Avoid_: Optimistic line, ghost line, in-flight item
+
 **Cart token**:
-The credential that identifies one anonymous cart. Lives only in an httpOnly cookie and on the server; the browser never reads it.
+The credential that identifies one anonymous cart. Lives only on the server, under the session; no cookie carries it and the browser never reads it.
 _Avoid_: Cart id, session, session token
 
 **Checkout page**:
