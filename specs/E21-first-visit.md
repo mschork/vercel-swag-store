@@ -35,12 +35,15 @@ The seed and the stock hole hydrate in separate boundaries and in no reliable or
 
 ## Add to Cart without a visit
 
-The form is in the HTML, so it can be submitted before the visit opens and with JavaScript off. `drawFor(productId)` draws and opens a visit holding that one product when there is none, since an action can set a cookie. The limit then holds for that visitor too.
+The form is in the HTML, so it can be submitted before the visit opens.
+
+- With JavaScript, an add waits for an open call still in flight, so the action never opens a second visit beside it and the two cookies never race.
+- A form posted before hydration reaches the action with no visit. The form carries the opening draw it showed, and `drawFor(productId, { shown })` opens a visit holding that one product with that number, since an action can set a cookie. The visit wins over `shown`, and a `shown` that fails validation is drawn fresh. A quantity change on the cart page opens no visit.
 
 ## Without JavaScript (second PR)
 
 - One notice under the header, in a `<noscript>`: "Thank you for your visit. Unfortunately not all functionality can be served to your browser if Javascript is not enabled."
-- The same `<noscript>` holds one style rule that hides every client-only skeleton, so none spins forever. The server-rendered stock line and form stay and work.
+- The same `<noscript>` holds one style rule that hides every skeleton, so none spins forever. That includes the product page's buy panel: React reveals a streamed hole with an inline script, so a browser without JavaScript receives the panel in the HTML and never shows it.
 
 ## Badge fade (second PR)
 
@@ -65,15 +68,15 @@ An inline head script that opens the visit before hydration; server draws for gr
 
 First PR, against a production build:
 
-- [ ] With no cookie and JavaScript disabled, a product page's response holds the stock line, the quantity input and the Add to Cart button, and every route's response holds the promotion.
-- [ ] With no cookie, the number in a product page's raw HTML, the number after the visit opens and the number after a reload are the same, in Chromium, WebKit and Firefox.
+- [ ] With no cookie, a product page's response, read as text, holds the stock line, the quantity input and the Add to Cart button, and every route's response holds the promotion.
+- [ ] With no cookie, the number in a product page's raw HTML, the number after the visit opens and the number after a reload are the same, in Chromium and Firefox. WebKit cannot run against a local build: it obeys `upgrade-insecure-requests` on localhost and refuses the `Secure` cookie, so Safari is part of the check by hand below.
 - [ ] A client-side navigation to a product page while the visit is opening never shows two numbers.
 - [ ] On the throttled mobile profile the first visit's buy panel appears within 0.3 s of a return visit's. A filmstrip of the home page and a product page, before and after, is recorded.
 - [ ] The route ignores a handed-back value the visit already holds, drops one that fails validation, and reads no body from a request that is not JSON.
-- [ ] An add with no visit opens one holding that product's draw, and a second add above it is refused.
+- [ ] An add with no visit opens one holding the number the form showed, and an add above it is refused.
 - [ ] Build output marks every page as before.
 - [ ] `pnpm verify` passes.
-- [ ] On the Vercel preview, by hand in a private window: the product page's number survives a reload.
+- [ ] On the Vercel preview, by hand in a private window, in Chrome and in Safari: the product page's number survives a reload.
 
 Second PR:
 
