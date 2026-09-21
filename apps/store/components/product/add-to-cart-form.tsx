@@ -4,6 +4,7 @@ import Link from 'next/link'
 import {
   useActionState,
   useEffect,
+  useRef,
   useState,
   useSyncExternalStore,
   type FormEvent,
@@ -11,6 +12,7 @@ import {
 import { addToCart, prepareCart, type AddToCartState } from '@/app/cart/actions'
 import { useCartCount } from '@/components/cart/cart-count'
 import { QuantityStepper } from '@/components/quantity-stepper'
+import { Spinner } from '@/components/spinner'
 import { useVisit } from '@/components/visit/visit-provider'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,8 +22,8 @@ import {
   totalInFlight,
 } from '@/lib/cart/adds-in-flight'
 
-/** How long the button reads "Added" after a click. */
-const ADDED_LABEL_MS = 1200
+/** How long the button spins after a click: an acknowledgement, not the save. */
+const ADDING_LABEL_MS = 1000
 
 const FAILED: AddToCartState = { ok: false, error: 'This item could not be added. Try again.' }
 
@@ -59,7 +61,8 @@ export function AddToCartForm({
 }) {
   const [posted, formAction] = useActionState(addToCart, null)
   const [answered, setAnswered] = useState<AddToCartState>(null)
-  const [justAdded, setJustAdded] = useState(false)
+  const [justClicked, setJustClicked] = useState(false)
+  const spinning = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const saving = useSyncExternalStore(
     subscribeInFlight,
     () => addsInFlight(productId) > 0,
@@ -93,8 +96,10 @@ export function AddToCartForm({
     const count = Number.isInteger(quantity) && quantity > 0 ? quantity : 0
     report(count)
     setAnswered(null)
-    setJustAdded(true)
-    setTimeout(() => setJustAdded(false), ADDED_LABEL_MS)
+    setJustClicked(true)
+    // A second click restarts the second, so the first timer cannot cut it short.
+    clearTimeout(spinning.current)
+    spinning.current = setTimeout(() => setJustClicked(false), ADDING_LABEL_MS)
     void (async () => {
       await pendingOpen()
       const result = await addToCart(null, data).catch(() => FAILED)
@@ -121,7 +126,14 @@ export function AddToCartForm({
       <div className="flex flex-col gap-3 md:flex-row md:items-end">
         <QuantityStepper name="quantity" min={1} max={max} disabled={disabled} />
         <Button type="submit" size="lg" disabled={disabled} className="h-11 md:flex-1">
-          {justAdded ? 'Added' : 'Add to Cart'}
+          {justClicked ? (
+            <>
+              <Spinner />
+              Adding…
+            </>
+          ) : (
+            'Add to Cart'
+          )}
         </Button>
       </div>
       <p role="status" className="min-h-6 text-sm leading-6">
