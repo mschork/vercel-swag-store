@@ -34,4 +34,4 @@ Against a production build:
 - [x] Removing the last line shows the empty cart without a reload.
 - [x] A reload after any of these shows the same cart.
 - [x] Build output marks every page as before, and `pnpm verify` passes.
-- [ ] Before and after timings are recorded in `callout.md`.
+- [x] Before and after timings are recorded in `callout.md`, measured on production.
