@@ -13,6 +13,7 @@ import {
 import { ApiError } from '@/lib/api/client'
 import type { Cart } from '@/lib/api/types'
 import { clearCartToken, getCartToken, setCartToken } from '@/lib/cart/cookie'
+import { toLines, type Line } from '@/lib/cart/lines'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
 import { getVisit, setVisit } from '@/lib/visit/cookie'
 import { drawFor } from '@/lib/visit/draw'
@@ -22,11 +23,14 @@ import { afterOrder } from '@/lib/visit/visit'
 /**
  * Cart Server Actions (specs/E06-cart.md). Each one validates its input, calls
  * the API with the token from the httpOnly cookie and answers with user-facing
- * copy and the cart's item count, never its lines or token. The count lets the
- * header badge update without reading the cart again. `refresh()` re-renders
- * the cart page from the server's view in the same round trip. After a
- * successful write the cookie is set again, so its one-day expiry slides with
- * the API cart's.
+ * copy and the cart's item count, never its token. The count lets the header
+ * badge update without reading the cart again.
+ *
+ * An add sets the cookie again, so its one-day expiry slides, and calls
+ * `refresh()`. A quantity change and a removal do neither, because either one
+ * re-renders the cart page inside the action's response, and the page then
+ * reads the cart the write has just returned: a second slow call. They answer
+ * with that cart's lines instead (specs/E23-cart-page-one-call.md).
  *
  * The API accepts any quantity of anything, so the limit a visitor sees is
  * enforced here or nowhere: every write is checked against their visit
@@ -43,9 +47,11 @@ export interface CartLineResult {
  * `totalItems` is on every success, and on a failure whenever the action
  * read the cart, as it does after a 404. `line` travels with it so the client
  * can move a product's remaining stock without reading the cart again.
+ * `lines` is the saved cart as the cart page renders it, on the writes that
+ * do not refresh.
  */
 export type CartActionResult =
-  | { ok: true; totalItems: number; line: CartLineResult }
+  | { ok: true; totalItems: number; line: CartLineResult; lines?: Line[] }
   | { ok: false; error: string; totalItems?: number; line?: CartLineResult }
 export type AddToCartState = CartActionResult | null
 
@@ -161,7 +167,12 @@ export async function updateQuantity(
     token,
     input.data.productId,
     () => updateCartItem(token, input.data.productId, input.data.quantity),
-    { gone: NOT_IN_CART, failed: 'The quantity could not be changed. Try again.', draw },
+    {
+      gone: NOT_IN_CART,
+      failed: 'The quantity could not be changed. Try again.',
+      draw,
+      answerWithLines: true,
+    },
   )
 }
 
@@ -175,6 +186,7 @@ export async function removeItem(productId: string): Promise<CartActionResult> {
   return write(token, input.data, () => removeCartItem(token, input.data), {
     gone: NOT_IN_CART,
     failed: 'This item could not be removed. Try again.',
+    answerWithLines: true,
   })
 }
 
@@ -220,11 +232,16 @@ type WriteOptions = {
    * forgetting it; `addToCart` passes a single add into a new cart instead.
    */
   onExpired?: () => Promise<CartActionResult>
+  /**
+   * Answer a success with the cart's lines and leave the cookie and the route
+   * alone, so the write is the action's only cart call.
+   */
+  answerWithLines?: boolean
 }
 
 /**
  * Runs one write and maps its outcome. Success sets the cookie again and
- * refreshes. A 404 is ambiguous, because the API answers `NOT_FOUND` for an
+ * refreshes, or with `answerWithLines` does neither and returns the lines. A 404 is ambiguous, because the API answers `NOT_FOUND` for an
  * unknown cart, line and product alike, so it is followed by one `getCart`:
  * no cart means it expired, a cart means the line or product is gone. A 404
  * alone never clears the cookie. Other failures keep the cart as it is.
@@ -246,8 +263,16 @@ async function write(
     console.error('[cart] write failed', error)
     return { ok: false, error: copy.failed }
   }
-  await setCartToken(token)
   const corrected = await capLine(token, cart, productId, copy.draw)
+  if (copy.answerWithLines && !corrected) {
+    return {
+      ok: true,
+      totalItems: cart.totalItems,
+      line: lineOf(cart, productId),
+      lines: toLines(cart),
+    }
+  }
+  await setCartToken(token)
   refresh()
   if (corrected) return corrected
   return { ok: true, totalItems: cart.totalItems, line: lineOf(cart, productId) }

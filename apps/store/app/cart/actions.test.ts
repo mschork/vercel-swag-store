@@ -335,7 +335,7 @@ describe('updateQuantity', () => {
   it.each([0, 99])('accepts quantity %i', async (quantity) => {
     jar.set(CART_COOKIE, 'live')
     mocked.updateCartItem.mockResolvedValue(cart(quantity))
-    await expect(updateQuantity('tshirt_001', quantity)).resolves.toEqual({
+    await expect(updateQuantity('tshirt_001', quantity)).resolves.toMatchObject({
       ok: true,
       totalItems: quantity,
       line: { productId: 'tshirt_001', quantity },
@@ -347,18 +347,22 @@ describe('updateQuantity', () => {
     )
   })
 
-  it('slides the cookie and refreshes after a successful write', async () => {
+  it('answers with the saved lines, and neither sets the cookie nor refreshes', async () => {
     jar.set(CART_COOKIE, 'live')
     mocked.updateCartItem.mockResolvedValue(cart(2))
 
-    await expect(updateQuantity('tshirt_001', 2)).resolves.toEqual({
+    const result = await updateQuantity('tshirt_001', 2)
+    expect(result).toMatchObject({
       ok: true,
       totalItems: 2,
       line: { productId: 'tshirt_001', quantity: 2 },
+      lines: [{ productId: 'tshirt_001', quantity: 2 }],
     })
-
-    expectCookieSlid('live')
-    expect(refresh).toHaveBeenCalledTimes(1)
+    // Either one re-renders the cart page, which would read the cart again.
+    expect(cookieStore.set).not.toHaveBeenCalled()
+    expect(refresh).not.toHaveBeenCalled()
+    expect(mocked.getCart).not.toHaveBeenCalled()
+    expect(JSON.stringify(result)).not.toContain('live')
   })
 
   it('treats a missing cookie as an expired cart', async () => {
@@ -454,7 +458,7 @@ describe('removeItem', () => {
     expect(mocked.removeCartItem).not.toHaveBeenCalled()
   })
 
-  it('removes the line, slides the cookie and refreshes', async () => {
+  it('removes the line and answers with the lines that are left', async () => {
     jar.set(CART_COOKIE, 'live')
     mocked.removeCartItem.mockResolvedValue(cart(0))
 
@@ -462,11 +466,13 @@ describe('removeItem', () => {
       ok: true,
       totalItems: 0,
       line: { productId: 'tshirt_001', quantity: 0 },
+      lines: [],
     })
 
     expect(mocked.removeCartItem).toHaveBeenCalledWith('live', 'tshirt_001')
-    expectCookieSlid('live')
-    expect(refresh).toHaveBeenCalledTimes(1)
+    expect(cookieStore.set).not.toHaveBeenCalled()
+    expect(refresh).not.toHaveBeenCalled()
+    expect(mocked.getCart).not.toHaveBeenCalled()
   })
 
   it('keeps the cookie for a missing line and clears it for a missing cart', async () => {
