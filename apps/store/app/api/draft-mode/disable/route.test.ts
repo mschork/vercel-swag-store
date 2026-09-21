@@ -18,7 +18,14 @@ describe('GET /api/draft-mode/disable', () => {
     expect(response.headers.get('location')).toBe('https://store.example/products/hoodie')
   })
 
-  it.each(['https://evil.example/', '//evil.example', '/\\evil.example'])(
+  it.each([
+    'https://evil.example/',
+    '//evil.example',
+    '/\\evil.example',
+    '/.//evil.example',
+    '/..//evil.example/x',
+    '/a/..//evil.example',
+  ])(
     'refuses %s and goes home instead',
     async (target) => {
       const response = await get(`?redirect=${encodeURIComponent(target)}`)
