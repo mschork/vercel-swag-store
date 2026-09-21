@@ -1,11 +1,14 @@
 import Link from 'next/link'
 import { Container } from '@/components/container'
 import { EmptyState } from '@/components/empty-state'
+import { JsonLd } from '@/components/json-ld'
 import { SortableProductGrid } from '@/components/product-grid'
 import { getCategories } from '@/lib/api/categories'
 import { getAllProducts, getProductsInCategory } from '@/lib/api/products'
 import type { Category } from '@/lib/api/types'
-import { productCountLabel } from '@/lib/listing'
+import { publicEnv } from '@/lib/env.public'
+import { categoryPath, productCountLabel } from '@/lib/listing'
+import { breadcrumbJsonLd, itemListJsonLd } from '@/lib/structured-data'
 import { CategoryChips } from './category-chips'
 
 /** The first row at the widest grid; on these pages the grid is the largest paint. */
@@ -30,12 +33,24 @@ export async function ProductListing({
     category ? getProductsInCategory(category.slug) : getAllProducts(),
     getCategories(),
   ])
+  const name = category ? category.name : 'All products'
+  const siteUrl = publicEnv.NEXT_PUBLIC_SITE_URL
   return (
     <Container className="flex flex-col gap-6 py-8 md:gap-8 md:py-12">
+      <JsonLd data={itemListJsonLd({ name, products, siteUrl })} />
+      {category ? (
+        <JsonLd
+          data={breadcrumbJsonLd(
+            [
+              { name: 'Home', href: '/' },
+              { name: category.name, href: categoryPath(category.slug) },
+            ],
+            siteUrl,
+          )}
+        />
+      ) : null}
       <div className="flex flex-col gap-3">
-        <h1 className="text-3xl font-medium tracking-tight">
-          {category ? category.name : 'All products'}
-        </h1>
+        <h1 className="text-3xl font-medium tracking-tight">{name}</h1>
         {intro ? <p className="max-w-prose text-pretty text-fg-secondary">{intro}</p> : null}
       </div>
       <CategoryChips categories={categories} current={category?.slug ?? null} />

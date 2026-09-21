@@ -2,12 +2,7 @@ import { cacheLife, cacheTag } from 'next/cache'
 import Link from 'next/link'
 import { ProductGrid } from '@/components/product-grid'
 import { CATALOG_PROFILE, TAGS } from '@/lib/api/cache'
-import { getFeaturedProducts } from '@/lib/api/products'
-
-/** The required minimum for the home grid; the API's featured count is not read. */
-const MIN_FEATURED = 6
-/** How many featured products to show at most. */
-const MAX_FEATURED = 12
+import { getHomeFeatured } from '@/lib/home'
 
 /**
  * Cached at the component level (the UI-level form of `"use cache"`; the data
@@ -29,10 +24,7 @@ export async function FeaturedProducts({
   'use cache'
   cacheTag(TAGS.products)
   cacheLife(CATALOG_PROFILE)
-  const products = await getFeaturedProducts({
-    limit: MAX_FEATURED,
-    min: MIN_FEATURED,
-  })
+  const products = await getHomeFeatured()
   return (
     <section
       aria-labelledby="featured-heading"
