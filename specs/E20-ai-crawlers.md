@@ -42,7 +42,7 @@ A client that runs no scripts and reads Markdown better than HTML gets every cat
 The rule is what the page shows, minus anything per visitor: no stock, no promotion, no cart.
 
 - Every file opens with its h1 and a link to its HTML page. Every other internal link goes to a `.md` address, so a reader can walk the store without parsing HTML.
-- Product: name, price, category, the API's description, the photo, then the enrichment in page order: "About this item", care, the extra photos, FAQs, testimonials as a quote with the person's name and role. No testimonial photos.
+- Product: name, price, category, the API's description, the photo, then the enrichment, facts before voices: "About this item", care, the extra photos, FAQs, and last the testimonials, each a quote with the person's name and role. The page opens with the testimonials; a reader after facts gets those first. No testimonial photos.
 - All products and category: the heading, the category intro when an editor wrote one, then each product as a list item with name, price and link. No count typed by hand, no sort.
 - Home: the store's name, the hero's headline and description, the featured products, the favourites when there are any, and a link to each category.
 - Prices go through `formatPrice()`.
