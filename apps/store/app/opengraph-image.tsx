@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { cacheLife, cacheTag } from 'next/cache'
 import { ImageResponse } from 'next/og'
 import { TRIANGLE_PATH, TRIANGLE_VIEWBOX } from '@/components/logo'
 import { getStoreConfig } from '@/lib/api/store'
@@ -7,6 +8,7 @@ import { HERO_IMAGE } from '@/lib/content/fallbacks'
 import { loadOgFonts, OG_FONT_FAMILY } from '@/lib/og-font'
 import { getHomePageForMetadata, getSiteSettingsForMetadata } from '@/lib/sanity/content'
 import { sanityCoverUrl } from '@/lib/sanity/image'
+import { sanityImageDataUri } from '@/lib/sanity/image-data'
 import { sharingCard } from '@/lib/sharing-card'
 
 export const alt = 'Vercel Swag Store'
@@ -19,12 +21,37 @@ async function bundledHero() {
   return `data:image/jpeg;base64,${file.toString('base64')}`
 }
 
+/** What `renderCard` draws; plain values, so they can key its cache entry. */
+type CardInput = {
+  /** A Sanity URL, or `null` for the bundled hero photo. */
+  photoUrl: string | null
+  /** `null` when the photo is the whole card. */
+  words: { storeName: string; headline: string } | null
+}
+
+/**
+ * The card as a base64 PNG. Cached whole: during a prerender any pending work
+ * outside a cache (the font read, the photo download, the PNG encoding) makes
+ * the route dynamic, and whether it is still pending depends on the machine's
+ * load.
+ */
+async function renderCard({ photoUrl, words }: CardInput): Promise<string> {
+  'use cache'
+  cacheTag('sanity')
+  cacheLife('content')
+  const photo = photoUrl ? await sanityImageDataUri(photoUrl) : await bundledHero()
+  const image = new ImageResponse(<Card photo={photo} words={words} />, {
+    ...size,
+    fonts: await loadOgFonts(),
+  })
+  return Buffer.from(await image.arrayBuffer()).toString('base64')
+}
+
 /**
  * The store's sharing card, and the card of every page without its own
  * (`sharingCard` in `lib/sharing-card.ts`). This file outranks
  * `openGraph.images` in metadata, so the editor's sharing image is drawn here.
- * Every read is cached, so the image is prerendered. Colours are literal
- * because the image renderer cannot read the CSS tokens.
+ * Every await is a cached read, so the image is prerendered.
  */
 export default async function Image() {
   const [settings, home, { storeName }] = await Promise.all([
@@ -33,7 +60,18 @@ export default async function Image() {
     getStoreConfig(),
   ])
   const card = sharingCard(settings, home)
-  const photo = card.photo ? sanityCoverUrl(card.photo, size) : await bundledHero()
+  const png = await renderCard({
+    photoUrl: card.photo ? sanityCoverUrl(card.photo, size) : null,
+    words:
+      card.kind === 'hero'
+        ? { storeName: settings?.storeName || storeName, headline: card.headline }
+        : null,
+  })
+  return new Response(Buffer.from(png, 'base64'), { headers: { 'Content-Type': contentType } })
+}
+
+/** Colours are literal because the image renderer cannot read the CSS tokens. */
+function Card({ photo, words }: { photo: string; words: CardInput['words'] }) {
   const cover = (
     <img
       src={photo}
@@ -43,8 +81,7 @@ export default async function Image() {
       style={{ position: 'absolute', top: 0, left: 0, objectFit: 'cover' }}
     />
   )
-  return new ImageResponse(
-    card.kind === 'upload' ? (
+  return !words ? (
       <div style={{ width: '100%', height: '100%', display: 'flex' }}>{cover}</div>
     ) : (
       <div
@@ -88,14 +125,12 @@ export default async function Image() {
             <svg viewBox={TRIANGLE_VIEWBOX} width="36" height="31" fill="#000">
               <path d={TRIANGLE_PATH} />
             </svg>
-            {settings?.storeName || storeName}
+            {words.storeName}
           </div>
           <div style={{ fontSize: 88, lineHeight: 1.05, letterSpacing: -3, maxWidth: 600 }}>
-            {card.headline}
+            {words.headline}
           </div>
         </div>
       </div>
-    ),
-    { ...size, fonts: await loadOgFonts() },
   )
 }
