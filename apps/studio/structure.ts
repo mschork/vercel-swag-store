@@ -1,16 +1,8 @@
 // Version 5 of the icon package exports each icon from its own path.
-import { BulbOutlineIcon } from '@sanity/icons/BulbOutline'
 import { CheckmarkCircleIcon } from '@sanity/icons/CheckmarkCircle'
 import { ClockIcon } from '@sanity/icons/Clock'
 import { CloseCircleIcon } from '@sanity/icons/CloseCircle'
-import { CogIcon } from '@sanity/icons/Cog'
-import { CommentIcon } from '@sanity/icons/Comment'
-import { CreditCardIcon } from '@sanity/icons/CreditCard'
-import { HelpCircleIcon } from '@sanity/icons/HelpCircle'
-import { HomeIcon } from '@sanity/icons/Home'
-import { PackageIcon } from '@sanity/icons/Package'
-import { SearchIcon } from '@sanity/icons/Search'
-import { TagIcon } from '@sanity/icons/Tag'
+import { EditIcon } from '@sanity/icons/Edit'
 import { UlistIcon } from '@sanity/icons/Ulist'
 import type { ComponentType } from 'react'
 import type { StructureBuilder, StructureResolver } from 'sanity/structure'
@@ -20,7 +12,8 @@ import { SINGLETON_IDS, type SingletonType } from '@repo/sanity'
 const API_VERSION = '2026-09-01'
 
 /**
- * The desk, in the order an editor works: what they write every day, then the
+ * The desk, in the order an editor works: what they write every day, with the
+ * products that have no extended description yet as their own list, then the
  * three pages that exist once, then the categories that mirror the API and
  * nobody edits, then the search-gap loop's proposals and the gaps behind them.
  */
@@ -28,23 +21,35 @@ export const structure: StructureResolver = (S) =>
   S.list()
     .title('Content')
     .items([
-      S.documentTypeListItem('product').title('Products').icon(PackageIcon),
-      S.documentTypeListItem('faq').title('FAQs').icon(HelpCircleIcon),
-      S.documentTypeListItem('testimonial').title('Testimonials').icon(CommentIcon),
+      S.documentTypeListItem('product').title('Products'),
+      S.listItem()
+        .title('Products to enrich')
+        .id('productsToEnrich')
+        .icon(EditIcon)
+        .child(
+          S.documentList()
+            .title('Products to enrich')
+            .schemaType('product')
+            .apiVersion(API_VERSION)
+            .filter('_type == "product" && missing != true && !defined(extendedDescription)')
+            .defaultOrdering([{ field: 'name', direction: 'asc' }]),
+        ),
+      S.documentTypeListItem('faq').title('FAQs'),
+      S.documentTypeListItem('testimonial').title('Testimonials'),
 
       S.divider().title('Website'),
-      singleton(S, 'homePage', 'Home page', HomeIcon),
-      singleton(S, 'checkoutPage', 'Checkout page', CreditCardIcon),
-      singleton(S, 'siteSettings', 'Site settings', CogIcon),
+      singleton(S, 'homePage', 'Home page'),
+      singleton(S, 'checkoutPage', 'Checkout page'),
+      singleton(S, 'siteSettings', 'Site settings'),
 
       S.divider().title('Taxonomies'),
-      S.documentTypeListItem('category').title('Categories').icon(TagIcon),
+      S.documentTypeListItem('category').title('Categories'),
 
       S.divider().title('Demand signals'),
       S.listItem()
         .title('Product ideas')
         .id('productIdeas')
-        .icon(BulbOutlineIcon)
+        .icon(typeIcon(S, 'productIdea'))
         .child(
           S.list()
             .title('Product ideas')
@@ -57,7 +62,7 @@ export const structure: StructureResolver = (S) =>
       S.listItem()
         .title('Search gaps')
         .id('searchGapsOpen')
-        .icon(SearchIcon)
+        .icon(typeIcon(S, 'searchGap'))
         .child(
           S.documentList()
             .title('Search gaps')
@@ -79,12 +84,17 @@ export const structure: StructureResolver = (S) =>
         ),
     ])
 
+/** The icon a document type declares, for a list item that is not a plain type list. */
+function typeIcon(S: StructureBuilder, type: string) {
+  return S.context.schema.get(type)?.icon as ComponentType | undefined
+}
+
 /** A page that exists once opens its document directly, with no list in between. */
-function singleton(S: StructureBuilder, type: SingletonType, title: string, icon: ComponentType) {
+function singleton(S: StructureBuilder, type: SingletonType, title: string) {
   return S.listItem()
     .title(title)
     .id(type)
-    .icon(icon)
+    .icon(typeIcon(S, type))
     .child(S.document().schemaType(type).documentId(SINGLETON_IDS[type]))
 }
 

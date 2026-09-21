@@ -1,3 +1,5 @@
+import { BulbOutlineIcon } from '@sanity/icons/BulbOutline'
+import { SearchIcon } from '@sanity/icons/Search'
 import { defineArrayMember, defineField, defineType } from 'sanity'
 import { GAP_STATUSES, IDEA_STATUSES } from '@repo/demand/constants'
 
@@ -14,6 +16,7 @@ export const searchGap = defineType({
   name: 'searchGap',
   title: 'Search gap',
   type: 'document',
+  icon: SearchIcon,
   description:
     'A search that found nothing, counted. Only the tidied-up query is kept: no raw input, nothing about who searched.',
   readOnly: true,
@@ -55,6 +58,7 @@ export const productIdea = defineType({
   name: 'productIdea',
   title: 'Product idea',
   type: 'document',
+  icon: BulbOutlineIcon,
   description:
     'A product people searched for and did not find, proposed by a model from the search gaps. Accepting it is a signal to whoever owns the catalogue and nothing more: the store cannot create products.',
   fields: [

@@ -1,3 +1,4 @@
+import { CommentIcon } from '@sanity/icons/Comment'
 import { defineArrayMember, defineField, defineType } from 'sanity'
 import { imageField } from './shared'
 
@@ -11,6 +12,7 @@ export const testimonial = defineType({
   name: 'testimonial',
   title: 'Testimonial',
   type: 'document',
+  icon: CommentIcon,
   fields: [
     defineField({
       name: 'person',

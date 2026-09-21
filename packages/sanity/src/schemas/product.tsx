@@ -1,3 +1,4 @@
+import { PackageIcon } from '@sanity/icons/Package'
 import { defineArrayMember, defineField, defineType } from 'sanity'
 import { imageField, syncedFields } from './shared'
 
@@ -10,10 +11,16 @@ import { imageField, syncedFields } from './shared'
  * every field of it is optional: a product with none renders from the API
  * alone.
  */
+/** The API's photo, filling the square a list row gives its media. */
+function CataloguePhoto({ src }: { src: string }) {
+  return <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+}
+
 export const product = defineType({
   name: 'product',
   title: 'Product',
   type: 'document',
+  icon: PackageIcon,
   groups: [
     { name: 'editorial', title: 'Enrichment', default: true },
     { name: 'catalogue', title: 'From the catalogue' },
@@ -105,6 +112,12 @@ export const product = defineType({
       group: 'editorial',
     }),
   ],
+  orderings: [
+    { name: 'name', title: 'Name', by: [{ field: 'name', direction: 'asc' }] },
+    { name: 'priceAsc', title: 'Price, lowest first', by: [{ field: 'price', direction: 'asc' }] },
+    { name: 'priceDesc', title: 'Price, highest first', by: [{ field: 'price', direction: 'desc' }] },
+    { name: 'syncedAt', title: 'Last synced', by: [{ field: 'syncedAt', direction: 'desc' }] },
+  ],
   preview: {
     select: {
       title: 'name',
@@ -113,8 +126,10 @@ export const product = defineType({
       missing: 'missing',
       enriched: 'extendedDescription',
     },
-    prepare: ({ title, category, missing, enriched }) => ({
+    prepare: ({ title, category, image, missing, enriched }) => ({
       title: String(title ?? ''),
+      // The photo is the API's, by URL, so the Studio cannot draw it itself.
+      media: typeof image === 'string' ? <CataloguePhoto src={image} /> : undefined,
       subtitle: [
         String(category ?? 'No category'),
         enriched ? 'enriched' : 'not enriched yet',
