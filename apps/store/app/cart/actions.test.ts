@@ -11,6 +11,7 @@ import { product } from '@/test/helpers'
 import {
   addToCart,
   placeOrder,
+  prepareCart,
   removeItem,
   updateQuantity,
 } from './actions'
@@ -689,6 +690,41 @@ describe('the visit caps every write', () => {
     await updateQuantity('tshirt_001', 3)
     expect(jar.has(VISIT_COOKIE)).toBe(false)
     expect(mockedStock.getStock).not.toHaveBeenCalled()
+  })
+})
+
+describe('prepareCart', () => {
+  it('creates a cart and sets its cookie for a visitor without one', async () => {
+    mocked.createCart.mockResolvedValue({ token: 'fresh' } as Awaited<ReturnType<typeof api.createCart>>)
+
+    await prepareCart()
+    expect(jar.get(CART_COOKIE)).toBe('fresh')
+  })
+
+  it('does nothing for a visitor who has a cart', async () => {
+    jar.set(CART_COOKIE, 'live')
+
+    await prepareCart()
+    expect(mocked.createCart).not.toHaveBeenCalled()
+    expect(jar.get(CART_COOKIE)).toBe('live')
+  })
+
+  it('lets the following add write once, into the prepared cart', async () => {
+    mocked.createCart.mockResolvedValue({ token: 'fresh' } as Awaited<ReturnType<typeof api.createCart>>)
+    mocked.addCartItem.mockResolvedValue(cart(1))
+
+    await prepareCart()
+    await addToCart(null, form({ productId: 'tshirt_001', quantity: '1' }))
+    expect(mocked.createCart).toHaveBeenCalledTimes(1)
+    expect(mocked.addCartItem).toHaveBeenCalledWith('fresh', 'tshirt_001', 1)
+  })
+
+  it('leaves a failure to the add', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    mocked.createCart.mockRejectedValue(new Error('the API is down'))
+
+    await expect(prepareCart()).resolves.toBeUndefined()
+    expect(jar.has(CART_COOKIE)).toBe(false)
   })
 })
 

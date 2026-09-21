@@ -31,11 +31,11 @@ The cart page's double read after a quantity change; a cart count cookie for the
 
 Against a production build:
 
-- [ ] A first add after the pointer rested on the form makes one cart call in the action, not two, and is saved in about the time of a second add.
-- [ ] The button is usable again within 0.1 s of a click, for a first and a later add.
-- [ ] Three quick adds of 1 land as a line of 3; the header badge and the stock line show all three at once, and "View cart" becomes a link only after the last.
-- [ ] Adds cannot exceed what remains, counting those in flight.
-- [ ] A failed add shows its error and puts the counts back.
-- [ ] A page view alone sets no cart cookie.
-- [ ] Build output marks every page as before, and `pnpm verify` passes.
+- [x] A first add after the pointer rested on the form makes one cart call in the action, not two, and is saved in about the time of a second add.
+- [x] The button is usable again within 0.1 s of a click, for a first and a later add.
+- [x] Three quick adds of 1 land as a line of 3; the header badge and the stock line show all three at once, and "View cart" becomes a link only after the last.
+- [x] Adds cannot exceed what remains, counting those in flight.
+- [x] A failed add shows its error and puts the counts back.
+- [x] A page view alone sets no cart cookie.
+- [x] Build output marks every page as before, and `pnpm verify` passes.
 - [ ] Before and after timings are recorded in `callout.md`.

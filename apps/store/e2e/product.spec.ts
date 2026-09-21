@@ -85,11 +85,11 @@ test('adding confirms at once, and View cart waits for the write', async ({
   // The optimistic path needs the hydrated form, not the no-JS post.
   await page.waitForLoadState('networkidle')
   await page.getByRole('button', { name: 'Add to Cart', exact: true }).click()
-  // Optimistic: the message and the busy button appear before the API
-  // answers, and the link stays inert until the write has landed.
+  // Optimistic: the message appears before the API answers, the button is
+  // free again at once, and the link stays inert until the write has landed.
   const status = page.getByRole('status').filter({ hasText: 'Added.' })
   await expect(status).toBeVisible({ timeout: 1_000 })
-  await expect(page.getByRole('button', { name: 'Adding…' })).toBeDisabled()
+  await expect(page.getByRole('main').getByRole('button', { name: 'Added', exact: true })).toBeEnabled()
   const viewCart = page.getByRole('link', { name: 'View cart' })
   await expect(viewCart).toHaveAttribute('aria-disabled', 'true')
   // The cart API is slow (`lib/api/cart.ts`).
@@ -102,6 +102,33 @@ test('adding confirms at once, and View cart waits for the write', async ({
   await expect(stockLine(page)).toHaveText('Only 4 left')
 })
 
+test('quick adds queue, and every count follows them at once', async ({ page, context }) => {
+  test.setTimeout(120_000)
+  await openFeatured(page, context, 5)
+  await page.waitForLoadState('networkidle')
+  const button = page.getByRole('main').getByRole('button', { name: /^(Add to Cart|Added)$/ })
+  await button.click()
+  await button.click()
+  await button.click()
+  // All three count before the first has been saved.
+  await expect(stockLine(page)).toHaveText('Only 2 left', { timeout: 2_000 })
+  const badge = page.getByRole('banner').getByRole('img', { name: /^Cart/ })
+  await expect(badge).toHaveAccessibleName(/3/, { timeout: 2_000 })
+  const viewCart = page.getByRole('link', { name: 'View cart' })
+  await expect(viewCart).toHaveAttribute('aria-disabled', 'true')
+  // Three slow writes, one after the other (`lib/api/cart.ts`).
+  await expect(viewCart).toHaveAttribute('href', '/cart', { timeout: 60_000 })
+  await expect(stockLine(page)).toHaveText('Only 2 left')
+  await expect(badge).toHaveAccessibleName(/3/)
+})
+
+test('a page view alone opens no cart', async ({ page, context }) => {
+  await openFeatured(page, context, 5)
+  // Long enough for a hydrated form to have opened one, had it done so unasked.
+  await page.waitForTimeout(3_000)
+  expect((await context.cookies()).some((cookie) => cookie.name === 'cart_token')).toBe(false)
+})
+
 test('says the cart holds them all once the whole draw is added', async ({
   page,
   context,
@@ -112,7 +139,7 @@ test('says the cart holds them all once the whole draw is added', async ({
   await page.getByLabel('Quantity', { exact: true }).fill('2')
   await page.getByLabel('Quantity', { exact: true }).blur()
   await page.getByRole('button', { name: 'Add to Cart', exact: true }).click()
-  // The line flips as the add is sent; the button waits for the slow write.
+  // The line flips as the add is sent, and nothing is left to add.
   await expect(stockLine(page)).toHaveText('All 2 are in your cart', { timeout: 5_000 })
   await expect(
     page.getByRole('button', { name: 'Add to Cart', exact: true }),
