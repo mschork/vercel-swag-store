@@ -124,6 +124,20 @@ Two changes (`specs/E22-add-to-cart-wait.md`). A first add made two slow calls i
 
 The button no longer waits for the save. A submit calls the action and frees the button; adds queue in order, and the quantities not yet answered count towards the header badge and against the stock line and the quantity limit at once. "View cart" still becomes a link only when the last save has landed, and a failed add shows its error and takes its quantity back. The save itself is as slow as the API makes it: one write, about 2.8 s, which no storefront change removes.
 
+## Cart latency after E23
+
+Measured on production on 21 Sep 2026, before and after the merge, with the same Playwright script: three runs per flow, each a fresh visitor with one line in the cart. "Saved" is when the action's answer has reached the browser. The cart calls were counted with a fetch hook preloaded into a local production build, because production's server cannot be instrumented.
+
+| Flow | Before: saved | Before: cart calls | After: saved | After: cart calls |
+|---|---|---|---|---|
+| One plus click on `/cart`, including the 0.4 s pause | 4.7 to 5.8 s | 2 | 3.5 to 3.6 s | 1 |
+| Remove on `/cart` | 4.5 to 4.9 s | 2 | 2.7 to 3.0 s | 1 |
+| Size of the action's response | about 73 KB | | under 0.4 KB | |
+
+The second call was a read of the cart the write had just returned (`specs/E23-cart-page-one-call.md`). The action set the cart cookie again and called `refresh()`, and either of those makes Next re-render the route inside the action's response; the cart page reads the cart to render its lines, so every change paid for a write and a read of the slow endpoint, and shipped the whole page back. `updateQuantity` and `removeItem` now answer with the saved cart's lines and leave the cookie and the route alone, and the cart view keeps those lines as the state under its optimistic ones. What is left is one write and the pause that turns four clicks into one request.
+
+Two things were given up for it. The cart cookie slides only with an add now, so its day counts from the last add and not from the last change; the cookie cannot say how old it is, so an action cannot slide it only when it is due. And the favourites row under the cart is rendered with the lines of the last full render, so a product removed from the cart returns to that row on the next load. `addToCart` still refreshes, because the quick-add row relies on the re-render to drop the product just added.
+
 ## Stock measurements (E05)
 
 Measured against the live API on 20 Sep 2026. `GET /products/{id}/stock` called 300 times
