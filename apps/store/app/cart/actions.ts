@@ -120,6 +120,23 @@ export async function addToCart(
   return write(token, productId, add(token), { ...copy, draw, onExpired: addToNewCart })
 }
 
+/**
+ * Creates the visitor's cart ahead of their first add, which then costs one
+ * slow call in place of two (specs/E22-add-to-cart-wait.md). The form calls it
+ * on intent. An action, because Next runs a client's actions one at a time: an
+ * add clicked meanwhile queues behind it and finds the cookie. A failure is
+ * left to the add, which opens a cart itself.
+ */
+export async function prepareCart(): Promise<void> {
+  if (await getCartToken()) return
+  try {
+    await openCart()
+  } catch (error) {
+    unstable_rethrow(error)
+    console.error('[cart] could not open a cart ahead of the add', error)
+  }
+}
+
 /** Changes a line's quantity through `updateCartItem` (lib/api/cart.ts). */
 export async function updateQuantity(
   productId: string,
