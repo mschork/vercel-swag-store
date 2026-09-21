@@ -61,11 +61,11 @@ It lives in a cookie because the store has no database. Sanity is the only datas
 
 ### Opening it
 
-Pages cannot set cookies, so the visit is opened by `POST /api/visit`, called once by the client when the visitor has none.
+Pages cannot set cookies, so the visit is opened by `POST /api/visit`, called once by the client when the visitor has none. What a render without a visit shows, and how the call keeps it, is `E21-first-visit.md`.
 
 - The handler reads the cookie, lists the catalogue with the cached `getAllProducts()`, draws stock with `getStock()` for every product id the visit lacks, eight at a time, and calls `getPromotion()` when the visit has none. It writes the cookie and answers with the stock map and the promotion.
 - A draw that fails is left out and is drawn on the next call. A product missing from the visit renders "Stock unavailable" with Add to Cart disabled, as a failed stock call does today. A promotion that fails to load leaves the banner's reserved box empty, as it does today.
-- It takes no input and returns only the caller's own visit, so a cross-site POST achieves nothing.
+- Its only input is the opening draws of `E21-first-visit.md`, read from a JSON request alone, and it returns only the caller's own visit, so a cross-site POST achieves nothing.
 - A route handler and not a Server Action: actions run one at a time per client and re-render the route when they set a cookie, so an Add to Cart clicked in the first second would queue behind the draws.
 - The same call tops the visit up when the catalogue gains a product.
 
@@ -82,7 +82,7 @@ Pages cannot set cookies, so the visit is opened by `POST /api/visit`, called on
 - `lib/visit/cookie.ts`, server-only: `getVisit()`, `setVisit()`, `clearVisit()`. Same split as `lib/cart/cookie.ts`.
 - `lib/stock-status.ts` keeps everything a stock line, Offer and button derive from a count: `stockStatus(draw, inCart)` replaces the version that took the API's `StockInfo`, and `LOW_STOCK_THRESHOLD` is 5, which is where the API's own `lowStock` flag turns over. It stays one module rather than gaining a second beside it.
 - `lib/visit/limits.ts`, pure, with no zod and nothing server-only, so the cart page can say what the actions enforce: `exceedsDraw(quantity, draw)` and `tooMany(draw)`.
-- `lib/visit/draw.ts`, server-only: `drawFor(productId)`, the count the actions check against. It draws and stores a product the visit does not cover yet, and answers `null` when there is nothing to enforce: no visit at all, which happens only with JavaScript off, or a draw that failed.
+- `lib/visit/draw.ts`, server-only: `drawFor(productId)`, the count the actions check against. It draws and stores a product the visit does not cover yet, opens a visit holding that one product when the visitor has none (`E21-first-visit.md`), and answers `null` when the draw failed and there is nothing to enforce.
 - `lib/visit/open.ts`, client-safe: the typed `openVisit()` and `resetVisit()` that call the handler. No `fetch` in a component.
 - `lib/api/stock.ts` and `lib/api/promotions.ts` are unchanged: never cached, one call each. Only their callers change.
 
@@ -93,7 +93,7 @@ The pattern is `CartCountProvider` again.
 - `VisitProvider` wraps the layout beside `CartCountProvider`. It holds `stock` and `inCart`, both keyed by product id, and the pinned promotion. It keeps no data of its own.
 - `VisitSeed` is a server component in the root layout inside `<Suspense fallback={null}>`. It runs on a full load and on `refresh()`, not on a client-side navigation, because the root layout is preserved across those; the provider is therefore the client's source of truth and a seed that finds no cookie never resets it. It reads the visit cookie and the cart through the request-memoized `loadCart`, so it adds no API call to a request that renders the badge. Inside an action's response it skips the cart, as the badge does. It compares the visit against the cached catalogue and renders a client leaf that seeds the provider and, when the cookie is absent or the visit does not cover every product, calls `openVisit()` once. The guard that keeps that to one call is a ref, because the repo's `react-hooks/set-state-in-effect` rule rejects a `setState` in an effect body.
 - Cart actions answer with the touched line as well as the count: `{ ok: true, totalItems, line: { productId, quantity } }`. The provider applies it, so remaining moves at once and without a read. The result still never carries the token or the other lines.
-- `useProductStock(productId, serverDraw?)` returns the product's draw and how many of it the cart holds. The draw is `undefined` before the visit arrives and `null` when the visit has no count for it; `serverDraw` is what the server read in this render, so a page that knows the count paints it without waiting for hydration.
+- `useProductStock(productId, serverDraw?)` returns the product's draw and how many of it the cart holds. The draw is `undefined` before the visit arrives and `null` when the visit has no count for it; `serverDraw` is what the server read in this render, from the visit or as an opening draw, so a page that knows the count paints it without waiting for hydration.
 
 The shell stays prerendered. The layout already reads a cookie inside a boundary for the badge; this is a second read of the same kind.
 
