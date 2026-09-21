@@ -110,6 +110,20 @@ The header badge follows the click in 0.04 to 0.07 s after E16, on both pages; b
 
 What changed, in order: a spinner on the busy button; the add writes first and reads only after a 404; quantity clicks wait for a pause and send the last value; the badge and the cart page share one read per request; actions return the item count and the badge holds it on the client; the product page confirms at submit time. What is left is the API's own time for one write, which no storefront change removes.
 
+## Cart latency after E22
+
+Measured on production on 21 Sep 2026 with a Playwright script, three runs per flow, each a fresh visitor whose draw allowed two adds. "Before" is the same script against production earlier that day, and matches the E16 table above. "Button free" is when the button can be clicked again. "Saved" is when "View cart" becomes a link.
+
+| Flow | Before: button free | Before: saved | After: button free | After: saved |
+|---|---|---|---|---|
+| First add, pointer rested on the buy panel for 3.5 s first | 5.9 to 6.4 s | 5.9 to 6.4 s | 0.03 to 0.04 s | 2.8 to 3.4 s |
+| First add, clicked the moment the pointer arrived | 5.9 to 6.4 s | 5.9 to 6.4 s | 0.02 to 0.03 s | 6.4 to 6.9 s |
+| Later add | 2.8 to 3.8 s | 2.8 to 3.8 s | 0.01 to 0.04 s | 2.8 to 3.8 s |
+
+Two changes (`specs/E22-add-to-cart-wait.md`). A first add made two slow calls in a row, create the cart and write the line, so `prepareCart()` creates the cart when the pointer enters the buy panel or focus lands in it, and the add that follows writes once. It is a Server Action because Next runs a client's actions one at a time: an add clicked while the cart is still being created queues behind it and finds the cookie, which is why the second row is no worse than before. It does not run on page view, because a cart cookie makes the header badge read the slow cart endpoint on every full page load, and a visitor who only looks should not pay for that. A touch screen has no hover, so a tap straight on the button is the second row.
+
+The button no longer waits for the save. A submit calls the action and frees the button; adds queue in order, and the quantities not yet answered count towards the header badge and against the stock line and the quantity limit at once. "View cart" still becomes a link only when the last save has landed, and a failed add shows its error and takes its quantity back. The save itself is as slow as the API makes it: one write, about 2.8 s, which no storefront change removes.
+
 ## Stock measurements (E05)
 
 Measured against the live API on 20 Sep 2026. `GET /products/{id}/stock` called 300 times

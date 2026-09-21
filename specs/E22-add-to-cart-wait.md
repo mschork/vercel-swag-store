@@ -38,4 +38,4 @@ Against a production build:
 - [x] A failed add shows its error and puts the counts back.
 - [x] A page view alone sets no cart cookie.
 - [x] Build output marks every page as before, and `pnpm verify` passes.
-- [ ] Before and after timings are recorded in `callout.md`.
+- [x] Before and after timings are recorded in `callout.md`, measured on production.
