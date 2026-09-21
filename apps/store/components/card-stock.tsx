@@ -15,6 +15,9 @@ import { LOW_STOCK_THRESHOLD } from '@/lib/stock-status'
  * The wording is the card's own where the product page's would not fit: a
  * product whose whole draw is in the visitor's cart reads "In your cart" here
  * and "All N are in your cart" there.
+ *
+ * It fades in, because it always arrives after the photo. A label that
+ * changes keeps its element, so an add does not replay the fade.
  */
 export function CardStock({ productId }: { productId: string }) {
   const { draw, inCart } = useProductStock(productId)
@@ -32,7 +35,7 @@ export function CardStock({ productId }: { productId: string }) {
 
   return (
     <span
-      className={`absolute top-2.5 left-2.5 rounded-full border px-2 py-0.5 text-xs leading-5 font-medium ${tone}`}
+      className={`absolute top-2.5 left-2.5 animate-fade-in rounded-full border px-2 py-0.5 text-xs leading-5 font-medium motion-reduce:animate-none ${tone}`}
     >
       {label}
     </span>

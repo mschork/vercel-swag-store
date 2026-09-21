@@ -39,6 +39,15 @@
     }
   }
 
+  /* A grid badge arrives after the page, when the visit lands, so it fades in.
+   * The box is reserved, so nothing moves. */
+  --animate-fade-in: fade-in 200ms ease-out both;
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
