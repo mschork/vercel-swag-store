@@ -28,10 +28,10 @@ A quantity change or a removal on the cart page takes 4.2 to 4.7 s to save, and 
 
 Against a production build:
 
-- [ ] A quantity change and a removal each make one cart call, counted on the server.
-- [ ] One plus click saves in about the time of one cart write plus the pause, down from 4.2 to 4.7 s.
-- [ ] The rows, the summary, the header badge and what remains of a product are right after a change, after a removal, after two rows changed in quick succession, and after a failed change.
-- [ ] Removing the last line shows the empty cart without a reload.
-- [ ] A reload after any of these shows the same cart.
-- [ ] Build output marks every page as before, and `pnpm verify` passes.
+- [x] A quantity change and a removal each make one cart call, counted on the server.
+- [x] One plus click saves in about the time of one cart write plus the pause, down from 4.2 to 4.7 s.
+- [x] The rows, the summary, the header badge and what remains of a product are right after a change, after a removal, after two rows changed in quick succession, and after a failed change.
+- [x] Removing the last line shows the empty cart without a reload.
+- [x] A reload after any of these shows the same cart.
+- [x] Build output marks every page as before, and `pnpm verify` passes.
 - [ ] Before and after timings are recorded in `callout.md`.

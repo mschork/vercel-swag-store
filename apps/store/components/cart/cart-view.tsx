@@ -19,8 +19,10 @@ import { EmptyCart } from './empty-cart'
 
 /**
  * The cart page's client leaf. Lines live in `useOptimistic`, so a quantity
- * change or a removal shows at once and the totals follow; the server's answer
- * arrives through `refresh()` and replaces `lines`. Above them sit drafts: the
+ * change or a removal shows at once and the totals follow. Under it are the
+ * saved lines: the server's `lines` from the last render, replaced by the
+ * lines a row's action answers with, because those actions do not refresh
+ * (specs/E23-cart-page-one-call.md). Above them sit drafts: the
  * quantities a row shows during its pause before saving. Messages are kept
  * here, keyed by product, because a row removed optimistically unmounts and
  * has to show why if the removal fails.
@@ -43,7 +45,14 @@ export function CartView({
   serverDraws: Readonly<Record<string, number | null>>
 }) {
   const { draw: heldDraw } = useVisit()
-  const [optimisticLines, applyChange] = useOptimistic(lines, applyLineChange)
+  const [saved, setSaved] = useState(lines)
+  // A render that brings new lines, after an add or an expired cart, wins.
+  const [rendered, setRendered] = useState(lines)
+  if (lines !== rendered) {
+    setRendered(lines)
+    setSaved(lines)
+  }
+  const [optimisticLines, applyChange] = useOptimistic(saved, applyLineChange)
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({})
   const [drafts, setDrafts] = useState<Drafts>({})
   const { setCartPage } = useCartCount()
@@ -89,6 +98,7 @@ export function CartView({
             error={errors[line.productId] ?? null}
             onChange={applyChange}
             onDraft={draft}
+            onSaved={setSaved}
             onResult={report}
           />
         ))}

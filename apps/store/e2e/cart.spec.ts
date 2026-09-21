@@ -1,4 +1,4 @@
-import { expect, test, type BrowserContext, type Page } from '@playwright/test'
+import { expect, test, type BrowserContext, type Page, type Request } from '@playwright/test'
 import { catalogueIds, openWithStock, seedVisit } from './visit'
 
 /**
@@ -304,4 +304,48 @@ test('a quick add from the favourites row swaps in the next favourite', async ({
   await expect(
     page.getByRole('main').locator(`ul:not([class*="grid"]) a[href="${addedHref}"]`),
   ).toHaveCount(1, SAVED)
+})
+
+test('two rows changed together each keep their own saved quantity', async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(240_000)
+  const ids = await catalogueIds(page, context)
+  await seedVisit(context, Object.fromEntries(ids.map((id) => [id, 20])))
+
+  // Two lines, both from the favourites row under the empty cart.
+  await page.goto('/cart')
+  const favourites = page.locator('section[aria-labelledby="favourites-heading"]').first()
+  const add = favourites.getByRole('listitem').first().getByRole('button', { name: /^Add to Cart/ })
+  await expect(add).toBeVisible(SAVED)
+  await add.click()
+  await expect(badge(page, 'Cart, 1 item')).toBeVisible(SAVED)
+  const rows = page.getByRole('main').locator('ul:not([class*="grid"]) > li')
+  await expect(rows).toHaveCount(1, SAVED)
+  await add.click()
+  await expect(rows).toHaveCount(2, SAVED)
+
+  // Each row saves once after its pause; a cancelled stream has answered too.
+  let answered = 0
+  const count = (request: Request) => {
+    if (request.headers()['next-action']) answered++
+  }
+  page.on('requestfinished', count)
+  page.on('requestfailed', count)
+  await rows.nth(0).getByRole('button', { name: 'Increase quantity' }).click()
+  await rows.nth(1).getByRole('button', { name: 'Increase quantity' }).click()
+  await rows.nth(1).getByRole('button', { name: 'Increase quantity' }).click()
+  await expect(badge(page, 'Cart, 5 items')).toBeVisible()
+
+  await expect.poll(() => answered, SAVED).toBe(2)
+  await expect(rows.nth(0)).not.toHaveAttribute('aria-busy', SAVED)
+  await expect(rows.nth(1)).not.toHaveAttribute('aria-busy', SAVED)
+  await expect(rows.nth(0).getByLabel('Quantity', { exact: true })).toHaveValue('2')
+  await expect(rows.nth(1).getByLabel('Quantity', { exact: true })).toHaveValue('3')
+  await expect(badge(page, 'Cart, 5 items')).toBeVisible()
+  // The second answer is the newer cart, and it must not undo the first row.
+  await page.reload()
+  await expect(rows.nth(0).getByLabel('Quantity', { exact: true })).toHaveValue('2', SAVED)
+  await expect(rows.nth(1).getByLabel('Quantity', { exact: true })).toHaveValue('3', SAVED)
 })

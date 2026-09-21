@@ -9,6 +9,7 @@ import {
   type CartActionResult,
 } from '@/app/cart/actions'
 import { useCartCount } from '@/components/cart/cart-count'
+import { useVisit } from '@/components/visit/visit-provider'
 import { Price } from '@/components/price'
 import { QuantityStepper } from '@/components/quantity-stepper'
 import { Button } from '@/components/ui/button'
@@ -41,6 +42,7 @@ export function CartLine({
   priority = false,
   onChange,
   onDraft,
+  onSaved,
   onResult,
 }: {
   line: Line
@@ -55,6 +57,8 @@ export function CartLine({
   priority?: boolean
   onChange: (change: LineChange) => void
   onDraft: (productId: string, quantity: number | null, onlyIf?: number) => void
+  /** The cart as the action saved it, which replaces the lines under the optimistic ones. */
+  onSaved: (lines: Line[]) => void
   onResult: (productId: string, error: string | null) => void
 }) {
   const { productId } = line
@@ -62,6 +66,7 @@ export function CartLine({
   const message = error ?? (overDrawn && draw !== null ? tooMany(draw) : null)
   const [pending, startTransition] = useTransition()
   const { confirm } = useCartCount()
+  const { confirmLine } = useVisit()
 
   const save = (quantity: number, action: () => Promise<CartActionResult>) =>
     startTransition(async () => {
@@ -72,6 +77,8 @@ export function CartLine({
       const result = await action()
       startTransition(() => {
         if (result.totalItems !== undefined) confirm(result.totalItems)
+        if (result.ok && result.lines) onSaved(result.lines)
+        if (result.line) confirmLine(result.line.productId, result.line.quantity)
         onResult(productId, result.ok ? null : result.error)
       })
     })
