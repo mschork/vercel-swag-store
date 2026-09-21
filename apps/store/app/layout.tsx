@@ -7,6 +7,7 @@ import { CartCountProvider } from '@/components/cart/cart-count'
 import { DraftMode } from '@/components/draft-mode'
 import { Footer } from '@/components/footer'
 import { Header } from '@/components/header'
+import { NoScriptNotice } from '@/components/no-script-notice'
 import { PromoBanner, PromoBannerSkeleton } from '@/components/promo-banner'
 import { VisitProvider } from '@/components/visit/visit-provider'
 import { VisitSeed } from '@/components/visit/visit-seed'
@@ -85,6 +86,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
             <Suspense fallback={<PromoBannerSkeleton />}>
               <PromoBanner />
             </Suspense>
+            <NoScriptNotice />
             <main id="main" className="w-full flex-1">
               {children}
             </main>

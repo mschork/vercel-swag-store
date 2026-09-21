@@ -80,6 +80,6 @@ First PR, against a production build:
 
 Second PR:
 
-- [ ] With JavaScript disabled, every page shows the notice, no skeleton and no empty promotion bar.
-- [ ] A badge fades in when it appears; with reduced motion it does not.
-- [ ] `pnpm verify` passes.
+- [x] With JavaScript disabled, every page shows the notice, no skeleton and no empty promotion bar.
+- [x] A badge fades in when it appears; with reduced motion it does not.
+- [x] `pnpm verify` passes.
