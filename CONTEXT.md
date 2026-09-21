@@ -100,6 +100,10 @@ _Avoid_: Order confirmation, thank-you page, checkout (as a process)
 The API's flat taxonomy of products. Owned by the API, never edited in Sanity.
 _Avoid_: Collection, tag, group
 
+**Markdown version**:
+A catalogue page rendered as Markdown for a reader that runs no scripts, at the page's address plus `.md`. Same facts as the page, from the same merged product; never live data. `llms.txt` is the index of them.
+_Avoid_: AI page, LLM view, text export
+
 **Product listing**:
 The page that shows every product the API returns, optionally narrowed to one category. For browsing; search is for finding.
 _Avoid_: Overview, shop, catalogue page, all products
