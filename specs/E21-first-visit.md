@@ -47,7 +47,7 @@ The form is in the HTML, so it can be submitted before the visit opens.
 
 ## Badge fade (second PR)
 
-A grid badge whose number arrives after first paint fades in: opacity, `BADGE_FADE_MS` of about 200 ms, no animation with reduced motion. A badge the server rendered from the visit does not animate. The box is reserved, so nothing moves.
+A grid badge fades in when it appears: opacity over 200 ms, the `--animate-fade-in` token in `globals.css`, and no animation with reduced motion. Every badge arrives after hydration, on a return visit too, because the grids are part of the shell and read the visit from the provider. A label that changes keeps its element, so an add does not replay the fade. The badge sits over the photo, so nothing moves.
 
 ## Spike
 
@@ -81,5 +81,5 @@ First PR, against a production build:
 Second PR:
 
 - [ ] With JavaScript disabled, every page shows the notice and no skeleton.
-- [ ] A badge that arrives after first paint fades in; with reduced motion, and on a return visit, it does not.
+- [ ] A badge fades in when it appears; with reduced motion it does not.
 - [ ] `pnpm verify` passes.
