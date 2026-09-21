@@ -59,6 +59,17 @@ export function getHomePage() {
   )
 }
 
+/** The same document for the sharing card, without stega (see `getSiteSettingsForMetadata`). */
+export function getHomePageForMetadata() {
+  return loadOptional('Home page content (metadata)', () =>
+    sanityFetch<HomePageQueryResult>({
+      query: homePageQuery,
+      tags: ['sanity:homePage'],
+      stega: false,
+    }),
+  )
+}
+
 export function getCheckoutPage() {
   return loadOptional('Checkout page content', () =>
     sanityFetch<CheckoutPageQueryResult>({
