@@ -6,17 +6,15 @@ describe('stockStatus', () => {
     expect(stockStatus(12)).toEqual({
       label: 'In stock',
       tone: 'success',
-      availability: 'https://schema.org/InStock',
       canAddToCart: true,
       maxQuantity: 12,
     })
   })
 
-  it('names the count at the low-stock threshold, and stays in stock', () => {
+  it('names the count at the low-stock threshold', () => {
     expect(stockStatus(LOW_STOCK_THRESHOLD)).toMatchObject({
       label: `Only ${LOW_STOCK_THRESHOLD} left`,
       tone: 'warning',
-      availability: 'https://schema.org/InStock',
       canAddToCart: true,
     })
   })
@@ -29,7 +27,6 @@ describe('stockStatus', () => {
     expect(stockStatus(0)).toEqual({
       label: 'Out of stock',
       tone: 'danger',
-      availability: 'https://schema.org/OutOfStock',
       canAddToCart: false,
       maxQuantity: 0,
     })
@@ -39,7 +36,6 @@ describe('stockStatus', () => {
     expect(stockStatus(null)).toEqual({
       label: 'Stock unavailable',
       tone: 'muted',
-      availability: null,
       canAddToCart: false,
       maxQuantity: 0,
     })
@@ -49,11 +45,10 @@ describe('stockStatus', () => {
     expect(stockStatus(12, 9)).toMatchObject({ label: 'Only 3 left', maxQuantity: 3 })
   })
 
-  it('names the cart when it holds the whole draw, and still calls the product in stock', () => {
+  it('names the cart when it holds the whole draw', () => {
     expect(stockStatus(4, 4)).toEqual({
       label: 'All 4 are in your cart',
       tone: 'warning',
-      availability: 'https://schema.org/InStock',
       canAddToCart: false,
       maxQuantity: 0,
     })

@@ -1,6 +1,6 @@
 import type { Product } from './api/types'
 import { decimalAmount } from './format'
-import type { StockAvailability } from './stock-status'
+import { portableTextToPlainText } from './markdown/portable-text'
 
 /** A JSON-LD document; plain data, loosely typed to avoid a schema-dts dependency. */
 export type JsonLd = Record<string, unknown>
@@ -11,20 +11,30 @@ export interface Crumb {
   href: string
 }
 
-const BRAND = 'Vercel Swag Store'
+/**
+ * What the catalogue says the products are. A brand is a fact about a
+ * product; the markup names no organisation, seller or publisher, which would
+ * be claims about who runs the site (specs/E20-ai-crawlers.md).
+ */
+const BRAND = 'Vercel'
+
+const productUrl = (slug: string, siteUrl: string) => new URL(`/products/${slug}`, siteUrl).href
 
 /**
  * schema.org `Product` with its `Offer`. Price in major units as a decimal
- * string; `availability` comes from live stock and is left out when stock is
- * unknown, which schema.org allows.
+ * string. Never `availability`: stock is a per-visitor draw
+ * (docs/adr/0006-the-stable-visit.md), and this is the same for everyone.
  */
 export function productJsonLd({
   product,
-  availability,
+  images,
+  categoryName,
   siteUrl,
 }: {
   product: Product
-  availability: StockAvailability | null
+  /** Absolute photo URLs, the API's first. */
+  images: readonly string[]
+  categoryName: string
   siteUrl: string
 }): JsonLd {
   return {
@@ -32,16 +42,62 @@ export function productJsonLd({
     '@type': 'Product',
     name: product.name,
     description: product.description,
-    image: product.images,
+    image: images,
     sku: product.id,
+    category: categoryName,
     brand: { '@type': 'Brand', name: BRAND },
     offers: {
       '@type': 'Offer',
-      url: new URL(`/products/${product.slug}`, siteUrl).href,
+      url: productUrl(product.slug, siteUrl),
       price: decimalAmount(product.price),
       priceCurrency: product.currency,
-      ...(availability ? { availability } : {}),
     },
+  }
+}
+
+/** schema.org `FAQPage`; answers are the rich text's plain text. */
+export function faqJsonLd(faqs: readonly { question: string; answer: unknown }[]): JsonLd {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: { '@type': 'Answer', text: portableTextToPlainText(faq.answer) },
+    })),
+  }
+}
+
+/** schema.org `ItemList` of product pages, in the order the listing shows them. */
+export function itemListJsonLd({
+  name,
+  products,
+  siteUrl,
+}: {
+  name: string
+  products: readonly Pick<Product, 'name' | 'slug'>[]
+  siteUrl: string
+}): JsonLd {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name,
+    itemListElement: products.map((product, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: product.name,
+      url: productUrl(product.slug, siteUrl),
+    })),
+  }
+}
+
+/** schema.org `WebSite`: the store's name and address, nothing about who runs it. */
+export function webSiteJsonLd({ name, siteUrl }: { name: string; siteUrl: string }): JsonLd {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name,
+    url: new URL('/', siteUrl).href,
   }
 }
 

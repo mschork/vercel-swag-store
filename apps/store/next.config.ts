@@ -25,6 +25,21 @@ const nextConfig: NextConfig = {
     '/opengraph-image': [GEIST_TTF, './public/hero.jpg'],
     '/products/[slug]/opengraph-image': [GEIST_TTF],
   },
+  // A page's Markdown version lives at its address plus `.md`
+  // (specs/E20-ai-crawlers.md). `beforeFiles`, so `/products/<slug>.md` reaches
+  // its handler before the product page's dynamic segment can claim it.
+  async rewrites() {
+    return {
+      beforeFiles: [
+        { source: '/index.md', destination: '/md/home' },
+        { source: '/products.md', destination: '/md/products' },
+        { source: '/products/category/:slug([^/]+)\\.md', destination: '/md/category/:slug' },
+        { source: '/products/:slug([^/]+)\\.md', destination: '/md/product/:slug' },
+      ],
+      afterFiles: [],
+      fallback: [],
+    }
+  },
   async headers() {
     const headers = securityHeaders({
       allowEval: process.env.NODE_ENV === 'development',

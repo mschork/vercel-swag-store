@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { ProductListing } from '@/components/listing/product-listing'
 import { findCategory, getCategories } from '@/lib/api/categories'
+import { categoryPath } from '@/lib/listing'
+import { markdownAlternate } from '@/lib/markdown/paths'
 import {
   getCategoryDocument,
   getCategoryDocumentForMetadata,
@@ -40,6 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // The editor's intro when there is one; read without stega, because a
     // description is exported to machines.
     description: document?.intro || `Browse all ${category.name} in the store.`,
+    alternates: markdownAlternate(categoryPath(category.slug)),
   }
 }
 

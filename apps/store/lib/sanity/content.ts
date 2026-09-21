@@ -79,24 +79,29 @@ export function getCheckoutPage() {
   )
 }
 
+/** `stega: false` for a caller that feeds machines (see `sanityFetch`). */
+type ReadOptions = { stega?: boolean }
+
 /** The enrichment for one product, by the API id the document mirrors. */
-export function getProductDocument(apiId: string) {
+export function getProductDocument(apiId: string, { stega }: ReadOptions = {}) {
   return loadOptional(`Enrichment for ${apiId}`, () =>
     sanityFetch<ProductQueryResult>({
       query: productQuery,
       params: { apiId },
       tags: ['sanity:product', `sanity:product-${apiId}`, 'sanity:faq'],
+      stega,
     }),
   )
 }
 
 /** Testimonials naming this product; the document id is derived from the API id. */
-export function getTestimonialsForProduct(apiId: string) {
+export function getTestimonialsForProduct(apiId: string, { stega }: ReadOptions = {}) {
   return loadOptional(`Testimonials for ${apiId}`, () =>
     sanityFetch<TestimonialsForProductQueryResult>({
       query: testimonialsForProductQuery,
       params: { productDocId: `product-${apiId}` },
       tags: ['sanity:testimonial'],
+      stega,
     }),
   )
 }

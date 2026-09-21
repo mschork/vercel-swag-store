@@ -72,15 +72,15 @@ A theme switcher; a visible link or button for the Markdown; `llms-full.txt`; co
 
 Before merge, against a production build:
 
-- [ ] The build lists every page as before, and every new route as static, on five runs of the full pipeline in a row.
-- [ ] A client that runs no scripts, with the user agents of common AI crawlers, gets 200 and `text/markdown` for each Markdown URL and `text/plain` for `llms.txt`; an unknown slug gets 404.
-- [ ] For three products, every fact in the Markdown matches the rendered page: name, price, category, description, enrichment, FAQs.
-- [ ] No Markdown file, no `llms.txt` and no JSON-LD block holds stock or a promotion.
-- [ ] Every link in `llms.txt` and in the Markdown files resolves.
-- [ ] The rendered JSON-LD passes the schema.org validator and the Rich Results test's code input without errors.
-- [ ] Revalidating the `products` tag refreshes a Markdown file and `llms.txt`.
-- [ ] `robots.txt` allows `*` everything but `/api/`, disallows `/` for every name in `AI_CRAWLERS`, and every response of a production build carries `X-Robots-Tag: noindex`.
-- [ ] `pnpm verify` passes.
+- [x] The build lists every page as before, and every new route as static, on five runs of the full pipeline in a row.
+- [x] A client that runs no scripts, with the user agents of common AI crawlers, gets 200 and `text/markdown` for each Markdown URL and `text/plain` for `llms.txt`; an unknown slug gets 404.
+- [x] For three products, every fact in the Markdown matches the rendered page: name, price, category, description, enrichment, FAQs.
+- [x] No Markdown file, no `llms.txt` and no JSON-LD block holds stock or a promotion.
+- [x] Every link in `llms.txt` and in the Markdown files resolves.
+- [x] The rendered JSON-LD passes the schema.org validator and the Rich Results test's code input without errors.
+- [x] Revalidating the `products` tag refreshes a Markdown file and `llms.txt`.
+- [x] `robots.txt` allows `*` everything but `/api/`, disallows `/` for every name in `AI_CRAWLERS`, and every response of a production build carries `X-Robots-Tag: noindex`.
+- [x] `pnpm verify` passes.
 
 After merge:
 
