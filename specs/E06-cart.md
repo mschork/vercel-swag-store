@@ -35,7 +35,7 @@ Checked against the live API on 15 Sep 2026.
 
 ### Server Actions `app/cart/actions.ts`
 
-`'use server'` file. Every action calls `refresh()` and sets the cookie again after a successful write.
+`'use server'` file. An add calls `refresh()` and sets the cookie again after a successful write; a quantity change and a removal answer with the cart's lines instead (`E23-cart-page-one-call.md`).
 
 - `addToCart(prevState, formData)`: keeps the E05 signature, the `AddToCartState` type and its error copy. Reads the token; if it is missing or `getCart` returns `null`, `createCart()` and set the cookie. Then `addCartItem`, set the cookie again and `refresh()`. The product page stays put and shows the inline "Added. View cart" line; the badge updates through the refresh.
 - `updateQuantity(productId, quantity)`: plain arguments, called from the client inside `startTransition`. `productId` is a non-empty string and `quantity` an integer in `[0, 99]`; 0 removes the line.
