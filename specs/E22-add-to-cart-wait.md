@@ -16,7 +16,7 @@ An add is acknowledged at once since E16, and the button still spins until the A
 
 ## The button does not wait for the save
 
-- With JavaScript, a submit calls `addToCart` and returns the button at once. The button reads "Added" for `ADDED_LABEL_MS` and is never disabled by a save in flight. It is disabled only when nothing remains to add.
+- With JavaScript, a submit calls `addToCart` and returns the button at once. The button shows its spinner and "Adding…" for `ADDING_LABEL_MS`, about a second, which acknowledges the click the way the old button did without lasting as long as the save. It is never disabled by a save in flight. It is disabled only when nothing remains to add.
 - Adds queue: Next sends them one at a time, in order. The form holds the quantities in flight and reports their sum, so the header badge counts up and the stock line and the card badges count down by everything not yet saved, and the quantity control cannot exceed what is left after them.
 - The status line under the button keeps its meaning: "Added." with an inert "View cart" while any add is in flight, a link once all have landed, the error when one fails. A failed add takes its quantity back off the counts.
 - Each result is applied when it arrives, even if the visitor has left the page: the providers live in the layout.
