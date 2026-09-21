@@ -35,6 +35,17 @@ export function sanityImageProps(
   }
 }
 
+/**
+ * A Sanity photo cropped to exactly this size around the editor's hotspot, as
+ * a JPEG: the `next/og` renderer sends no `Accept` header and reads no WebP.
+ */
+export function sanityCoverUrl(
+  image: SanityImageSource,
+  { width, height }: { width: number; height: number },
+) {
+  return builder.image(image).width(width).height(height).fit('crop').format('jpg').url()
+}
+
 /** True when the query returned an image an editor uploaded. */
 export function hasImage(
   image: (SanityImageSource & SanityPhoto) | null | undefined,

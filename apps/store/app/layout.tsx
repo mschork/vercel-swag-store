@@ -12,7 +12,6 @@ import { VisitProvider } from '@/components/visit/visit-provider'
 import { VisitSeed } from '@/components/visit/visit-seed'
 import { getStoreConfig } from '@/lib/api/store'
 import { getSiteSettingsForMetadata } from '@/lib/sanity/content'
-import { hasImage, sanityImageProps } from '@/lib/sanity/image'
 import { publicEnv } from '@/lib/env.public'
 import { openGraphDefaults } from '@/lib/metadata'
 import './globals.css'
@@ -47,12 +46,8 @@ export async function generateMetadata(): Promise<Metadata> {
       template: seo.titleTemplate,
     },
     description: settings?.seoDescription || seo.defaultDescription,
-    openGraph: {
-      ...openGraphDefaults(name),
-      ...(hasImage(settings?.ogImage)
-        ? { images: [{ url: sanityImageProps(settings.ogImage, { width: 1200 }).src }] }
-        : {}),
-    },
+    // The image is ./opengraph-image.tsx, which also draws the editor's.
+    openGraph: openGraphDefaults(name),
     twitter: { card: 'summary_large_image' },
   }
 }

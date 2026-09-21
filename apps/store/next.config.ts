@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
   // The OG images read this font with a runtime path (lib/og-font.ts), which
   // the file trace cannot see; list it so each image function carries it.
   outputFileTracingIncludes: {
-    '/opengraph-image': [GEIST_TTF],
+    '/opengraph-image': [GEIST_TTF, './public/hero.jpg'],
     '/products/[slug]/opengraph-image': [GEIST_TTF],
   },
   async headers() {
