@@ -89,7 +89,7 @@ test('adding confirms at once, and View cart waits for the write', async ({
   // free again at once, and the link stays inert until the write has landed.
   const status = page.getByRole('status').filter({ hasText: 'Added.' })
   await expect(status).toBeVisible({ timeout: 1_000 })
-  await expect(page.getByRole('main').getByRole('button', { name: 'Added', exact: true })).toBeEnabled()
+  await expect(page.getByRole('main').getByRole('button', { name: 'Adding…', exact: true })).toBeEnabled()
   const viewCart = page.getByRole('link', { name: 'View cart' })
   await expect(viewCart).toHaveAttribute('aria-disabled', 'true')
   // The cart API is slow (`lib/api/cart.ts`).
@@ -106,7 +106,7 @@ test('quick adds queue, and every count follows them at once', async ({ page, co
   test.setTimeout(120_000)
   await openFeatured(page, context, 5)
   await page.waitForLoadState('networkidle')
-  const button = page.getByRole('main').getByRole('button', { name: /^(Add to Cart|Added)$/ })
+  const button = page.getByRole('main').getByRole('button', { name: /^(Add to Cart|Adding…)$/ })
   await button.click()
   await button.click()
   await button.click()
