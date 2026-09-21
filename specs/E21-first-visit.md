@@ -68,14 +68,14 @@ An inline head script that opens the visit before hydration; server draws for gr
 
 First PR, against a production build:
 
-- [ ] With no cookie, a product page's response, read as text, holds the stock line, the quantity input and the Add to Cart button, and every route's response holds the promotion.
-- [ ] With no cookie, the number in a product page's raw HTML, the number after the visit opens and the number after a reload are the same, in Chromium and Firefox. WebKit cannot run against a local build: it obeys `upgrade-insecure-requests` on localhost and refuses the `Secure` cookie, so Safari is part of the check by hand below.
-- [ ] A client-side navigation to a product page while the visit is opening never shows two numbers.
-- [ ] On the throttled mobile profile the first visit's buy panel appears within 0.3 s of a return visit's. A filmstrip of the home page and a product page, before and after, is recorded.
-- [ ] The route ignores a handed-back value the visit already holds, drops one that fails validation, and reads no body from a request that is not JSON.
-- [ ] An add with no visit opens one holding the number the form showed, and an add above it is refused.
-- [ ] Build output marks every page as before.
-- [ ] `pnpm verify` passes.
+- [x] With no cookie, a product page's response, read as text, holds the stock line, the quantity input and the Add to Cart button, and every route's response holds the promotion.
+- [x] With no cookie, the number in a product page's raw HTML, the number after the visit opens and the number after a reload are the same, in Chromium and Firefox. WebKit cannot run against a local build: it obeys `upgrade-insecure-requests` on localhost and refuses the `Secure` cookie, so Safari is part of the check by hand below.
+- [x] A client-side navigation to a product page while the visit is opening never shows two numbers.
+- [x] On the throttled mobile profile the first visit's buy panel appears within 0.3 s of a return visit's. A filmstrip of the home page and a product page, before and after, is recorded.
+- [x] The route ignores a handed-back value the visit already holds, drops one that fails validation, and reads no body from a request that is not JSON.
+- [x] An add with no visit opens one holding the number the form showed, and an add above it is refused.
+- [x] Build output marks every page as before.
+- [x] `pnpm verify` passes.
 - [ ] On the Vercel preview, by hand in a private window, in Chrome and in Safari: the product page's number survives a reload.
 
 Second PR:

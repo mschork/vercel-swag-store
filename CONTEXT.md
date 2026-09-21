@@ -20,6 +20,10 @@ _Avoid_: Session, user state, inventory cookie
 One answer from the stock endpoint for one product. The store asks once per product per visit and keeps it.
 _Avoid_: Stock level, stock count, inventory number
 
+**Opening draw**:
+A stock draw or promotion read made while rendering for a visitor who has no visit yet. It is shown in that HTML and handed to the visit when it opens, so the visit holds the number the visitor already read.
+_Avoid_: Live draw, first draw, server draw
+
 **Inventory**:
 The visit's stock draws, keyed by product id.
 _Avoid_: Stock map, warehouse

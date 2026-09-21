@@ -2,19 +2,23 @@ import { Container } from '@/components/container'
 import { NEEDS_SCRIPT } from '@/components/no-script-notice'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getVisit } from '@/lib/visit/cookie'
+import { openingPromotion } from '@/lib/visit/opening'
 import { PromoStrip, RESERVED_BOX } from './promo-strip'
 
 /**
  * The accent strip under the header, on every route. It shows the promotion
  * the visit pinned, so the code a visitor reads here is the code still there
  * when they reach the cart; the API picks a different one of its four on every
- * request (specs/E19-stable-visit.md). Reading the cookie is the whole cost,
- * and it happens inside `<Suspense>` in the root layout so the shell stays
- * static. Without a promotion the reserved box stays empty and nothing moves.
+ * request (specs/E19-stable-visit.md). It renders inside `<Suspense>` in the
+ * root layout so the shell stays static. With a visit, reading the cookie is
+ * the whole cost; without one it shows an opening draw, which the visit then
+ * keeps (specs/E21-first-visit.md). Without a promotion the reserved box stays
+ * empty and nothing moves.
  */
 export async function PromoBanner() {
   const visit = await getVisit()
-  return <PromoStrip serverPromotion={visit?.promotion ?? null} />
+  const promotion = visit ? visit.promotion : await openingPromotion()
+  return <PromoStrip serverPromotion={promotion ?? null} />
 }
 
 export function PromoBannerSkeleton() {

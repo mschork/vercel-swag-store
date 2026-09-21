@@ -4,6 +4,7 @@ import { getStock } from '@/lib/api/stock'
 import { loadOptional } from '@/lib/load-optional'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
 import { clearVisit, getVisit, setVisit } from '@/lib/visit/cookie'
+import { readHandBack } from '@/lib/visit/hand-back'
 import type { OpenedVisit } from '@/lib/visit/open'
 import type { Visit } from '@/lib/visit/visit'
 
@@ -14,22 +15,29 @@ import type { Visit } from '@/lib/visit/visit'
  * per client, so an Add to Cart clicked during the draws would queue behind
  * them.
  *
- * It takes no input and returns only the caller's own visit, so a cross-site
- * POST achieves nothing.
+ * Its only input is the opening draws the first render showed
+ * (`readHandBack`), kept where the visit holds nothing, so the visit holds the
+ * numbers the visitor already read. It returns only the caller's own visit,
+ * and a cross-site form cannot send the JSON it reads, so a cross-site POST
+ * achieves nothing.
  */
 
 /** Stock calls in flight at once. Eight draws the catalogue in about a second. */
 const DRAW_CONCURRENCY = 8
 
-export async function POST(): Promise<Response> {
-  const existing = await getVisit()
+export async function POST(request: Request): Promise<Response> {
+  const [existing, handed] = await Promise.all([getVisit(), readHandBack(request)])
   const products = await getAllProducts()
   const stock: Record<string, number> = { ...(existing?.stock ?? {}) }
+  const { draw: shown } = handed
+  if (shown && !(shown.productId in stock) && products.some((p) => p.id === shown.productId)) {
+    stock[shown.productId] = shown.count
+  }
 
   const missing = products.map((product) => product.id).filter((id) => !(id in stock))
   const [drawn, promotion] = await Promise.all([
     draw(missing),
-    existing?.promotion ?? loadOptional('Visit: promotion', getPromotion),
+    existing?.promotion ?? handed.promotion ?? loadOptional('Visit: promotion', getPromotion),
   ])
   for (const [id, count] of drawn) stock[id] = count
 
