@@ -43,7 +43,7 @@ The form is in the HTML, so it can be submitted before the visit opens.
 ## Without JavaScript (second PR)
 
 - One notice under the header, in a `<noscript>`: "Thank you for your visit. Unfortunately not all functionality can be served to your browser if Javascript is not enabled."
-- The same `<noscript>` holds one style rule that hides every skeleton, so none spins forever. That includes the product page's buy panel: React reveals a streamed hole with an inline script, so a browser without JavaScript receives the panel in the HTML and never shows it.
+- The same `<noscript>` holds one style rule that hides every skeleton, so none spins forever, and every box marked `data-needs-script`, which is the promotion strip's reserved box: its hole is never revealed either, and an empty accent bar says nothing. That includes the product page's buy panel: React reveals a streamed hole with an inline script, so a browser without JavaScript receives the panel in the HTML and never shows it.
 
 ## Badge fade (second PR)
 
@@ -80,6 +80,6 @@ First PR, against a production build:
 
 Second PR:
 
-- [ ] With JavaScript disabled, every page shows the notice and no skeleton.
+- [ ] With JavaScript disabled, every page shows the notice, no skeleton and no empty promotion bar.
 - [ ] A badge fades in when it appears; with reduced motion it does not.
 - [ ] `pnpm verify` passes.
