@@ -40,7 +40,7 @@ On `/cart` the badge and the contents each call `GET /cart`, because `fetchApi` 
 
 Today `refresh()` re-renders the route after every action, and the badge's own cart read runs inside the action's response, about 1.7 s of the wait. Instead: a small provider in the layout holds the confirmed count, seeded by the server value the badge already fetches, and the actions return the new `totalItems` so the badge updates without a second read. `refresh()` still reconciles the rest of the route.
 
-This widens the return shape E06 settled. An action answers `{ ok: true, totalItems } | { ok: false, error, totalItems? }`: a success always carries the count, and a failure carries it whenever the action read the cart, as it does after a 404. It never carries lines or the token.
+This widens the return shape E06 settled. An action answers `{ ok: true, totalItems } | { ok: false, error, totalItems? }`: a success always carries the count, and a failure carries it whenever the action read the cart, as it does after a 404. It never carries the token. Since `E23-cart-page-one-call.md` a quantity change and a removal also carry the cart's lines, and do not refresh.
 
 It also gives the shell client state for the first time. The badge stays the shell's one dynamic hole; it simply hydrates.
 
