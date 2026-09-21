@@ -58,9 +58,15 @@ The rule is what the page shows, minus anything per visitor: no stock, no promot
 
 Each page that has a Markdown version carries `<link rel="alternate" type="text/markdown">` in its head, through `alternates.types` in its metadata. There is no visible control.
 
+## Crawlers `app/robots.ts`
+
+Two signals, because two kinds of crawler obey different ones. Search engines, and the AI answers built on their indexes, obey `X-Robots-Tag: noindex`, and only if they may fetch the page to read it: the `*` group keeps allowing everything but `/api/`. AI training crawlers ignore that header and obey `robots.txt`: a second group names them (`AI_CRAWLERS` in `lib/crawlers.ts`) and disallows `/`. The list is a constant with a test, since new crawlers appear and it is the one place to add them.
+
+The Markdown and `llms.txt` stay fetchable by anyone who asks: a reviewer, or an agent acting for a user. `robots.txt` is a request, not a gate, so the acceptance check below still gets a 200 with a crawler's user agent.
+
 ## Out of scope
 
-A theme switcher; a visible link or button for the Markdown; `llms-full.txt`; content negotiation; per-crawler rules in `robots.ts`; `Review`, `Organization` and `availability` markup; Markdown for search, cart and checkout.
+A theme switcher; a visible link or button for the Markdown; `llms-full.txt`; content negotiation; blocking crawlers by user agent on the server; `Review`, `Organization` and `availability` markup; Markdown for search, cart and checkout.
 
 ## Acceptance
 
@@ -73,8 +79,10 @@ Before merge, against a production build:
 - [ ] Every link in `llms.txt` and in the Markdown files resolves.
 - [ ] The rendered JSON-LD passes the schema.org validator and the Rich Results test's code input without errors.
 - [ ] Revalidating the `products` tag refreshes a Markdown file and `llms.txt`.
+- [ ] `robots.txt` allows `*` everything but `/api/`, disallows `/` for every name in `AI_CRAWLERS`, and every response of a production build carries `X-Robots-Tag: noindex`.
 - [ ] `pnpm verify` passes.
 
 After merge:
 
 - [ ] The Rich Results test reads `Product` and `Offer` from a production product URL.
+- [ ] Production carries `X-Robots-Tag: noindex` on a page, the sitemap, an image route, a Markdown file and `llms.txt`. `ALLOW_INDEXING` is not set in the Production environment.
