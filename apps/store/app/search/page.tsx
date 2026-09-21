@@ -24,7 +24,8 @@ const DESCRIPTION = 'Search the store by name and narrow the results by category
  *
  * Streamed metadata lands in the body, where a tool that reads only the head
  * finds no description. The description does not depend on the query, so the
- * page renders it in the static shell and this leaves it out.
+ * page renders it and its Open Graph twin in the static shell and this leaves
+ * both out.
  */
 export async function generateMetadata({
   searchParams,
@@ -47,6 +48,7 @@ export default function SearchPage({ searchParams }: Props) {
     <SearchTransition>
       {/* React moves it into the head of the prerendered shell. */}
       <meta name="description" content={DESCRIPTION} />
+      <meta property="og:description" content={DESCRIPTION} />
       <Container className="flex flex-col gap-6 py-8 md:gap-8 md:py-12">
         <h1 className="text-3xl font-medium tracking-tight">Search</h1>
         <SearchForm />
