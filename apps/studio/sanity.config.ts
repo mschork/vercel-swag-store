@@ -5,6 +5,7 @@ import { presentationTool } from 'sanity/presentation'
 import { structureTool } from 'sanity/structure'
 import { CREATABLE_TYPES, schemaTypes } from '@repo/sanity'
 import { requireSanityEnv } from '@repo/sanity/env'
+import { guardActions } from './actions/guard-rails'
 import { AcceptIdea, RejectIdea } from './actions/idea-decision'
 import { resolve } from './presentation/resolve'
 import { structure } from './structure'
@@ -57,6 +58,6 @@ export default defineConfig({
     actions: (previous, context) =>
       context.schemaType === 'productIdea'
         ? [AcceptIdea, RejectIdea, ...previous.filter((action) => action.action === 'delete')]
-        : previous,
+        : guardActions(previous, context),
   },
 })

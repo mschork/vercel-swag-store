@@ -25,14 +25,14 @@ export const testimonial = defineType({
       title: 'Quote',
       type: 'text',
       rows: 3,
-      validation: (rule) => rule.max(240),
+      validation: (rule) => rule.required().max(240),
     }),
     defineField({
       name: 'products',
       title: 'Products in the photo',
       type: 'array',
       of: [defineArrayMember({ type: 'reference', to: [{ type: 'product' }] })],
-      validation: (rule) => rule.min(1),
+      validation: (rule) => rule.required().min(1),
     }),
     defineField({
       name: 'consent',

@@ -97,8 +97,8 @@ export type Testimonial = {
     alt: string
     _type: 'image'
   }
-  quote?: string
-  products?: Array<
+  quote: string
+  products: Array<
     {
       _key: string
     } & ProductReference
@@ -553,7 +553,7 @@ export type TestimonialsForProductQueryResult = Array<{
   _id: string
   person: string
   role: string | null
-  quote: string | null
+  quote: string
   photo: {
     asset?: SanityImageAssetReference
     media?: unknown
