@@ -84,5 +84,5 @@ Before merge, against a production build:
 
 After merge:
 
-- [ ] The Rich Results test reads `Product` and `Offer` from a production product URL.
-- [ ] Production carries `X-Robots-Tag: noindex` on a page, the sitemap, an image route, a Markdown file and `llms.txt`. `ALLOW_INDEXING` is not set in the Production environment.
+- [x] The Rich Results test reads `Product` and `Offer` from a production product URL.
+- [x] Production carries `X-Robots-Tag: noindex` on a page, the sitemap, an image route, a Markdown file and `llms.txt`. `ALLOW_INDEXING` is not set in the Production environment.
