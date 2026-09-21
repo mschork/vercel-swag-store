@@ -76,7 +76,7 @@ First PR, against a production build:
 - [x] An add with no visit opens one holding the number the form showed, and an add above it is refused.
 - [x] Build output marks every page as before.
 - [x] `pnpm verify` passes.
-- [ ] On the Vercel preview, by hand in a private window, in Chrome and in Safari: the product page's number survives a reload.
+- [x] On production, which needs no login: the first-visit and no-script specs pass in Chromium, Firefox and WebKit, 150 of 150 runs, and by hand in a private window in Chrome and in Safari the product page's number and the promotion survive a reload. The buy panel arrives a moment after the photo, which is the stock call.
 
 Second PR:
 
