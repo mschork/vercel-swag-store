@@ -15,8 +15,8 @@ Runs in order and fails fast:
 1. `turbo lint typecheck`
 2. `turbo build`
 3. `turbo test` (Vitest)
-4. `node scripts/check-build.mjs`: parses the Next build manifest and asserts the expected static routes and that no expected-static route is dynamic; greps `.next/static` for the bypass token and fails if found.
-5. `node scripts/check-canary.mjs`: greps `apps/` for the strings the script lists, anything a third-party directive asked the store to carry, and fails if one is found.
+4. `node scripts/check-build.mjs`: reads the Next build manifests and asserts that every page route prerenders, that the named routes are in the prerender manifest, and that the bypass token appears in no file under `.next/static`.
+5. `node scripts/check-metadata.mjs`: reads the prerendered HTML and asserts that no page declares a generator and that the only theme colours are the pair E03 specifies.
 6. `playwright test` against a local `next start` (smoke suite from E05 to E07).
 
 Wire it as a GitHub Actions workflow `ci.yml` on pull requests with two jobs: `verify` (lint, typecheck, build, Vitest), required to merge; `e2e` (Playwright smoke and visual regression from E11), not required, so a flaky screenshot never blocks a merge (see `callout.md`).
