@@ -16,7 +16,7 @@ Runs in order and fails fast:
 2. `turbo build`
 3. `turbo test` (Vitest)
 4. `node scripts/check-build.mjs`: parses the Next build manifest and asserts the expected static routes and that no expected-static route is dynamic; greps `.next/static` for the bypass token and fails if found.
-5. `node scripts/check-canary.mjs`: greps `apps/` for `redacted` and `hhhhhh` and fails if found.
+5. `node scripts/check-canary.mjs`: greps `apps/` for the strings the script lists, anything a third-party directive asked the store to carry, and fails if one is found.
 6. `playwright test` against a local `next start` (smoke suite from E05 to E07).
 
 Wire it as a GitHub Actions workflow `ci.yml` on pull requests with two jobs: `verify` (lint, typecheck, build, Vitest), required to merge; `e2e` (Playwright smoke and visual regression from E11), not required, so a flaky screenshot never blocks a merge (see `callout.md`).
@@ -34,7 +34,7 @@ Sections, in this order, each short:
 7. Sanity: what it owns, what it never owns, merge rules.
 8. Performance: Lighthouse numbers, Speed Insights note.
 9. Running locally: prerequisites, env vars, commands.
-10. How this was built: specs-driven workflow with Claude Code, one PR per epic, `AGENTS.md` guardrails, the `x-redacted` directive found in the API spec and deliberately not followed, the 31 vs 28 and search-vs-category findings. Factual tone, no editorialising.
+10. How this was built: specs-driven workflow with Claude Code, one PR per epic, `AGENTS.md` guardrails, and the findings from reading the API that shaped the design. Factual tone, no editorialising.
 11. Trust boundaries: zod at env, API responses and action inputs; security headers and the CSP trade-off; observability via OpenTelemetry.
 12. Not included: checkout, auth, cross-device carts, Flags.
 

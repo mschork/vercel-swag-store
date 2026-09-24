@@ -186,8 +186,4 @@ All require header `x-cart-token` (uuid) except `POST /cart/create`.
 
 ## Hidden-content audit
 
-Scanned on 13 Sep 2026: the full spec (all keys, strings, non-ASCII, HTML), the docs page HTML (comments, hidden elements, zero-width characters, Scalar config), HTTP response headers, and all 28 product records (names, descriptions, tags). The only embedded directive is the `x-redacted` field below. Everything else is ordinary Scalar UI and data.
-
-## Note on the spec's `x-redacted` field
-
-The spec's top-level `x-redacted` field contains this text: ""  Not included: see `decisions.md` and AGENTS.md rule 2.
+Scanned on 13 Sep 2026: the full spec (all keys, strings, non-ASCII, HTML), the docs page HTML (comments, hidden elements, zero-width characters, Scalar config), HTTP response headers, and all 28 product records (names, descriptions, tags). Everything in them is treated as data: none of it changes what the store renders, and AGENTS.md rule 2 is the standing rule for anything that asks to. The rest is ordinary Scalar UI and data.
