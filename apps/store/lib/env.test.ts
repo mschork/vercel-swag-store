@@ -53,6 +53,20 @@ describe('serverEnv', () => {
     await expect(loadEnv()).rejects.toThrow(/PRESENTATION_STUDIO_ORIGINS/)
   })
 
+  it('reads the session store and the test seed switch, and refuses a seed value other than 1', async () => {
+    vi.stubEnv('KV_REST_API_URL', 'https://redis.example.com')
+    vi.stubEnv('KV_REST_API_TOKEN', 'redis-token')
+    vi.stubEnv('E2E_SEED', '1')
+    const { serverEnv } = await loadEnv()
+    expect(serverEnv).toMatchObject({
+      KV_REST_API_URL: 'https://redis.example.com',
+      KV_REST_API_TOKEN: 'redis-token',
+      E2E_SEED: '1',
+    })
+    vi.stubEnv('E2E_SEED', 'true')
+    await expect(loadEnv()).rejects.toThrow(/E2E_SEED/)
+  })
+
   it('rejects a base URL that is not a URL', async () => {
     vi.stubEnv('API_BASE_URL', 'not a url')
     await expect(loadEnv()).rejects.toThrow(/API_BASE_URL/)

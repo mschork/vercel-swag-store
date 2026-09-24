@@ -18,11 +18,14 @@ export async function FavouriteProducts({
   heading,
   exclude = [],
   slot,
+  hideInCart = false,
 }: {
   heading: string
   exclude?: readonly string[]
   /** Rendered under each card; the cart page puts an Add to Cart there. */
   slot?: (product: Product) => ReactNode
+  /** Drops a card from the row once its product is in the cart. */
+  hideInCart?: boolean
 }) {
   const products = await getFavourites(exclude)
   if (products.length === 0) return null
@@ -34,7 +37,7 @@ export async function FavouriteProducts({
       <h2 id="favourites-heading" className="text-2xl font-medium tracking-tight">
         {heading}
       </h2>
-      <ProductGrid products={products} variant="favourites" slot={slot} />
+      <ProductGrid products={products} variant="favourites" slot={slot} hideInCart={hideInCart} />
     </section>
   )
 }

@@ -1,55 +1,63 @@
 import Link from 'next/link'
+import { after } from 'next/server'
 import { Suspense } from 'react'
 import { EmptyState } from '@/components/empty-state'
 import { FavouriteProducts } from '@/components/favourite-products'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { getStoreConfig } from '@/lib/api/store'
 import { FAVOURITES_FALLBACK } from '@/lib/content/fallbacks'
 import { loadCart } from '@/lib/cart/get-cart'
-import { toLines } from '@/lib/cart/lines'
+import { reconcileCart } from '@/lib/cart/reconcile'
+import { loadOptional } from '@/lib/load-optional'
 import { getHomePage } from '@/lib/sanity/content'
-import { getVisit } from '@/lib/visit/cookie'
+import { getSession } from '@/lib/session/store'
 import { CartView } from './cart-view'
 import { QuickAddForm } from './quick-add-form'
-import { EmptyCart } from './empty-cart'
 
 /**
- * The cart page's dynamic hole. Three outcomes: no cart (never created,
- * expired, or no lines) is the empty state; a failed cart call says the cart
- * could not be loaded, because "your cart is empty" would be false; otherwise
- * the client view takes the lines.
+ * The cart page's dynamic hole, rendered from the cart mirror with no cart
+ * API call. A session the store could not read says the cart could not be
+ * loaded, because "your cart is empty" would be false; otherwise the client
+ * view takes the lines, and shows the empty state itself when it holds none
+ * and no add is in flight. With no cart, the currency is the store's, from
+ * the cached store config; without either, the cart could not be loaded.
  *
- * Under all of them, the same favourites row the home page shows. An empty
- * cart gets it unfiltered; a cart with lines gets it without the products
- * already in it. Only the exclusion is dynamic: the ranking and the catalogue
- * are cached. The row has its own boundary, so the lines never wait for it.
+ * Under both, the same favourites row the home page shows. An empty cart gets
+ * it unfiltered; a cart with lines gets it without the products already in
+ * it. Only the exclusion is dynamic: the ranking and the catalogue are cached.
+ * The row has its own boundary, so the lines never wait for it.
  *
  * The visitor's draws travel with the lines, so the first paint already caps
  * each stepper and says which line holds more than there is. They also decide
  * the favourites row: it offers only what the visitor could actually buy.
  */
 export async function CartContents() {
-  const [result, visit] = await Promise.all([loadCart('Cart'), getVisit()])
-  if (!result) return <CartUnavailable />
-  const { cart } = result
-  const items = cart?.items ?? []
+  const [cart, session] = await Promise.all([loadCart(), getSession()])
+  if (cart === 'unavailable' || session === 'unavailable') return <CartUnavailable />
+  if (session.cart) {
+    const { sid } = session
+    const { savedAt } = session.cart
+    after(() => reconcileCart(sid, savedAt))
+  }
+  const lines = cart?.lines ?? []
+  const currency =
+    cart?.currency ?? (await loadOptional('Cart: store config', getStoreConfig))?.currency
+  if (!currency) return <CartUnavailable />
+  const stock = session.visit?.stock ?? {}
   const draws = Object.fromEntries(
-    items.map((item) => [item.productId, visit?.stock[item.productId] ?? null]),
+    lines.map((line) => [line.productId, stock[line.productId] ?? null]),
   )
   // A row that cross-sells something unbuyable wastes the only place on the
   // page where the visitor is ready to add one more thing.
-  const soldOut = Object.entries(visit?.stock ?? {})
+  const soldOut = Object.entries(stock)
     .filter(([, count]) => count === 0)
     .map(([productId]) => productId)
   return (
     <>
-      {cart && items.length > 0 ? (
-        <CartView lines={toLines(cart)} currency={cart.currency} serverDraws={draws} />
-      ) : (
-        <EmptyCart />
-      )}
+      <CartView lines={lines} currency={currency} serverDraws={draws} />
       <Suspense fallback={<FavouritesSkeleton />}>
-        <Favourites exclude={[...items.map((item) => item.productId), ...soldOut]} />
+        <Favourites exclude={[...lines.map((line) => line.productId), ...soldOut]} />
       </Suspense>
     </>
   )
@@ -66,7 +74,13 @@ async function Favourites({ exclude }: { exclude: readonly string[] }) {
     <FavouriteProducts
       heading={content?.favourites?.heading || FAVOURITES_FALLBACK.heading}
       exclude={exclude}
-      slot={(product) => <QuickAddForm productId={product.id} name={product.name} />}
+      hideInCart
+      slot={({ id, slug, name, images, price }) => (
+        <QuickAddForm
+          productId={id}
+          display={{ slug, name, image: images[0] ?? null, price }}
+        />
+      )}
     />
   )
 }

@@ -14,17 +14,21 @@ import { Button } from '@/components/ui/button'
  * `blocked` means a line holds more than there is of it. Checkout is disabled
  * and says why; the action refuses the same order, so a native post made
  * before hydration lands back on this page rather than going through.
+ * `saving` means an add is still saving; Checkout waits for it, because the
+ * order is placed from the cart mirror, which does not hold it yet.
  */
 export function CartSummary({
   totalItems,
   subtotal,
   currency,
   blocked,
+  saving,
 }: {
   totalItems: number
   subtotal: number
   currency: string
   blocked: boolean
+  saving: boolean
 }) {
   return (
     <section
@@ -50,8 +54,12 @@ export function CartSummary({
         </div>
       </dl>
       <form action={placeOrder} className="flex flex-col gap-2">
-        <CheckoutButton blocked={blocked} />
-        {blocked ? (
+        <CheckoutButton blocked={blocked || saving} />
+        {saving ? (
+          <p role="status" className="text-sm leading-6 text-fg-secondary">
+            Your cart is saving. Checkout opens when it is saved.
+          </p>
+        ) : blocked ? (
           <p role="status" className="text-sm leading-6 text-danger">
             Reduce the lines above to the quantities available before checking out.
           </p>

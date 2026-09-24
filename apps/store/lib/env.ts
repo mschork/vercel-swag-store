@@ -25,6 +25,13 @@ const ServerEnvSchema = PublicEnvSchema.extend({
   // Optional: a Viewer token, used only in draft mode. Without it the enable
   // route answers 404 and the store never reads a draft.
   SANITY_API_READ_TOKEN: z.string().min(1).optional(),
+  // Optional, both or neither: the session store's Upstash Redis. Without
+  // them an in-memory store serves one process.
+  KV_REST_API_URL: z.url().optional(),
+  KV_REST_API_TOKEN: z.string().min(1).optional(),
+  // Optional: `1` only for the Playwright web server. Unset, the test seed
+  // route answers 404.
+  E2E_SEED: z.literal('1').optional(),
   // Optional: the Studios that may frame the store. Exact origins only.
   PRESENTATION_STUDIO_ORIGINS: z
     .string()
@@ -52,6 +59,9 @@ function parseServerEnv(): ServerEnv {
     DEMAND_ANALYSE_SECRET: process.env.DEMAND_ANALYSE_SECRET || undefined,
     SANITY_API_READ_TOKEN: process.env.SANITY_API_READ_TOKEN || undefined,
     PRESENTATION_STUDIO_ORIGINS: process.env.PRESENTATION_STUDIO_ORIGINS || undefined,
+    KV_REST_API_URL: process.env.KV_REST_API_URL || undefined,
+    KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN || undefined,
+    E2E_SEED: process.env.E2E_SEED || undefined,
   })
   if (!result.success) {
     // prettifyError lists paths and messages only; values are never echoed.

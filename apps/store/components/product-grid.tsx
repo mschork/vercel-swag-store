@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { InCartHidden } from '@/components/cart/in-cart-hidden'
 import { SortableGrid } from '@/components/listing/sortable-grid'
 import { ProductCard } from '@/components/product-card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -42,19 +43,22 @@ export type GridVariant = keyof typeof VARIANTS
  * than the slug.
  *
  * `slot` renders under a card, inside the list item but outside the link, so a
- * grid can carry a control without putting a button inside a link. Only the
- * cart page's favourites row uses it.
+ * grid can carry a control without putting a button inside a link. With
+ * `hideInCart` a card leaves the grid once its product is in the cart. Only
+ * the cart page's favourites row uses either.
  */
 export async function ProductGrid({
   products,
   variant,
   preloadCount = 0,
   slot,
+  hideInCart = false,
 }: {
   products: readonly Product[]
   variant: GridVariant
   preloadCount?: number
   slot?: (product: Product) => ReactNode
+  hideInCart?: boolean
 }) {
   const { grid, sizes } = VARIANTS[variant]
   const categories = await getCategories()
@@ -62,17 +66,26 @@ export async function ProductGrid({
     categories.find((category) => category.slug === slug)?.name ?? slug
   return (
     <ul className={grid}>
-      {products.map((product, index) => (
-        <li key={product.id}>
-          <ProductCard
-            product={product}
-            categoryName={nameOf(product.category)}
-            sizes={sizes}
-            preload={index < preloadCount}
-          />
-          {slot?.(product)}
-        </li>
-      ))}
+      {products.map((product, index) => {
+        const item = (
+          <>
+            <ProductCard
+              product={product}
+              categoryName={nameOf(product.category)}
+              sizes={sizes}
+              preload={index < preloadCount}
+            />
+            {slot?.(product)}
+          </>
+        )
+        return hideInCart ? (
+          <InCartHidden key={product.id} productId={product.id}>
+            {item}
+          </InCartHidden>
+        ) : (
+          <li key={product.id}>{item}</li>
+        )
+      })}
     </ul>
   )
 }

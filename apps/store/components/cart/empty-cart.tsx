@@ -3,8 +3,8 @@ import { EmptyState } from '@/components/empty-state'
 import { Button } from '@/components/ui/button'
 
 /**
- * Shown when there is no cart, it expired, or its last line was removed. Used
- * by the server contents and by the client view, which reaches zero lines
+ * Shown when there is no cart, it expired, or its last line was removed, and
+ * no add is saving. Rendered by the cart view, which also reaches zero lines
  * optimistically before the server confirms.
  */
 export function EmptyCart() {

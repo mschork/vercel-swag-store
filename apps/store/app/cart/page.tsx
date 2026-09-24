@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: 'Cart', robots: { index: false } }
 
 /**
  * The heading is prerendered with the shell; everything that depends on the
- * cart cookie streams inside one boundary.
+ * visitor's session streams inside one boundary.
  */
 export default function CartPage() {
   return (

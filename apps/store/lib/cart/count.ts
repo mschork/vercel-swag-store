@@ -2,14 +2,16 @@
  * The header badge's number, from four sources. Pure and safe for client
  * components.
  *
- * - `server`: the count the badge read while rendering; `null` when that read
- *   failed, `undefined` when the render skipped it.
+ * - `server`: the count the badge read from the cart mirror while rendering;
+ *   `null` when the session store could not be read, `undefined` when nothing
+ *   was read.
  * - `confirmed`: the confirmed count (CONTEXT.md), the latest count the API
  *   reported through an action or a render; `undefined` until one arrives on
  *   the client.
- * - `adding`: items of an Add to Cart still in flight, shown ahead of the API.
- * - `cartPage`: the total the cart page shows while it is open, drafts and
- *   optimistic changes included, so the badge never disagrees with it.
+ * - `adding`: items of adds still in flight, shown ahead of the API.
+ * - `cartPage`: the total the cart page shows while it is open, drafts,
+ *   optimistic changes and pending lines included, so the badge never
+ *   disagrees with it.
  *
  * `null` means unknown: the badge shows no number rather than a guess.
  */

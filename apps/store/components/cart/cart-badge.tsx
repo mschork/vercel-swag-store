@@ -1,24 +1,15 @@
-import { headers } from 'next/headers'
 import Link from 'next/link'
 import { loadCart } from '@/lib/cart/get-cart'
 import { CartCount } from './cart-count'
 
 /**
- * Header cart link with the live count, and the shell's only dynamic hole
- * inside its Suspense boundary. A missing, expired or unreadable cart shows
- * the icon alone, with no count. Inside an action's response the badge skips
- * its read: the cart API is slow (`lib/api/cart.ts`) and the client already
- * holds the count the action returned.
+ * Header cart link with the count from the cart mirror, and the shell's only
+ * dynamic hole inside its Suspense boundary. No cart counts as none; a
+ * session the store could not read shows the icon alone, with no count.
  */
 export async function CartBadge() {
-  const duringAction = (await headers()).has('next-action')
-  const result = duringAction ? undefined : await loadCart('Cart badge')
-  const count =
-    result === undefined
-      ? undefined
-      : result
-        ? (result.cart?.totalItems ?? 0)
-        : null
+  const cart = await loadCart()
+  const count = cart === 'unavailable' ? null : (cart?.totalItems ?? 0)
   return (
     <Link
       href="/cart"

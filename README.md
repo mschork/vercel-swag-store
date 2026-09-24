@@ -59,6 +59,19 @@ Only `.env.example` files are committed. Copy them and fill in the values.
 | `NEXT_PUBLIC_SITE_URL` | public | Canonical site URL for metadata and OG images |
 | `CATALOG_REVALIDATE_SECRET` | server | Optional, at least 32 characters. Bearer secret for `POST /api/revalidate/catalog`; unset, the route refuses every call |
 
+Store, session store, both optional and server only. Set both or neither; Vercel sets both when the Upstash Redis store is connected to the project:
+
+| Variable | Purpose |
+|---|---|
+| `KV_REST_API_URL` | Upstash Redis REST URL, where the store keeps each browser's visit, cart token and cart mirror under its session id (`docs/adr/0007-the-session-store.md`). Unset, an in-memory store serves one process, which is enough for a clone, CI and the tests |
+| `KV_REST_API_TOKEN` | Bearer token for that URL. Never `NEXT_PUBLIC_`, never logged |
+
+Store, Playwright only:
+
+| Variable | Purpose |
+|---|---|
+| `E2E_SEED` | `1` only for the Playwright web server, which `playwright.config.ts` sets. It enables `POST /api/test/session`, which seeds a visit and a cart mirror; unset, the route answers 404. Never set on Vercel |
+
 Store, search-gap loop only, both optional and server only:
 
 | Variable | Purpose |

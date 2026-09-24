@@ -110,7 +110,7 @@ test('cards say when a product is out of stock or nearly gone', async ({
   page,
   context,
 }) => {
-  const ids = await catalogueIds(page, context)
+  const ids = await catalogueIds(context)
   expect(ids.length).toBeGreaterThan(2)
   const [soldOut = '', nearlyGone = '', ...rest] = ids
   await seedVisit(context, {

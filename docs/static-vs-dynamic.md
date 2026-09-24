@@ -20,9 +20,10 @@ One table for the whole store: what is cached, what is live, and what makes cach
 | Product list, product by slug, featured grid | `lib/api/products.ts` | `"use cache"` | `products` | `catalog`: stale 5 min, revalidate 1 h, expire 1 d |
 | Categories | `lib/api/categories.ts` | `"use cache"` | `categories` | Same |
 | Store config | `lib/api/store.ts` | `"use cache"` | `store` | Same |
-| Stock | `lib/api/stock.ts` | never cached | none | Read per request |
-| Promotion | `lib/api/promotions.ts` | never cached | none | Read per request |
-| Cart | `lib/api/cart.ts`, `app/cart/actions.ts` | never cached | none | Read per request from the cookie; Server Actions call `refresh()` |
+| Session store | `lib/session/store.ts` | never cached | none | Upstash Redis, read once per render; the visit lasts a day from its first draw, the cart mirror a day from its last save |
+| Stock | `lib/api/stock.ts` | never cached | none | Drawn once per product per visit and kept in the session store |
+| Promotion | `lib/api/promotions.ts` | never cached | none | Pinned once per visit and kept in the session store |
+| Cart | `lib/api/cart.ts`, `app/cart/actions.ts`, `lib/cart/get-cart.ts` | never cached | none | Rendered from the cart mirror; each action writes the API and saves its answer as the mirror, and only the order calls `refresh()`; the cart page re-reads the API in `after()` for the next render |
 | Health | `lib/api/store.ts` | never cached | none | Only used by the integration test |
 
 Every call states its policy: `fetchApi` takes `cache: 'cached' | 'live'`, which also lands on the call's trace span, so a mismatch between the policy and the code is visible in the traces.
@@ -69,7 +70,8 @@ Seventeen, all interactive leaves. No page or layout is a client component. The 
 
 ## Rules that keep the shell static
 
-- Anything reading `cookies()`, `headers()` or `searchParams` renders inside a Suspense boundary. The cart badge, the cart contents and the search results are the three cases.
+- Anything reading `cookies()`, `headers()` or `searchParams` renders inside a Suspense boundary. The session id is a cookie, so the visit seed, the promo strip, the stock hole, the cart badge and the cart contents are such cases, and so are the search results.
+- `proxy.ts` mints the session cookie with no I/O, and its matcher skips every request that already carries a valid id, so those are served from the CDN without invoking it.
 - `/search` passes the `searchParams` promise down without awaiting it; awaiting it in the page would make the whole route dynamic.
 - Every fetch of API data lives in `apps/store/lib/` behind a typed function with an explicit policy. No component fetches directly.
-- Cart calls are server-only, so the cart token never reaches the browser (`docs/adr/0002-cart-server-side-only.md`).
+- Cart calls are server-only, and the cart token lives only in the session store, so it never reaches the browser (`docs/adr/0002-cart-server-side-only.md`, `docs/adr/0007-the-session-store.md`).
