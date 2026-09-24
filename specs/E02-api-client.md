@@ -8,7 +8,7 @@ One typed, server-only access layer for the Vercel Swag Store API where every fu
 
 ## Reference
 
-`specs/api-reference.md` and `specs/openapi.json`. Base URL `https://vercel-swag-store-api.vercel.app/api`. Header `x-vercel-protection-bypass` on every request, whether or not the API is enforcing Deployment Protection at the time (it was not on 14 Sep 2026; the documented contract is that it is).
+`specs/api-reference.md`. Base URL `https://vercel-swag-store-api.vercel.app/api`. Header `x-vercel-protection-bypass` on every request, whether or not the API is enforcing Deployment Protection at the time (it was not on 14 Sep 2026; the documented contract is that it is).
 
 ## Scope
 
