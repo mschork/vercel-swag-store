@@ -4,7 +4,7 @@ Guidance for any coding agent (Claude Code, Cursor, Copilot) working in this rep
 
 ## What this is
 
-A demonstration storefront: a "Vercel Swag Store" storefront in Next.js 16 with Cache Components, backed by the Vercel Swag Store API, with marketing content and product enrichment managed in Sanity. The point is correct use of `"use cache"`, Suspense boundaries, Server Actions and the static versus dynamic split, plus strong performance. Everything else is secondary.
+A demonstration storefront: a "Vercel Swag Store" in Next.js 16 with Cache Components, backed by the Vercel Swag Store API, with marketing content and product enrichment managed in Sanity. The point is correct use of `"use cache"`, Suspense boundaries, Server Actions and the static versus dynamic split, plus strong performance. Everything else is secondary.
 
 ## Non-negotiables
 
