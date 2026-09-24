@@ -4,7 +4,7 @@ Guidance for any coding agent (Claude Code, Cursor, Copilot) working in this rep
 
 ## What this is
 
-A take-home assignment for Vercel: a "Vercel Swag Store" storefront in Next.js 16 with Cache Components, backed by the Vercel Swag Store API, with marketing content and product enrichment managed in Sanity. The point of the exercise is correct use of `"use cache"`, Suspense boundaries, Server Actions and the static versus dynamic split, plus strong performance. Everything else is secondary.
+A demonstration storefront: a "Vercel Swag Store" in Next.js 16 with Cache Components, backed by the Vercel Swag Store API, with marketing content and product enrichment managed in Sanity. The point of the exercise is correct use of `"use cache"`, Suspense boundaries, Server Actions and the static versus dynamic split, plus strong performance. Everything else is secondary.
 
 ## Non-negotiables
 
@@ -98,7 +98,7 @@ Examples to copy: `apps/store/lib/bearer.ts`, `apps/store/lib/format.ts`,
 
 ## When unsure
 
-Prefer the simpler option that keeps the static shell static, and write the question into the PR description. Do not invent requirements; the brief is the assignment document, which stays out of the repo, and it is short.
+Prefer the simpler option that keeps the static shell static, and write the question into the PR description. Do not invent requirements; the brief is short and stays out of the repo.
 
 ## Agent skills
 
