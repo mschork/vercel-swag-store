@@ -1,6 +1,6 @@
 # Vercel Swag Store API Reference
 
-Extracted from the Scalar docs at https://vercel-swag-store-api.vercel.app/api/docs (OpenAPI 3.1.1, API version 2.0.0). The raw spec is saved as `openapi.json` next to this file.
+Extracted from the Scalar docs at https://vercel-swag-store-api.vercel.app/api/docs (OpenAPI 3.1.1, API version 2.0.0). This file is the reference the store is built against; the raw specification is not committed and is read from the API's own docs.
 
 ## Basics
 
