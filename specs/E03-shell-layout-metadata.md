@@ -13,7 +13,7 @@ The shared frame every page renders inside: header with logo, nav and cart badge
 - `<html lang="en">` with the Geist font variables from the `geist` package (`geist/font/sans`, `geist/font/mono`, self-hosted through `next/font/local`). No theme script, no `suppressHydrationWarning`.
 - Body: skip link to `#main`, `<Header />`, `<main id="main">{children}</main>`, `<Footer />`, `<SpeedInsights />`, `<Analytics />` (packages added here, see E11 for verification).
 - `export async function generateMetadata()`: awaits the cached `getStoreConfig()` and maps `seo.defaultTitle` to `title.default`, `seo.titleTemplate` to `title.template`, `seo.defaultDescription` to `description` and `storeName` to `openGraph.siteName`. `metadataBase` from `NEXT_PUBLIC_SITE_URL`; `openGraph: { type: 'website', locale: 'en_US' }`; `twitter: { card: 'summary_large_image' }`; `robots` default. Because the only await is a `"use cache"` function, the root stays static and the metadata is prerendered. There is no constants fallback: a build that cannot reach the API fails, as `specs/callout.md` states.
-- `export const viewport`: `themeColor` as an array with `media: '(prefers-color-scheme: light)'` `#ffffff` and dark `#000000`. Not `#hhhhhh`.
+- `export const viewport`: `themeColor` as an array with `media: '(prefers-color-scheme: light)'` `#ffffff` and dark `#000000`, and no other value.
 - Root `app/opengraph-image.tsx` via `next/og`: black canvas, the triangle, "Vercel Swag Store" in Geist. Font loaded with `readFile` from the `geist` package's `Geist-Regular.ttf`, inside the image handler and never at module scope: this module sits in every route's graph through the root metadata, and a route that resumes at request time loads it on the server, where a module-scope read outside the function bundle throws. The font is listed in `outputFileTracingIncludes` for the `/opengraph-image` route. Static.
 
 ### Theme
@@ -72,7 +72,7 @@ Hardening that goes with the `'unsafe-inline'` choice, all in the same epic:
 
 ### Tests
 
-Vitest: `lib/security-headers.test.ts` (required directives present, no nonce, hosts listed; the `hhhhhh` check is the grep criterion, not a test, so the string never enters `apps/`) and the social-link label map. Playwright arrives in E12.
+Vitest: `lib/security-headers.test.ts` (required directives present, no nonce, hosts listed) and the social-link label map. The theme-colour check is a grep criterion rather than a test, so no unwanted value enters `apps/` even as a fixture. Playwright arrives in E12.
 
 ## Acceptance criteria
 
@@ -81,7 +81,7 @@ Vitest: `lib/security-headers.test.ts` (required directives present, no nonce, h
 - [x] Light and dark follow the OS preference with no flash on reload.
 - [x] Header and footer on all routes; keyboard navigation reaches every control; skip link works.
 - [x] Lighthouse accessibility 100 on `/` at this stage.
-- [x] `grep -r hhhhhh apps/` returns nothing.
+- [x] `apps/` carries no theme colour beyond the two this spec names.
 - [x] `NEXT_PUBLIC_SITE_URL` set to the production URL for Production and Preview in the Vercel project.
 
 ## Out of scope
