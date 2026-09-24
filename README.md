@@ -456,7 +456,7 @@ changed. Preview deployments are protected; production is public.
 
 | Job | What it runs | Required |
 |---|---|---|
-| `verify` | `pnpm verify`: ESLint with warnings as errors, `tsc --noEmit`, both builds, Vitest | yes |
+| `verify` | `pnpm verify`: ESLint with warnings as errors, `tsc --noEmit`, both builds, Vitest, then the two build checks below | yes |
 | `e2e` | Playwright, smoke and visual | no |
 | `deploy studio` | `sanity deploy` to `swagstore-ms.sanity.studio`, on `main` only | — |
 
@@ -490,7 +490,8 @@ spec became one branch, one pull request and one Vercel preview, reviewed before
 The code was written with Claude Code; the specs, the decisions and the reviews are the
 human input. Hard-to-reverse engineering trade-offs are recorded as ADRs under `docs/adr/`,
 and `specs/callout.md` holds the measurements behind the decisions that could look like
-omissions.
+omissions. `docs/pull-requests.md` is the build history: all 56 pull requests, oldest
+first, each recording what was decided, what was generated and what it assumed.
 
 Two findings from reading the API shaped the design:
 
@@ -517,8 +518,11 @@ component.
 
 `API_BYPASS_TOKEN`, `SANITY_API_READ_TOKEN`, `SANITY_API_WRITE_TOKEN` and the Redis token
 are server-only: never prefixed `NEXT_PUBLIC_`, never sent from a client component, never
-logged. None of them reaches the client bundle, which is checked by grepping
-`.next/static` for the bypass token after a build.
+logged. `scripts/check-build.mjs` runs after every build and fails if the bypass
+token appears in any file under `.next/static`. The same script asserts that every
+page route still prerenders, and `scripts/check-metadata.mjs` reads the prerendered
+HTML and fails if a page declares a generator or carries a theme colour other than
+the two this store defines.
 
 The Content-Security-Policy allows `'unsafe-inline'` for scripts and names a strict host
 list, with `object-src 'none'`, `base-uri 'self'`, `form-action 'self'` and

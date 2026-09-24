@@ -6,11 +6,14 @@ One table for the whole store: what is cached, what is live, and what makes cach
 
 | Route | Static shell | Dynamic holes | Cache tags behind the shell | What refreshes it |
 |---|---|---|---|---|
-| `/` | Hero, featured grid, chrome | Promo strip, cart badge | `products`, `categories`, `store` | Hourly revalidate, or `POST /api/revalidate/catalog` |
-| `/products/[slug]` | Gallery, name, price, description, breadcrumb, JSON-LD | Stock with Add to Cart, promo strip, cart badge | `products`, `categories`, `store` | Same |
+| `/` | Hero, featured grid, favourites row, chrome | Promo strip, cart badge | `products`, `categories`, `store`, `sanity` | Hourly revalidate, `POST /api/revalidate/catalog`, or a Sanity publish |
+| `/products` | Heading, every card, the category chips | Promo strip, cart badge | `products`, `categories` | Same |
+| `/products/category/[slug]` | Heading, the Sanity intro, the category's cards | Promo strip, cart badge | `products`, `categories`, `sanity` | Same |
+| `/products/[slug]` | Gallery, name, price, descriptions, testimonials, questions, breadcrumb, JSON-LD | Stock with Add to Cart, promo strip, cart badge | `products`, `categories`, `store`, `sanity` | Same |
 | `/search` | Heading, search form, results region | Results grid, form state, promo strip, cart badge | `products`, `categories` | Same. Results themselves vary by `searchParams`, and each argument set is cached on its own |
-| `/cart` | Heading, skeleton box, chrome | Cart contents, promo strip, cart badge | `store` (chrome only) | Cart data is never cached |
-| `/checkout` | Whole page | Promo strip, cart badge | `store` | Same |
+| `/cart` | Heading, skeleton box, chrome | Cart contents, favourites row, promo strip, cart badge | `store` (chrome only) | Cart data is never cached; it is read from the cart mirror |
+| `/checkout` | Whole page | Promo strip, cart badge | `store`, `sanity` | Hourly revalidate or a Sanity publish |
+| `/md/**`, `/llms.txt` | Whole file | none | `products`, `categories`, `sanity` | Same as the pages they mirror; never live data |
 | `/robots.txt`, `/sitemap.xml` | Whole file | none | `products` for the sitemap's product URLs | Same |
 
 ## By data source
@@ -52,21 +55,25 @@ Without the call, the same tags refresh on their own within the hour.
 
 ## Client components
 
-Seventeen, all interactive leaves. No page or layout is a client component. The search form's fields are a server component, rendered as the fallback while the client form hydrates, so the form works without JavaScript.
+Twenty-eight files carry `"use client"`, all interactive leaves. No page and no layout is one. The search form's fields are a server component, rendered as the fallback while the client form hydrates, so the form works without JavaScript.
 
-| Component | Why it is client-side |
+| File | Why it is client-side |
 |---|---|
-| `cart/cart-count`, `cart/cart-view`, `cart/cart-line`, `cart/cart-summary` | Hold the badge count, optimistic lines and pending state |
-| `product/add-to-cart-form` | Optimistic confirmation and the pending button |
+| `cart/cart-count`, `cart/cart-view`, `cart/cart-line`, `cart/cart-summary` | Hold the badge count, the optimistic lines and the pending state |
+| `cart/quick-add-form`, `cart/use-cart-add`, `cart/in-cart-hidden` | The quick-add row, and the adds the browser holds while they save |
+| `product/add-to-cart-form`, `product/stock-and-cart-client` | Optimistic confirmation, the pending button, the visitor's own draw |
+| `card-stock` | Fades a grid badge in from the visit once it is known |
 | `quantity-stepper` | Clamps the value, disables at bounds, announces changes |
 | `product/gallery-thumbnails` | Selected image is local state |
 | `search/search-form-client`, `search/search-transition`, `search/results-error` | Debounced search, shared pending state, retry |
+| `listing/chip-row`, `listing/sortable-grid` | The category chips' scroll state and the price sort, which re-orders cards already on the page |
 | `nav-link`, `pending-scope` | Read the current path and the pending navigation |
 | `sticky-header` | `IntersectionObserver` for the scrolled hairline |
-| `promo-marquee` | Measures the text to set the scroll duration |
+| `promo-strip`, `promo-marquee` | Read the pinned promotion and measure the text to set the scroll duration |
+| `visit/visit-provider`, `visit/reset-visit` | Hold the visitor's draws for the grids, and the control that clears them |
+| `draft-mode-bar`, `draft-visual-editing` | Draft mode only; neither ships to a visitor |
 | `error-boundary` | React has no hook equivalent |
 | `app/error.tsx` | Next requires it |
-| `ui/separator` | The shadcn wrapper around Base UI |
 
 ## Rules that keep the shell static
 
