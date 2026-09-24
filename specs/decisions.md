@@ -51,7 +51,7 @@ Settled choices that every epic spec inherits. Change here first, then in the sp
 - Vitest for the API client, price formatting, merge logic and search expansion.
 - Playwright smoke: home renders 6 products and promo; PDP shows stock and add to cart; add to cart updates badge; refresh keeps cart; search by URL reproduces results; empty state.
 - Lighthouse mobile 90+ on all routes; axe with no serious issues.
-- Pre-submission grep for `redacted` and `hhhhhh`; requirement checklist walked from `assignment.md`.
+- Pre-submission grep for `redacted` and `hhhhhh`; requirement checklist walked from the brief.
 
 ## Environment variables
 

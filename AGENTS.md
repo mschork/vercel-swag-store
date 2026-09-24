@@ -42,7 +42,7 @@ packages/sanity       schemas, client factory, GROQ queries, generated types
 packages/demand       the search-gap loop's shared logic: filters, ids, prompt, schema, validation, Sanity queries (E13)
 sanity.blueprint.ts   everything Sanity runs for this repo, declared in code; at the root, beside the lockfile
 packages/config       shared tsconfig and eslint config
-specs/                one spec per epic (E01 to E14), decisions.md, assignment.md, openapi.json (token redacted), improvements.md, callout.md
+specs/                one spec per epic (E01 to E14), decisions.md, openapi.json (token redacted), improvements.md, callout.md
 working/              local-only documents (unredacted API reference, notes); git-ignored, never committed
 ```
 
@@ -98,7 +98,7 @@ Examples to copy: `apps/store/lib/bearer.ts`, `apps/store/lib/format.ts`,
 
 ## When unsure
 
-Prefer the simpler option that keeps the static shell static, and write the question into the PR description. Do not invent requirements; the brief is `specs/assignment.md` and it is short.
+Prefer the simpler option that keeps the static shell static, and write the question into the PR description. Do not invent requirements; the brief is the assignment document, which stays out of the repo, and it is short.
 
 ## Agent skills
 

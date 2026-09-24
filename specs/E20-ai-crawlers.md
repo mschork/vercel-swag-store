@@ -4,7 +4,7 @@ Branch: `epic/E20-ai-crawlers`. Depends on: E05, E09, E18. Blocks: nothing. One 
 
 ## Goal
 
-A client that runs no scripts and reads Markdown better than HTML gets every catalogue fact the store shows a person: as structured data in the page, as a Markdown version of the page, and through an `llms.txt` index. The brief (`assignment.md`) does not ask for this. The store stays noindex (`callout.md`, "The store is noindex on purpose"), so nothing here asks to be found or cited: it demonstrates the technique, and it is measured by checks anyone can run.
+A client that runs no scripts and reads Markdown better than HTML gets every catalogue fact the store shows a person: as structured data in the page, as a Markdown version of the page, and through an `llms.txt` index. The brief does not ask for this. The store stays noindex (`callout.md`, "The store is noindex on purpose"), so nothing here asks to be found or cited: it demonstrates the technique, and it is measured by checks anyone can run.
 
 ## Structured data `lib/structured-data.ts`
 

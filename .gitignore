@@ -46,3 +46,6 @@ working
 
 # local issue tracker for agent skills (see docs/agents/issue-tracker.md)
 .scratch
+
+# The assignment brief is third-party material and stays out of the repo.
+specs/assignment.md

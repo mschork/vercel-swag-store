@@ -23,7 +23,7 @@ The banner sits above the hero, in the root layout on every route (E10); its box
 ### Hero `components/home/hero.tsx`
 
 - Headline, supporting paragraph, primary CTA button linking to `/search`. No secondary text link: the brief asks for a headline, a description, a CTA and a visual element, and the visual element links to the product itself.
-- Visual (E10): a full-bleed lifestyle photo from `public/hero.jpg` via `next/image` with `priority`, `fill` and `sizes="100vw"`, the only LCP candidate. Copy over the photo at md and up, under it on phones. No link, no button.
+- Visual (E10): a full-bleed lifestyle photo from the `homePage` document via `next/image` with `priority`, `fill` and `sizes="100vw"`, the only LCP candidate. Copy over the photo at md and up, under it on phones. No link, no button.
 - Content comes from a `HERO_FALLBACK` constant in `lib/content/fallbacks.ts` so E09 can swap in Sanity data without touching the component. Field names match E08's `homePage.hero`: `{ headline, description }`. Values: headline "Ship in black.", description "Official Vercel merchandise. Apparel, desk gear and accessories from the team behind Next.js, all in one colour.". The copy is placeholder marketing text (`improvements.md`).
 
 ### Promo banner `components/home/promo-banner.tsx`

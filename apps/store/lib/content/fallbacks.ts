@@ -13,12 +13,6 @@ export const HERO_FALLBACK: HeroContent = {
     'Official Vercel merchandise. Apparel, desk gear and accessories from the team behind Next.js, all in one colour.',
 }
 
-/** The hero photo in `public/`, used when `homePage.hero.image` is unset. */
-export const HERO_IMAGE = {
-  src: '/hero.jpg',
-  alt: 'Someone in a black Vercel hoodie leaning on a rooftop wall, a city skyline behind them',
-} as const
-
 /**
  * The checkout page (CONTEXT.md), matching the `checkoutPage` singleton.
  * `body` is plain text here; the document's own body is Portable Text.

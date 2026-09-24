@@ -193,7 +193,7 @@ export function llmsTxt({
   return document([
     `# ${escapeMarkdown(storeName)}`,
     `> ${escapeMarkdown(description)}`,
-    'This site is a demonstration built for a take-home assignment. The products are invented, nothing can be bought, and the site asks not to be indexed or used for training. Every catalogue page has a Markdown version at its own address plus `.md`.',
+    'This site is a demonstration storefront. The products are invented, nothing can be bought, and the site asks not to be indexed or used for training. Every catalogue page has a Markdown version at its own address plus `.md`.',
     '## Store',
     [
       `- ${link('Home', markdownUrl('/', siteUrl))}`,
