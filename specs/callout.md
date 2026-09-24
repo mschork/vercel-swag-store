@@ -140,19 +140,19 @@ Two things were given up for it. The cart cookie slides only with an add now, so
 
 ## The session store
 
-Measured on 22 Sep 2026 with the Playwright script of the two sections above, three runs per flow, each a fresh visitor who lands on `/` first. "Before" is production on the cookies; "after" is the preview of the E24 branch, on Upstash Redis. Times run from the start of a full load or from the click. Production figures follow after the merge.
+Measured with the Playwright script of the two sections above, three runs per flow, each a fresh visitor who lands on `/` first. Both columns are production: "before" on 22 Sep 2026 on the cookies, "after" on 24 Sep 2026 on Upstash Redis. Times run from the start of a full load or from the click. The preview measured the same before the merge.
 
 | Flow | Before | After |
 |---|---|---|
 | Cart page, full load, to the first row | 1.34 to 1.74 s | 0.34 s |
-| Cart page, away to `/` and back through the header, click to the first row | 1.43 to 1.90 s | 0.14 to 0.71 s |
-| Header badge on a full load of `/`, to the count | 1.84 to 2.31 s | 0.34 to 0.44 s |
-| Add to Cart, then the header's cart link 0.7 s later | "Your cart is empty" from 0.86 s, the row at 7.9 to 9.1 s, and the badge fell back from 1 to 0 meanwhile | A saving row at 0.86 to 0.96 s, settled at 5.3 to 5.8 s; never empty, the badge held at 1 |
-| First add, clicked the moment the pointer arrived, click to answer | 5.0 to 5.6 s | 4.9 to 5.8 s |
-| First add, pointer rested on the buy panel for 3.5 s first | 2.7 to 3.2 s | 2.4 to 3.2 s |
-| One plus click on `/cart`, including the 0.4 s pause | 3.2 to 3.5 s | 2.7 to 3.5 s |
-| Remove on `/cart` | 2.3 to 3.1 s | 2.7 to 3.2 s |
-| Size of the add's response | 68 KB | 0.4 KB |
+| Cart page, away to `/` and back through the header, click to the first row | 1.43 to 1.90 s | 0.12 to 0.14 s |
+| Header badge on a full load of `/`, to the count | 1.84 to 2.31 s | 0.35 s |
+| Add to Cart, then the header's cart link 0.7 s later | "Your cart is empty" from 0.86 s, the row at 7.9 to 9.1 s, and the badge fell back from 1 to 0 meanwhile | A saving row at 0.87 to 0.89 s, settled at 5.2 to 5.9 s; never empty, the badge held at 1 |
+| First add, clicked the moment the pointer arrived, click to answer | 5.0 to 5.6 s | 4.9 to 6.0 s |
+| First add, pointer rested on the buy panel for 3.5 s first | 2.7 to 3.2 s | 2.6 to 2.9 s |
+| One plus click on `/cart`, including the 0.4 s pause | 3.2 to 3.5 s | 2.9 to 3.7 s |
+| Remove on `/cart` | 2.3 to 3.1 s | 2.3 to 2.8 s |
+| Size of the add's response | 68 KB | 399 bytes |
 
 Two quick adds from the favourites row of an empty cart showed two saving rows within 0.25 s, and both settled at 7.1 to 8.7 s: the cart's creation and two writes, one after the other. After every flow the browser held one cookie, `sid`, httpOnly, Secure, SameSite=Lax, for 30 days, and no action's response reached 1 KB.
 
