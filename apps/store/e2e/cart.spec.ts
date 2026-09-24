@@ -1,18 +1,31 @@
-import { expect, test, type BrowserContext, type Page, type Request } from '@playwright/test'
-import { catalogueIds, openWithStock, seedVisit } from './visit'
+import { expect, test, type BrowserContext, type Page } from '@playwright/test'
+import { watchActions } from './actions'
+import {
+  catalogueIds,
+  expectOnlySessionCookie,
+  openWithStock,
+  seedSession,
+  seedVisit,
+} from './visit'
 
 /**
  * Cart flows against a production build and the live API. Every test gets its
- * own browser context, so each starts without a cart cookie. The product is
- * the first in the home page's featured grid, and the visit cookie says the
+ * own browser context, so each starts without a session. The product is the
+ * first in the home page's featured grid, and the seeded visit says the
  * visitor has plenty of it, so no test depends on what the API drew.
  */
 
 /** More than any test adds, so the draw never becomes the reason a test fails. */
 const SEEDED_STOCK = 40
 
-/** Cart assertions wait far longer: the cart API is slow (`lib/api/cart.ts`). */
+/**
+ * Cart assertions wait far longer: a cart write takes seconds, and each waits
+ * up to `CART_TIMEOUT_MS` (lib/api/cart.ts).
+ */
 const SAVED = { timeout: 30_000 }
+
+/** Well inside one cart write, so a row seen within it was seen while saving. */
+const AT_ONCE = { timeout: 2_000 }
 
 test.describe.configure({ timeout: 180_000 })
 
@@ -49,39 +62,46 @@ async function openInStockProduct(
   }
 }
 
-/** Adds and waits for the write to land, which enables "View cart". */
+/** Adds and waits for the write to land. */
 async function addToCart(page: Page) {
+  const actions = watchActions(page)
   await page.getByRole('button', { name: 'Add to Cart', exact: true }).click()
-  await expect(
-    page.getByRole('status').filter({ hasText: 'Added.' }),
-  ).toBeVisible(SAVED)
-  await expect(
-    page.getByRole('link', { name: 'View cart' }),
-  ).toHaveAttribute('href', '/cart', SAVED)
-}
-
-/**
- * Resolves when the next Server Action answers. Rows and the badge update
- * before the save, so a test waits on this before reloading.
- */
-const actionAnswer = (page: Page) =>
-  page.waitForResponse(
-    (response) => !!response.request().headers()['next-action'],
-    SAVED,
-  )
-
-/** Server Action posts, told apart from navigations by Next's header. */
-function countActions(page: Page) {
-  const sent: string[] = []
-  page.on('request', (request) => {
-    if (request.headers()['next-action']) sent.push(request.url())
-  })
-  return sent
+  await expect(page.getByRole('status').filter({ hasText: 'Added.' })).toBeVisible()
+  await expect.poll(actions.addsAnswered, SAVED).toBe(1)
 }
 
 /** The header badge, found by the count its label announces. */
 const badge = (page: Page, label: string) =>
   page.getByRole('banner').getByRole('img', { name: label, exact: true })
+
+/** The cart's rows; the favourites row under them is a grid. */
+const rows = (page: Page) => page.getByRole('main').locator('ul:not([class*="grid"]) > li')
+
+/** The cart's row for the product a link points at. */
+const rowFor = (page: Page, href: string) =>
+  rows(page).filter({ has: page.locator(`a[href="${href}"]`) })
+
+/** A row's status line; the stepper announces its quantity in a status of its own. */
+const statusOf = (row: ReturnType<typeof rowFor>) => row.locator('p[role="status"]')
+
+/**
+ * The favourites row under the cart. React streams a hidden copy of the hole
+ * before revealing it, so the row is only settled once its buttons are there;
+ * `first()` ignores the copy.
+ */
+const favouritesOf = (page: Page) =>
+  page.locator('section[aria-labelledby="favourites-heading"]').first()
+
+/** Opens the cart with every product in stock, its favourites row ready to add from. */
+async function openCartToAddFrom(page: Page, context: BrowserContext) {
+  const ids = await catalogueIds(context)
+  await seedVisit(context, Object.fromEntries(ids.map((id) => [id, 20])))
+  await page.goto('/cart')
+  await expect(page.getByRole('button', { name: /^Add to Cart/ }).first()).toBeVisible(SAVED)
+  // A pending row needs the hydrated form, not the no-JS post.
+  await page.waitForLoadState('networkidle')
+  return favouritesOf(page)
+}
 
 test('add, change and remove a line; the cart survives a reload', async ({
   page,
@@ -94,10 +114,8 @@ test('add, change and remove a line; the cart survives a reload', async ({
 
   await addToCart(page)
   await expect(badge(page, 'Cart, 1 item')).toBeVisible(SAVED)
-  const cookie = (await context.cookies()).find(
-    ({ name }) => name === 'cart_token',
-  )
-  expect(cookie).toMatchObject({ httpOnly: true, sameSite: 'Lax', path: '/' })
+  // The cart token lives only on the server; the browser holds the session id.
+  await expectOnlySessionCookie(context)
 
   await page.getByRole('link', { name: 'View cart' }).click()
   await expect(page).toHaveURL(/\/cart$/)
@@ -106,7 +124,7 @@ test('add, change and remove a line; the cart survives a reload', async ({
     .filter({ has: page.getByRole('link', { name: product.name, exact: true }) })
   await expect(line).toContainText(`${usd(product.priceCents)} each`)
 
-  const increased = actionAnswer(page)
+  const actions = watchActions(page)
   await line.getByRole('button', { name: 'Increase quantity' }).click()
   await expect(badge(page, 'Cart, 2 items')).toBeVisible(SAVED)
   await expect(line).toContainText(
@@ -114,15 +132,15 @@ test('add, change and remove a line; the cart survives a reload', async ({
     SAVED,
   )
 
-  await increased
+  await expect.poll(actions.answered, SAVED).toBe(1)
   await page.reload()
   await expect(line.getByLabel('Quantity', { exact: true })).toHaveValue('2')
 
-  const removed = actionAnswer(page)
+  const removal = watchActions(page)
   await line.getByRole('button', { name: `Remove ${product.name}` }).click()
   await expect(page.getByRole('heading', { name: 'Your cart is empty' })).toBeVisible(SAVED)
   await expect(badge(page, 'Cart, 0 items')).toBeVisible(SAVED)
-  await removed
+  await expect.poll(removal.answered, SAVED).toBe(1)
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Your cart is empty' })).toBeVisible()
 
@@ -132,6 +150,7 @@ test('add, change and remove a line; the cart survives a reload', async ({
   expect(
     urls.filter((url) => url.startsWith('http') && !url.startsWith(origin)),
   ).toEqual([])
+  await expectOnlySessionCookie(context)
 })
 
 test('placing the order empties the cart and lands on the checkout page', async ({
@@ -170,19 +189,19 @@ test('rapid plus clicks save once, with the final quantity', async ({
   const quantity = line.getByLabel('Quantity', { exact: true })
   await expect(quantity).toHaveValue('1')
 
-  const actions = countActions(page)
+  const actions = watchActions(page)
   const plus = line.getByRole('button', { name: 'Increase quantity' })
   for (let click = 0; click < 4; click++) await plus.click()
   // The row and the badge move at once, before anything is sent.
   await expect(quantity).toHaveValue('5')
   await expect(badge(page, 'Cart, 5 items')).toBeVisible()
   await expect(line).toContainText(`Line total ${usd(product.priceCents * 5)}`)
-  expect(actions).toHaveLength(0)
+  expect(actions.sent()).toBe(0)
 
   // One save after the pause; the reload shows what the API holds.
   await expect(line).toHaveAttribute('aria-busy', 'true', SAVED)
   await expect(line).not.toHaveAttribute('aria-busy', SAVED)
-  expect(actions).toHaveLength(1)
+  expect(actions.sent()).toBe(1)
   await page.reload()
   await expect(quantity).toHaveValue('5', SAVED)
   await expect(badge(page, 'Cart, 5 items')).toBeVisible(SAVED)
@@ -223,87 +242,178 @@ test('the cart refuses more than the visit holds, and blocks checkout', async ({
   await expect(page.getByRole('button', { name: 'Checkout' })).toBeEnabled(SAVED)
 })
 
-test('a first visit whose draws arrive before the cart hydrates cleanly', async ({
+test('a cart rendered while the visit is drawn hydrates cleanly', async ({
   page,
   context,
 }) => {
-  await openInStockProduct(page, context, 3)
+  const product = await openInStockProduct(page, context, 3)
   await page.waitForLoadState('networkidle')
   await addToCart(page)
-  await expect(badge(page, 'Cart, 1 item')).toBeVisible(SAVED)
 
-  // No visit, so the server renders the line and the favourites without a
-  // draw, and the visit that opens says everything is sold out: the client
-  // knows before the cart streams in, and its first render still has to
-  // repeat the server's HTML.
-  await context.clearCookies({ name: 'visit' })
-  await page.route('**/api/visit', async (route) => {
-    const response = await route.fetch()
-    const body = (await response.json()) as { stock?: Record<string, number> }
-    const stock = Object.fromEntries(Object.keys(body.stock ?? {}).map((id) => [id, 0]))
-    await route.fulfill({ response, json: { ...body, stock } })
-  })
+  // No visit: the cart's hole reads no draw for its line while the seed hole
+  // draws the catalogue in the same render, and the first client render
+  // still has to repeat the server's HTML.
+  await seedSession(context, { stock: {} })
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
+  page.on('console', (message) => {
+    if (message.type() === 'error' && /hydrat/i.test(message.text())) errors.push(message.text())
+  })
 
   await page.goto('/cart')
-  await expect(page.getByRole('button', { name: 'Checkout' })).toBeDisabled(SAVED)
+  await expect(
+    page.getByRole('main').getByRole('link', { name: product.name, exact: true }),
+  ).toBeVisible(SAVED)
+  await expect(page.getByRole('button', { name: 'Checkout' })).toBeVisible()
+  await page.waitForLoadState('networkidle')
   expect(errors).toEqual([])
 })
 
 test('the cart cross-sells only what can be bought', async ({ page, context }) => {
-  const ids = await catalogueIds(page, context)
-  const favourites = (target: Page) =>
-    target.locator('section[aria-labelledby="favourites-heading"]')
+  const ids = await catalogueIds(context)
 
   // Nothing in the catalogue is available to this visitor.
   await seedVisit(context, Object.fromEntries(ids.map((id) => [id, 0])))
 
   // The home page's row is static, so a sold-out favourite is badged, not dropped.
   await page.goto('/')
-  await expect(favourites(page)).toBeVisible()
-  await expect(favourites(page).getByRole('listitem')).not.toHaveCount(0)
-  await expect(favourites(page).getByText('Out of stock').first()).toBeVisible()
+  await expect(favouritesOf(page)).toBeVisible()
+  await expect(favouritesOf(page).getByRole('listitem')).not.toHaveCount(0)
+  await expect(favouritesOf(page).getByText('Out of stock').first()).toBeVisible()
 
   // The cart page's row is dynamic, so it has nothing left to offer.
   await page.goto('/cart')
   await expect(page.getByRole('main').getByRole('heading', { level: 1 })).toBeVisible()
-  await expect(favourites(page)).toHaveCount(0, SAVED)
+  await expect(page.locator('section[aria-labelledby="favourites-heading"]')).toHaveCount(
+    0,
+    SAVED,
+  )
 })
 
-test('a quick add from the favourites row swaps in the next favourite', async ({
+declare global {
+  interface Window {
+    __sawEmptyCart: boolean
+    __sameDocument: boolean
+  }
+}
+
+test('the cart opened at once after Add to Cart shows the add as a saving row, never an empty cart', async ({
   page,
   context,
 }) => {
-  test.setTimeout(180_000)
-  const ids = await catalogueIds(page, context)
-  await seedVisit(context, Object.fromEntries(ids.map((id) => [id, 20])))
+  const product = await openInStockProduct(page, context)
+  await page.waitForLoadState('networkidle')
+  const href = new URL(page.url()).pathname
+  // Records the empty state if it is ever inserted, however briefly. A full
+  // load would drop both flags, so they also prove the page never reloaded.
+  await page.evaluate(() => {
+    window.__sawEmptyCart = false
+    window.__sameDocument = true
+    new MutationObserver((records) => {
+      for (const record of records) {
+        const nodes = [...record.addedNodes, record.target]
+        if (nodes.some((node) => node.textContent?.includes('Your cart is empty'))) {
+          window.__sawEmptyCart = true
+        }
+      }
+    }).observe(document.body, { childList: true, subtree: true, characterData: true })
+  })
 
-  await page.goto('/cart')
-  // React streams a hidden copy of the hole before revealing it, so the row is
-  // only settled once its buttons are there; `first()` ignores the copy.
-  const addButtons = page.getByRole('button', { name: /^Add to Cart/ })
-  await expect(addButtons.first()).toBeVisible(SAVED)
-  const favourites = page
-    .locator('section[aria-labelledby="favourites-heading"]')
-    .first()
+  const actions = watchActions(page)
+  await page.getByRole('button', { name: 'Add to Cart', exact: true }).click()
+  await page.getByRole('banner').locator('a[href="/cart"]').click()
+  await expect(page).toHaveURL(/\/cart$/)
+
+  const row = rowFor(page, href)
+  await expect(statusOf(row)).toHaveText('Saving…', AT_ONCE)
+  expect(actions.addsAnswered()).toBe(0)
+  await expect(row.getByRole('button', { name: `Remove ${product.name}` })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Checkout' })).toBeDisabled()
+
+  // The save lands and the row settles in place.
+  await expect.poll(actions.addsAnswered, SAVED).toBe(1)
+  await expect(statusOf(row)).not.toHaveText('Saving…')
+  await expect(row.getByLabel('Quantity', { exact: true })).toHaveValue('1')
+  await expect(page.getByRole('button', { name: 'Checkout' })).toBeEnabled()
+  await expect(badge(page, 'Cart, 1 item')).toBeVisible()
+  expect(await page.evaluate(() => window.__sameDocument)).toBe(true)
+  expect(await page.evaluate(() => window.__sawEmptyCart)).toBe(false)
+})
+
+test('two quick adds of different products are two saving rows, and a reload keeps both', async ({
+  page,
+  context,
+}) => {
+  const favourites = await openCartToAddFrom(page, context)
+  const firstCard = favourites.getByRole('listitem').first()
+  const actions = watchActions(page)
+
+  // The first card leaves the row at the click, so the same locator then
+  // names the next product.
+  const firstHref = await firstCard.getByRole('link').getAttribute('href')
+  await firstCard.getByRole('button', { name: /^Add to Cart/ }).click()
+  await expect(favourites.locator(`a[href="${firstHref}"]`)).toHaveCount(0, AT_ONCE)
+  const secondHref = await firstCard.getByRole('link').getAttribute('href')
+  expect(secondHref).not.toBe(firstHref)
+  await firstCard.getByRole('button', { name: /^Add to Cart/ }).click()
+
+  await expect(rows(page)).toHaveCount(2, AT_ONCE)
+  for (const href of [firstHref, secondHref]) {
+    await expect(statusOf(rowFor(page, href ?? ''))).toHaveText('Saving…', AT_ONCE)
+  }
+  expect(actions.addsAnswered()).toBe(0)
+  await expect(badge(page, 'Cart, 2 items')).toBeVisible()
+
+  // Next runs one action at a time, so the second save follows the first.
+  await expect.poll(actions.addsAnswered, { timeout: 2 * SAVED.timeout }).toBe(2)
+  await expect(rows(page).getByText('Saving…')).toHaveCount(0)
+  const shown = await rows(page).getByRole('link').evaluateAll((links) =>
+    links.map((link) => link.getAttribute('href')),
+  )
+  expect(shown).toEqual([firstHref, secondHref])
+
+  await page.reload()
+  await expect(rows(page)).toHaveCount(2, SAVED)
+  expect(
+    await rows(page).getByRole('link').evaluateAll((links) =>
+      links.map((link) => link.getAttribute('href')),
+    ),
+  ).toEqual(shown)
+  for (const href of shown) {
+    await expect(rowFor(page, href ?? '').getByLabel('Quantity', { exact: true })).toHaveValue('1')
+  }
+  await expect(badge(page, 'Cart, 2 items')).toBeVisible()
+})
+
+test('a quick add from the favourites row adds a row and hides that card', async ({
+  page,
+  context,
+}) => {
+  const favourites = await openCartToAddFrom(page, context)
   const before = await favourites.getByRole('listitem').count()
   expect(before).toBeGreaterThan(1)
   const firstCard = favourites.getByRole('listitem').first()
   // The href identifies the product; the link's text starts with its price.
   const addedHref = await firstCard.getByRole('link').getAttribute('href')
+  const actions = watchActions(page)
 
   await firstCard.getByRole('button', { name: /^Add to Cart/ }).click()
 
-  // The badge counts the add at once, and the row refills to its old length.
-  await expect(badge(page, 'Cart, 1 item')).toBeVisible(SAVED)
-  await expect(favourites.getByRole('listitem')).toHaveCount(before, SAVED)
+  // At the click: the card leaves the row, the cart gains a saving row for
+  // it, and the badge counts it.
+  await expect(favourites.locator(`a[href="${addedHref}"]`)).toHaveCount(0, AT_ONCE)
+  const row = rowFor(page, addedHref ?? '')
+  await expect(statusOf(row)).toHaveText('Saving…', AT_ONCE)
+  expect(actions.addsAnswered()).toBe(0)
+  await expect(badge(page, 'Cart, 1 item')).toBeVisible()
 
-  // The added product has left the row and is now a line in the cart.
-  await expect(favourites.locator(`a[href="${addedHref}"]`)).toHaveCount(0, SAVED)
-  await expect(
-    page.getByRole('main').locator(`ul:not([class*="grid"]) a[href="${addedHref}"]`),
-  ).toHaveCount(1, SAVED)
+  // The save lands: the row settles, and the favourites row stays one card
+  // shorter, because nothing renders it again.
+  await expect.poll(actions.addsAnswered, SAVED).toBe(1)
+  await expect(statusOf(row)).not.toHaveText('Saving…')
+  await expect(row.getByLabel('Quantity', { exact: true })).toHaveValue('1')
+  await expect(favourites.getByRole('listitem')).toHaveCount(before - 1)
+  await expect(favourites.locator(`a[href="${addedHref}"]`)).toHaveCount(0)
 })
 
 test('two rows changed together each keep their own saved quantity', async ({
@@ -311,41 +421,33 @@ test('two rows changed together each keep their own saved quantity', async ({
   context,
 }) => {
   test.setTimeout(240_000)
-  const ids = await catalogueIds(page, context)
-  await seedVisit(context, Object.fromEntries(ids.map((id) => [id, 20])))
+  const favourites = await openCartToAddFrom(page, context)
+  const actions = watchActions(page)
 
   // Two lines, both from the favourites row under the empty cart.
-  await page.goto('/cart')
-  const favourites = page.locator('section[aria-labelledby="favourites-heading"]').first()
   const add = favourites.getByRole('listitem').first().getByRole('button', { name: /^Add to Cart/ })
-  await expect(add).toBeVisible(SAVED)
   await add.click()
-  await expect(badge(page, 'Cart, 1 item')).toBeVisible(SAVED)
-  const rows = page.getByRole('main').locator('ul:not([class*="grid"]) > li')
-  await expect(rows).toHaveCount(1, SAVED)
+  await expect(rows(page)).toHaveCount(1, AT_ONCE)
   await add.click()
-  await expect(rows).toHaveCount(2, SAVED)
+  await expect(rows(page)).toHaveCount(2, AT_ONCE)
+  await expect.poll(actions.addsAnswered, { timeout: 2 * SAVED.timeout }).toBe(2)
+  await expect(rows(page).getByText('Saving…')).toHaveCount(0)
 
-  // Each row saves once after its pause; a cancelled stream has answered too.
-  let answered = 0
-  const count = (request: Request) => {
-    if (request.headers()['next-action']) answered++
-  }
-  page.on('requestfinished', count)
-  page.on('requestfailed', count)
-  await rows.nth(0).getByRole('button', { name: 'Increase quantity' }).click()
-  await rows.nth(1).getByRole('button', { name: 'Increase quantity' }).click()
-  await rows.nth(1).getByRole('button', { name: 'Increase quantity' }).click()
+  // Each row saves once after its pause.
+  const before = actions.answered()
+  await rows(page).nth(0).getByRole('button', { name: 'Increase quantity' }).click()
+  await rows(page).nth(1).getByRole('button', { name: 'Increase quantity' }).click()
+  await rows(page).nth(1).getByRole('button', { name: 'Increase quantity' }).click()
   await expect(badge(page, 'Cart, 5 items')).toBeVisible()
 
-  await expect.poll(() => answered, SAVED).toBe(2)
-  await expect(rows.nth(0)).not.toHaveAttribute('aria-busy', SAVED)
-  await expect(rows.nth(1)).not.toHaveAttribute('aria-busy', SAVED)
-  await expect(rows.nth(0).getByLabel('Quantity', { exact: true })).toHaveValue('2')
-  await expect(rows.nth(1).getByLabel('Quantity', { exact: true })).toHaveValue('3')
+  await expect.poll(() => actions.answered() - before, SAVED).toBe(2)
+  await expect(rows(page).nth(0)).not.toHaveAttribute('aria-busy', SAVED)
+  await expect(rows(page).nth(1)).not.toHaveAttribute('aria-busy', SAVED)
+  await expect(rows(page).nth(0).getByLabel('Quantity', { exact: true })).toHaveValue('2')
+  await expect(rows(page).nth(1).getByLabel('Quantity', { exact: true })).toHaveValue('3')
   await expect(badge(page, 'Cart, 5 items')).toBeVisible()
   // The second answer is the newer cart, and it must not undo the first row.
   await page.reload()
-  await expect(rows.nth(0).getByLabel('Quantity', { exact: true })).toHaveValue('2', SAVED)
-  await expect(rows.nth(1).getByLabel('Quantity', { exact: true })).toHaveValue('3', SAVED)
+  await expect(rows(page).nth(0).getByLabel('Quantity', { exact: true })).toHaveValue('2', SAVED)
+  await expect(rows(page).nth(1).getByLabel('Quantity', { exact: true })).toHaveValue('3', SAVED)
 })

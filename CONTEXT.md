@@ -77,7 +77,7 @@ One question and its answer, written once and shown on many products. It reaches
 _Avoid_: Help article, question entry
 
 **Cart**:
-The anonymous set of lines the API holds for one cart token. One per browser, and none until the first add.
+The anonymous set of lines the API holds for one cart token. One per session, and none until the visitor first reaches for Add to Cart.
 _Avoid_: Basket, bag, session cart
 
 **Line**:
@@ -97,7 +97,7 @@ The store's own copy of one cart as the API last answered it, kept under the ses
 _Avoid_: Cart cache, cached cart, local cart
 
 **Pending line**:
-A line the browser holds for an add whose save has not answered yet. Shown as saving, never counted as in the cart, and gone when the answer arrives.
+A line the browser holds for an add whose save has not answered yet. Shown as saving and counted on screen, never in the confirmed count or an order, and gone when the answer arrives.
 _Avoid_: Optimistic line, ghost line, in-flight item
 
 **Cart token**:

@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: accepted, partly superseded by ADR-0007
 date: 2026-09-14
 ---
 
@@ -14,6 +14,6 @@ The Swag Store API's cart endpoints accept any `Origin`, allow `PATCH` and `DELE
 
 ## Consequences
 
-- `lib/api/cart.ts` takes the token as an explicit argument and never reads `cookies()`, so it stays unit-testable; cookie handling lives in `lib/cart/cookie.ts`, which only the Server Actions in `app/cart/actions.ts` write through.
+- `lib/api/cart.ts` takes the token as an explicit argument and never reads `cookies()`, so it stays unit-testable; cookie handling lives in `lib/cart/cookie.ts`, which only the Server Actions in `app/cart/actions.ts` write through. Superseded: the token lives only in the session store, where the Server Actions save it, and no cookie carries it (`0007-the-session-store.md`).
 - The `Cart` type has no `token` field. `createCart()` is the only function that returns the token, read from the response header.
 - Earlier notes said CORS forced this. It did not; the reason above is the one that holds if the API's CORS policy changes again.

@@ -1,7 +1,7 @@
 'use client'
 
-import { useLayoutEffect } from 'react'
-import { useProductStock, useVisit } from '@/components/visit/visit-provider'
+import { useProductStock } from '@/components/visit/visit-provider'
+import type { LineDisplay } from '@/lib/cart/adds-in-flight'
 import { stockStatus } from '@/lib/stock-status'
 import { AddToCartForm } from './add-to-cart-form'
 import { StockIndicator } from './stock-indicator'
@@ -13,26 +13,20 @@ import { StockSkeleton } from './stock-skeleton'
  * the client is what lets the number follow an add without reading the cart
  * again.
  *
- * `serverDraw` is what the server read in this render, so the first paint
- * carries the real count: from the cookie, or as an opening draw when
- * `opening` is set. `undefined` means the server has no count, and the
- * skeleton stays until the provider has opened a visit. Either way the
- * provider is told before paint, because it holds the open call for this.
+ * `serverDraw` is the visit's draw as the server read it in this render, so
+ * the first paint carries the real count. `display` is what the cart page's
+ * row shows for the product while an add of it is saving.
  */
 export function StockAndCartClient({
   productId,
+  display,
   serverDraw,
-  opening,
 }: {
   productId: string
-  serverDraw: number | null | undefined
-  opening: boolean
+  display: LineDisplay
+  serverDraw: number | null
 }) {
-  const { reportOpeningDraw } = useVisit()
-  useLayoutEffect(() => {
-    reportOpeningDraw(productId, opening ? (serverDraw ?? undefined) : undefined)
-  }, [reportOpeningDraw, productId, opening, serverDraw])
-  const { draw, inCart } = useProductStock(productId, serverDraw, opening)
+  const { draw, inCart } = useProductStock(productId, serverDraw)
   if (draw === undefined) return <StockSkeleton />
 
   const status = stockStatus(draw, inCart)
@@ -41,9 +35,9 @@ export function StockAndCartClient({
       <StockIndicator status={status} />
       <AddToCartForm
         productId={productId}
+        display={display}
         max={status.maxQuantity}
         disabled={!status.canAddToCart}
-        shown={opening && typeof draw === 'number' ? draw : undefined}
       />
     </>
   )

@@ -1,23 +1,24 @@
 import type { Product } from '@/lib/api/types'
-import { getVisit } from '@/lib/visit/cookie'
-import { openingStock } from '@/lib/visit/opening'
-import { OPENING_DRAW_MARKER } from '@/lib/visit/opening-limits'
+import { drawFor } from '@/lib/visit/draw'
 import { StockAndCartClient } from './stock-and-cart-client'
 
 /**
  * The product page's only dynamic hole, rendered per request inside
- * `<Suspense>`. With a visit the count comes from the cookie, which is what
- * makes it the same number on every reload (specs/E19-stable-visit.md).
- * Without one it awaits an opening draw from the stock endpoint, and the
- * browser hands that number to the visit (specs/E21-first-visit.md).
+ * `<Suspense>`. It shows the visit's draw for this product, drawn and claimed
+ * here when the visit has none, so the buy panel never waits for the seed.
+ * The session store keeps the first write, so the two show the same number
+ * (docs/adr/0007-the-session-store.md).
  */
 export async function StockAndCart({ product }: { product: Product }) {
-  const visit = await getVisit()
-  const opening = visit ? undefined : await openingStock(product.id)
-  const draw = visit ? (visit.stock[product.id] ?? null) : opening
+  const draw = await drawFor(product.id)
+  const { slug, name, price } = product
   return (
-    <div className="flex flex-col gap-4" {...(opening !== undefined ? { [OPENING_DRAW_MARKER]: '' } : {})}>
-      <StockAndCartClient productId={product.id} serverDraw={draw} opening={opening !== undefined} />
+    <div className="flex flex-col gap-4">
+      <StockAndCartClient
+        productId={product.id}
+        display={{ slug, name, image: product.images[0] ?? null, price }}
+        serverDraw={draw}
+      />
     </div>
   )
 }

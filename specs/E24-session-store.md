@@ -93,15 +93,15 @@ Signing the session id; a cross-device cart; holding pending lines in Redis; ado
 
 Against a preview deploy, then production after the merge:
 
-- [ ] The only cookie the store sets is `sid`, httpOnly, Secure, SameSite=Lax, 30 days, set once.
-- [ ] A first visit renders a stock number on the product page in the HTML, and every later render of any surface shows the same number until the visit is reset or an order lowers it.
+- [x] The only cookie the store sets is `sid`, httpOnly, Secure, SameSite=Lax, 30 days, set once.
+- [x] A first visit renders a stock number on the product page in the HTML, and every later render of any surface shows the same number until the visit is reset or an order lowers it.
 - [ ] The cart page renders its lines without a cart API call; measured on production, its hole arrives in under 0.5 s where it took 1.6 to 2 s.
-- [ ] The header badge on a full page load makes no cart API call.
-- [ ] Opening the cart within a second of Add to Cart shows the product as a saving row, never an empty cart, and the row settles without a reload when the save lands.
-- [ ] Two quick adds of different products both show as saving rows.
-- [ ] An add, a quantity change and a removal each make one cart API call, and every action's response is under 1 KB.
-- [ ] With `KV_REST_API_URL` unset, `pnpm verify` and the Playwright suite pass on the memory adapter.
-- [ ] With Redis unreachable, a page render still completes, shows the API's stock, and the cart says it is unavailable rather than empty.
-- [ ] `POST /api/test/session` answers 404 on the preview.
-- [ ] Build output marks every page as before, and `pnpm verify` passes.
+- [x] The header badge on a full page load makes no cart API call.
+- [x] Opening the cart within a second of Add to Cart shows the product as a saving row, never an empty cart, and the row settles without a reload when the save lands.
+- [x] Two quick adds of different products both show as saving rows.
+- [x] An add, a quantity change and a removal each make one cart API call, and every action's response is under 1 KB.
+- [x] With `KV_REST_API_URL` unset, `pnpm verify` and the Playwright suite pass on the memory adapter.
+- [x] With Redis unreachable, a page render still completes, shows the API's stock, and the cart says it is unavailable rather than empty.
+- [x] `POST /api/test/session` answers 404 on the preview.
+- [x] Build output marks every page as before, and `pnpm verify` passes.
 - [ ] Before and after timings are recorded in `callout.md`, measured on production.

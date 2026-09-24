@@ -1,12 +1,16 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
-import { decodeVisit, openWithStock } from './visit'
+import { watchActions } from './actions'
+import { expectOnlySessionCookie, openWithStock, readVisit, SEEDED_PROMOTION } from './visit'
 
 /**
  * Smoke for the product page against a production build. The product comes
- * from the home grid rather than a hard-coded slug, and the visit cookie says
+ * from the home grid rather than a hard-coded slug, and the seeded visit says
  * how much of it there is, so no test depends on what the API drew.
  */
 const STOCK_LINE = /^(In stock|Only \d+ left|Out of stock|All \d+ are in your cart)$/
+
+/** One cart write and then some (`CART_TIMEOUT_MS` in lib/api/cart.ts). */
+const SAVED = { timeout: 30_000 }
 
 /** Scoped to `main`: React streams a hidden copy of the hole to the end of the body. */
 const stockLine = (page: Page) => page.getByRole('main').getByText(STOCK_LINE)
@@ -75,7 +79,7 @@ test('quantity cannot exceed stock', async ({ page, context }) => {
   ).toBeDisabled()
 })
 
-test('adding confirms at once, and View cart waits for the write', async ({
+test('adding confirms at once, and View cart leads to the cart from the click on', async ({
   page,
   context,
 }) => {
@@ -84,16 +88,20 @@ test('adding confirms at once, and View cart waits for the write', async ({
   await openFeatured(page, context, 5)
   // The optimistic path needs the hydrated form, not the no-JS post.
   await page.waitForLoadState('networkidle')
+  const actions = watchActions(page)
   await page.getByRole('button', { name: 'Add to Cart', exact: true }).click()
   // Optimistic: the message appears before the API answers, the button is
-  // free again at once, and the link stays inert until the write has landed.
+  // free again at once, and the link works, because the cart page shows an
+  // add still saving as a row that says so.
   const status = page.getByRole('status').filter({ hasText: 'Added.' })
   await expect(status).toBeVisible({ timeout: 1_000 })
   await expect(page.getByRole('main').getByRole('button', { name: 'Adding…', exact: true })).toBeEnabled()
   const viewCart = page.getByRole('link', { name: 'View cart' })
-  await expect(viewCart).toHaveAttribute('aria-disabled', 'true')
-  // The cart API is slow (`lib/api/cart.ts`).
-  await expect(viewCart).toHaveAttribute('href', '/cart', { timeout: 30_000 })
+  await expect(viewCart).toHaveAttribute('href', '/cart')
+  await expect(viewCart).not.toHaveAttribute('aria-disabled', 'true')
+  expect(actions.addsAnswered()).toBe(0)
+
+  await expect.poll(actions.addsAnswered, SAVED).toBe(1)
   await expect(status).toBeVisible()
   await expect(
     page.getByRole('button', { name: 'Add to Cart', exact: true }),
@@ -106,6 +114,7 @@ test('quick adds queue, and every count follows them at once', async ({ page, co
   test.setTimeout(120_000)
   await openFeatured(page, context, 5)
   await page.waitForLoadState('networkidle')
+  const actions = watchActions(page)
   const button = page.getByRole('main').getByRole('button', { name: /^(Add to Cart|Adding…)$/ })
   await button.click()
   await button.click()
@@ -114,19 +123,31 @@ test('quick adds queue, and every count follows them at once', async ({ page, co
   await expect(stockLine(page)).toHaveText('Only 2 left', { timeout: 2_000 })
   const badge = page.getByRole('banner').getByRole('img', { name: /^Cart/ })
   await expect(badge).toHaveAccessibleName(/3/, { timeout: 2_000 })
-  const viewCart = page.getByRole('link', { name: 'View cart' })
-  await expect(viewCart).toHaveAttribute('aria-disabled', 'true')
-  // Three slow writes, one after the other (`lib/api/cart.ts`).
-  await expect(viewCart).toHaveAttribute('href', '/cart', { timeout: 60_000 })
+  expect(actions.addsAnswered()).toBe(0)
+
+  // Three slow writes, one after the other; the counts hold through each.
+  await expect.poll(actions.addsAnswered, { timeout: 3 * SAVED.timeout }).toBe(3)
   await expect(stockLine(page)).toHaveText('Only 2 left')
   await expect(badge).toHaveAccessibleName(/3/)
+  // The session kept all three.
+  await page.reload()
+  await expect(stockLine(page)).toHaveText('Only 2 left')
+  await expect(badge).toHaveAccessibleName('Cart, 3 items')
 })
 
-test('a page view alone opens no cart', async ({ page, context }) => {
+test('a page view alone opens no cart and sets only the session cookie', async ({
+  page,
+  context,
+}) => {
+  const actions: string[] = []
+  page.on('request', (request) => {
+    if (request.headers()['next-action']) actions.push(request.url())
+  })
   await openFeatured(page, context, 5)
   // Long enough for a hydrated form to have opened one, had it done so unasked.
   await page.waitForTimeout(3_000)
-  expect((await context.cookies()).some((cookie) => cookie.name === 'cart_token')).toBe(false)
+  expect(actions).toEqual([])
+  await expectOnlySessionCookie(context)
 })
 
 test('says the cart holds them all once the whole draw is added', async ({
@@ -143,7 +164,7 @@ test('says the cart holds them all once the whole draw is added', async ({
   await expect(stockLine(page)).toHaveText('All 2 are in your cart', { timeout: 5_000 })
   await expect(
     page.getByRole('button', { name: 'Add to Cart', exact: true }),
-  ).toBeDisabled({ timeout: 30_000 })
+  ).toBeDisabled(SAVED)
 })
 
 test('a failed add retracts its confirmation and says why', async ({
@@ -163,9 +184,7 @@ test('a failed add retracts its confirmation and says why', async ({
   await page.getByRole('button', { name: 'Add to Cart', exact: true }).click()
   const status = page.getByRole('status').filter({ hasText: /Added\.|available/ })
   await expect(status).toHaveText(/^Added\./, { timeout: 1_000 })
-  await expect(status).toHaveText('This product is no longer available.', {
-    timeout: 30_000,
-  })
+  await expect(status).toHaveText('This product is no longer available.', SAVED)
   await expect(page.getByRole('link', { name: 'View cart' })).toHaveCount(0)
   const badge = page.getByRole('banner').getByRole('img', { name: /^Cart/ })
   await expect(badge).not.toHaveAccessibleName(/[1-9]/)
@@ -178,16 +197,17 @@ test('the footer reset draws a whole new visit', async ({ page, context }) => {
 
   await page.getByRole('button', { name: 'Reset the demo' }).click()
 
-  // The seeded visit named one product; a drawn one names the whole catalogue.
+  // The seeded promotion is one the API never answers, so another one means a
+  // new visit, and its draws cover the catalogue again.
   await expect
-    .poll(async () => Object.keys(await visitStock(context)).length, { timeout: 30_000 })
-    .toBeGreaterThan(1)
+    .poll(
+      async () => {
+        const visit = await readVisit(context)
+        return (
+          visit?.promotion?.id !== SEEDED_PROMOTION.id && Object.keys(visit?.stock ?? {}).length > 1
+        )
+      },
+      SAVED,
+    )
+    .toBe(true)
 })
-
-/** The stock map in the browser's visit cookie. */
-async function visitStock(context: BrowserContext): Promise<Record<string, number>> {
-  const cookie = (await context.cookies()).find((candidate) => candidate.name === 'visit')
-  if (!cookie) return {}
-  const json = decodeVisit(cookie.value)
-  return json ? (JSON.parse(json).stock as Record<string, number>) : {}
-}

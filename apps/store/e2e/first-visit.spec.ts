@@ -1,11 +1,16 @@
 import { expect, test, type Page } from '@playwright/test'
+import { productIdOf, readVisit } from './visit'
 
 /**
- * A visitor without a visit (specs/E21-first-visit.md): the buy panel and the
- * promotion are in the HTML, and the number the page shows never changes. The
- * API draws the number, so the tests compare what they see with itself.
+ * A visitor without a visit (specs/E21-first-visit.md): the server draws it,
+ * the buy panel and the promotion are in the HTML, and the number the page
+ * shows is the number the session store keeps. The API draws the number, so
+ * the tests compare what they see with what the store kept.
  */
 const STOCK_LINE = /^(In stock|Only \d+ left|Out of stock)$/
+
+/** Where "Only N left" starts (`LOW_STOCK_THRESHOLD` in lib/stock-status.ts). */
+const LOW_STOCK = 5
 
 declare global {
   interface Window {
@@ -41,6 +46,23 @@ async function recordPanel(page: Page) {
 
 const panelStates = (page: Page) => page.evaluate(() => window.__panel.filter(Boolean))
 
+/**
+ * Waits until a number the provider was seeded with would have replaced the
+ * first. Not `networkidle`: after a reload Chromium never reports the
+ * router's repeated prefetches as finished.
+ */
+async function settled(page: Page) {
+  await page.waitForLoadState('load')
+  await page.waitForTimeout(500)
+}
+
+/** The panel a visitor with an empty cart sees for `draw`, as `recordPanel` writes it. */
+function panelFor(draw: number | undefined): string {
+  if (draw === undefined) return 'no draw kept'
+  if (draw === 0) return 'Out of stock|1'
+  return `${draw <= LOW_STOCK ? `Only ${draw} left` : 'In stock'}|${draw}`
+}
+
 async function firstProductHref(page: Page): Promise<string> {
   const href = await page
     .getByRole('region', { name: 'Featured' })
@@ -75,55 +97,59 @@ test('the response to a visitor without a visit holds the buy panel and the prom
   )
 })
 
-test('the number in the HTML is the number the visit keeps', async ({ page }) => {
+test('the number in the HTML is the number the visit keeps', async ({ page, context }) => {
   await page.goto('/')
   const href = await firstProductHref(page)
-  await page.context().clearCookies()
+  await context.clearCookies()
 
   await recordPanel(page)
-  const opened = page.waitForResponse(
-    (response) => response.url().endsWith('/api/visit') && response.request().method() === 'POST',
-  )
   await page.goto(href)
-  expect((await opened).ok()).toBe(true)
   await expect(stockLine(page)).toBeVisible()
-  // Long enough for a wrong number from the visit to have replaced the first.
-  await page.waitForTimeout(500)
+  await settled(page)
   const first = await panelStates(page)
   expect(first).toHaveLength(1)
 
+  const kept = (await readVisit(context))?.stock[await productIdOf(page)]
+  expect(first[0]).toBe(panelFor(kept))
+
   await page.reload()
   await expect(stockLine(page)).toBeVisible()
-  await page.waitForTimeout(500)
+  await settled(page)
   expect(await panelStates(page)).toEqual(first)
 })
 
-test('the promotion in the HTML is the promotion the visit keeps', async ({ page }) => {
+test('the promotion in the HTML is the promotion the visit keeps', async ({ page, context }) => {
   const strip = page.getByRole('complementary', { name: 'Current promotion' })
-  const opened = page.waitForResponse((response) => response.url().endsWith('/api/visit'))
   await page.goto('/')
+  const kept = (await readVisit(context))?.promotion
+  if (!kept) {
+    await expect(strip).toHaveCount(0)
+    return
+  }
   const shown = await strip.textContent()
-  await opened
-  await expect(strip).toHaveText(shown ?? '')
+  expect(shown).toContain(kept.title)
   await page.reload()
   await expect(strip).toHaveText(shown ?? '')
 })
 
-test('a product opened while the visit is opening never shows two numbers', async ({ page }) => {
-  // Holds the open call, so the navigation below lands while it is in flight.
-  await page.route('**/api/visit', async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    await route.continue()
-  })
+test('a product opened while the home page draws the visit never shows two numbers', async ({
+  page,
+  context,
+}) => {
   await recordPanel(page)
-  await page.goto('/')
+  // Leaves as soon as the featured grid is there, while the seed may still be
+  // drawing the catalogue.
+  await page.goto('/', { waitUntil: 'commit' })
   await page
     .getByRole('region', { name: 'Featured' })
     .getByRole('listitem')
     .first()
     .getByRole('link')
     .click()
-  await expect(stockLine(page)).toBeVisible({ timeout: 15000 })
-  await page.waitForTimeout(500)
-  expect(await panelStates(page)).toHaveLength(1)
+  await expect(stockLine(page)).toBeVisible({ timeout: 15_000 })
+  await settled(page)
+  const states = await panelStates(page)
+  expect(states).toHaveLength(1)
+  const kept = (await readVisit(context))?.stock[await productIdOf(page)]
+  expect(states[0]).toBe(panelFor(kept))
 })

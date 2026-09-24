@@ -12,29 +12,23 @@ import {
 } from '@/lib/api/cart'
 import { ApiError } from '@/lib/api/client'
 import type { Cart } from '@/lib/api/types'
-import { clearCartToken, getCartToken, setCartToken } from '@/lib/cart/cookie'
 import { toLines, type Line } from '@/lib/cart/lines'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
-import { getVisit, setVisit } from '@/lib/visit/cookie'
+import { getSession, sessionStore } from '@/lib/session/store'
 import { drawFor } from '@/lib/visit/draw'
 import { exceedsDraw, tooMany } from '@/lib/visit/limits'
 import { afterOrder } from '@/lib/visit/visit'
 
 /**
- * Cart Server Actions (specs/E06-cart.md). Each one validates its input, calls
- * the API with the token from the httpOnly cookie and answers with user-facing
- * copy and the cart's item count, never its token. The count lets the header
- * badge update without reading the cart again.
- *
- * An add sets the cookie again, so its one-day expiry slides, and calls
- * `refresh()`. A quantity change and a removal do neither, because either one
- * re-renders the cart page inside the action's response, and the page then
- * reads the cart the write has just returned: a second slow call. They answer
- * with that cart's lines instead (specs/E23-cart-page-one-call.md).
+ * Cart Server Actions (docs/adr/0007-the-session-store.md). Each one validates
+ * its input, calls the API with the token from the cart mirror, saves the
+ * API's answer as the new mirror and answers with user-facing copy and the
+ * saved lines, never the token. No action sets a cookie, and only an order
+ * calls `refresh()`: the client applies the lines, so a response carries only
+ * what was saved.
  *
  * The API accepts any quantity of anything, so the limit a visitor sees is
- * enforced here or nowhere: every write is checked against their visit
- * (specs/E19-stable-visit.md).
+ * enforced here or nowhere: every write is checked against their visit.
  */
 
 /** The product the action touched and the quantity the cart now holds of it. */
@@ -44,19 +38,24 @@ export interface CartLineResult {
 }
 
 /**
- * `totalItems` is on every success, and on a failure whenever the action
- * read the cart, as it does after a 404. `line` travels with it so the client
- * can move a product's remaining stock without reading the cart again.
- * `lines` is the saved cart as the cart page renders it, on the writes that
- * do not refresh.
+ * Every success carries the saved cart: its count, the touched line and all
+ * its lines. A failure carries them whenever the action learnt the cart's
+ * state, as it does after a 404, an over-drawn line or an expired cart.
  */
 export type CartActionResult =
-  | { ok: true; totalItems: number; line: CartLineResult; lines?: Line[] }
-  | { ok: false; error: string; totalItems?: number; line?: CartLineResult }
+  | { ok: true; totalItems: number; line: CartLineResult; lines: Line[] }
+  | {
+      ok: false
+      error: string
+      totalItems?: number
+      line?: CartLineResult
+      lines?: Line[]
+    }
 export type AddToCartState = CartActionResult | null
 
 const EXPIRED = 'Your cart expired. Add products again to start a new cart.'
 const NOT_IN_CART = 'This item is no longer in your cart.'
+const UNAVAILABLE = 'Your cart cannot be reached right now. Try again in a moment.'
 
 // Server Action input is a trust boundary: anyone can post these.
 const ProductId = z.string().trim().min(1)
@@ -64,8 +63,6 @@ const ProductId = z.string().trim().min(1)
 const AddToCartInput = z.object({
   productId: ProductId,
   quantity: z.coerce.number().int().positive(),
-  // The opening draw the form showed; a value that does not parse is ignored.
-  shown: z.coerce.number().int().min(0).max(CART_MAX_QUANTITY).optional().catch(undefined),
 })
 
 const UpdateQuantityInput = z.object({
@@ -84,7 +81,6 @@ export async function addToCart(
   const input = AddToCartInput.safeParse({
     productId: formData.get('productId'),
     quantity: formData.get('quantity'),
-    shown: formData.get('shown') ?? undefined,
   })
   if (!input.success) {
     return {
@@ -94,14 +90,17 @@ export async function addToCart(
         : 'This item could not be added.',
     }
   }
-  const { productId, quantity, shown } = input.data
+  const session = await getSession()
+  if (session === 'unavailable') return { ok: false, error: UNAVAILABLE }
+  const { sid } = session
+  const { productId, quantity } = input.data
   const copy = {
     gone: 'This product is no longer available.',
     failed: 'This item could not be added. Try again.',
   }
 
   // Checked before the write, so an add the visit cannot cover costs no call.
-  const draw = await drawFor(productId, { shown })
+  const draw = await drawFor(productId)
   if (exceedsDraw(quantity, draw) && draw !== null) {
     return { ok: false, error: tooMany(draw) }
   }
@@ -109,38 +108,34 @@ export async function addToCart(
 
   // Into a new cart: its 404 can only mean the product, so nothing retries.
   const addToNewCart = async (): Promise<CartActionResult> => {
-    let token: string
-    try {
-      token = await openCart()
-    } catch (error) {
-      unstable_rethrow(error)
-      console.error('[cart] could not open a cart', error)
-      return { ok: false, error: copy.failed }
-    }
-    return write(token, productId, add(token), { ...copy, draw })
+    const token = await openCart(sid)
+    if (!token) return { ok: false, error: copy.failed }
+    return write(sid, token, productId, add(token), { ...copy, draw })
   }
 
   // Write first; only a 404 whose re-check finds no cart opens a new one.
-  const token = await getCartToken()
+  const token = session.cart?.token
   if (!token) return addToNewCart()
-  return write(token, productId, add(token), { ...copy, draw, onExpired: addToNewCart })
+  return write(sid, token, productId, add(token), {
+    ...copy,
+    draw,
+    // The old cart is gone, so an answer that does not say otherwise is empty.
+    onExpired: async () => ({ totalItems: 0, lines: [], ...(await addToNewCart()) }),
+  })
 }
 
 /**
- * Creates the visitor's cart ahead of their first add, which then costs one
- * slow call in place of two (specs/E22-add-to-cart-wait.md). The form calls it
- * on intent. An action, because Next runs a client's actions one at a time: an
- * add clicked meanwhile queues behind it and finds the cookie. A failure is
- * left to the add, which opens a cart itself.
+ * Opens the visitor's cart ahead of their first add, which then costs one
+ * slow call in place of two. The form calls it on intent, through the queue
+ * that runs the browser's cart writes one at a time (`lib/cart/in-order.ts`),
+ * so an add clicked meanwhile finds the mirror; `openCart` keeps one cart if
+ * two opens still meet. A failure is left to the add, which opens a cart
+ * itself.
  */
 export async function prepareCart(): Promise<void> {
-  if (await getCartToken()) return
-  try {
-    await openCart()
-  } catch (error) {
-    unstable_rethrow(error)
-    console.error('[cart] could not open a cart ahead of the add', error)
-  }
+  const session = await getSession()
+  if (session === 'unavailable' || session.cart) return
+  await openCart(session.sid)
 }
 
 /** Changes a line's quantity through `updateCartItem` (lib/api/cart.ts). */
@@ -157,13 +152,16 @@ export async function updateQuantity(
         : 'This item could not be updated.',
     }
   }
-  const token = await getCartToken()
+  const session = await getSession()
+  if (session === 'unavailable') return { ok: false, error: UNAVAILABLE }
+  const token = session.cart?.token
   if (!token) return expired()
   const draw = await drawFor(input.data.productId)
   if (exceedsDraw(input.data.quantity, draw) && draw !== null) {
     return { ok: false, error: tooMany(draw) }
   }
   return write(
+    session.sid,
     token,
     input.data.productId,
     () => updateCartItem(token, input.data.productId, input.data.quantity),
@@ -171,7 +169,6 @@ export async function updateQuantity(
       gone: NOT_IN_CART,
       failed: 'The quantity could not be changed. Try again.',
       draw,
-      answerWithLines: true,
     },
   )
 }
@@ -181,42 +178,60 @@ export async function removeItem(productId: string): Promise<CartActionResult> {
   if (!input.success) {
     return { ok: false, error: 'This item could not be removed.' }
   }
-  const token = await getCartToken()
+  const session = await getSession()
+  if (session === 'unavailable') return { ok: false, error: UNAVAILABLE }
+  const token = session.cart?.token
   if (!token) return expired()
-  return write(token, input.data, () => removeCartItem(token, input.data), {
+  return write(session.sid, token, input.data, () => removeCartItem(token, input.data), {
     gone: NOT_IN_CART,
     failed: 'This item could not be removed. Try again.',
-    answerWithLines: true,
   })
 }
 
 /**
- * The demo order, bound to the Checkout form. Only a cart with lines can be
- * ordered; anything else goes back to `/cart`, which shows the true state.
- * Ordering drops the cookie and nothing more: the API has no clear-cart
- * endpoint and its cart expires on its own.
- * `redirect` throws, so it is never called inside a `try`.
+ * The demo order, bound to the Checkout form. It orders the cart mirror,
+ * which the store trusts, so it makes no API call. Only a mirror with lines,
+ * each within its draw, can be ordered; anything else goes back to `/cart`,
+ * which shows why. Ordering forgets the mirror, then lowers the draws: the API
+ * has no clear-cart endpoint and its cart expires on its own. It is the one
+ * action that refreshes, so the layout's badge and seed stop showing the cart
+ * just ordered. `redirect` throws, so it is never called inside a `try`.
  */
 export async function placeOrder(): Promise<void> {
-  const token = await getCartToken()
-  const cart = token ? await orderableCart(token) : null
-  if (!cart) redirect('/cart')
-  const visit = await getVisit()
-  if (visit) {
-    if (cart.items.some((item) => exceedsDraw(item.quantity, visit.stock[item.productId] ?? null))) {
-      redirect('/cart')
-    }
-    await setVisit(afterOrder(visit, cart.items))
-  }
-  await clearCartToken()
+  const session = await getSession()
+  if (session === 'unavailable') redirect('/cart')
+  const lines = session.cart?.lines ?? []
+  if (lines.length === 0) redirect('/cart')
+  const { visit } = session
+  const overDrawn = lines.some((line) =>
+    exceedsDraw(line.quantity, visit?.stock[line.productId] ?? null),
+  )
+  if (overDrawn) redirect('/cart')
+  // A mirror the store could not forget is an order not placed.
+  if (!(await sessionStore.clearCart(session.sid))) redirect('/cart')
+  if (visit) await sessionStore.setStock(session.sid, afterOrder(visit.stock, lines))
+  refresh()
   redirect('/checkout')
 }
 
-/** Creates a cart and sets its cookie before the first write to it. */
-async function openCart(): Promise<string> {
-  const created = await createCart()
-  await setCartToken(created.token)
-  return created.token
+/**
+ * Creates a cart and claims the mirror with it, empty, before the first write
+ * to it, answering the token of the cart that won: an action that opened one
+ * meanwhile keeps its cart, and this one is left for the API to expire.
+ * `null` when either step fails: a token the store cannot keep would put the
+ * add in a cart nobody can reach again.
+ */
+async function openCart(sid: string): Promise<string | null> {
+  let created: { cart: Cart; token: string }
+  try {
+    created = await createCart()
+  } catch (error) {
+    unstable_rethrow(error)
+    console.error('[cart] could not open a cart', error)
+    return null
+  }
+  const kept = await sessionStore.claimCart(sid, mirrorOf(created.token, created.cart))
+  return kept?.token ?? null
 }
 
 type WriteOptions = {
@@ -228,93 +243,67 @@ type WriteOptions = {
    */
   draw?: number | null
   /**
-   * What to do when a 404 turns out to be an expired cart. Defaults to
-   * forgetting it; `addToCart` passes a single add into a new cart instead.
+   * What to do when a 404 turns out to be an expired cart, after its mirror is
+   * cleared. Defaults to saying so; `addToCart` adds into a new cart instead.
    */
   onExpired?: () => Promise<CartActionResult>
-  /**
-   * Answer a success with the cart's lines and leave the cookie and the route
-   * alone, so the write is the action's only cart call.
-   */
-  answerWithLines?: boolean
 }
 
 /**
- * Runs one write and maps its outcome. Success sets the cookie again and
- * refreshes, or with `answerWithLines` does neither and returns the lines. A 404 is ambiguous, because the API answers `NOT_FOUND` for an
- * unknown cart, line and product alike, so it is followed by one `getCart`:
- * no cart means it expired, a cart means the line or product is gone. A 404
- * alone never clears the cookie. Other failures keep the cart as it is.
+ * Runs one write, saves the API's answer as the mirror and maps the outcome.
+ * A 404 is ambiguous, because the API answers `NOT_FOUND` for an unknown cart,
+ * line and product alike, so it is followed by one `getCart`: no cart means it
+ * expired, a cart means the line or product is gone. Other failures leave the
+ * mirror as it is.
  */
 async function write(
+  sid: string,
   token: string,
   productId: string,
   run: () => Promise<Cart>,
   copy: WriteOptions,
 ): Promise<CartActionResult> {
-  let cart: Cart
+  let written: Cart
   try {
-    cart = await run()
+    written = await run()
   } catch (error) {
     unstable_rethrow(error)
     if (error instanceof ApiError && error.status === 404) {
-      return afterNotFound(token, productId, copy)
+      return afterNotFound(sid, token, productId, copy)
     }
     console.error('[cart] write failed', error)
     return { ok: false, error: copy.failed }
   }
-  const corrected = await capLine(token, cart, productId, copy.draw)
-  if (copy.answerWithLines && !corrected) {
-    return {
-      ok: true,
-      totalItems: cart.totalItems,
-      line: lineOf(cart, productId),
-      lines: toLines(cart),
-    }
-  }
-  await setCartToken(token)
-  refresh()
-  if (corrected) return corrected
-  return { ok: true, totalItems: cart.totalItems, line: lineOf(cart, productId) }
+  const { cart, error } = await capLine(token, written, productId, copy.draw)
+  const answer = { ...(await save(sid, token, cart)), line: lineOf(cart, productId) }
+  return error ? { ok: false, error, ...answer } : { ok: true, ...answer }
 }
 
 /**
  * Sets a line back to the draw when the API left it above one, which happens
  * when a product was already in the cart from an earlier visit. The second
- * slow call is paid only on a violation; an add within the draw costs exactly
- * what it did before this epic.
+ * slow call is paid only on a violation. Answers the cart as it now stands,
+ * with the refusal to show when the line was over its draw.
  */
 async function capLine(
   token: string,
   cart: Cart,
   productId: string,
   draw: number | null | undefined,
-): Promise<CartActionResult | null> {
-  if (draw === undefined || draw === null) return null
-  const line = lineOf(cart, productId)
-  if (!exceedsDraw(line.quantity, draw)) return null
+): Promise<{ cart: Cart; error?: string }> {
+  if (draw === undefined || draw === null) return { cart }
+  if (!exceedsDraw(lineOf(cart, productId).quantity, draw)) return { cart }
   try {
-    const capped = await updateCartItem(token, productId, draw)
-    return {
-      ok: false,
-      error: tooMany(draw),
-      totalItems: capped.totalItems,
-      line: lineOf(capped, productId),
-    }
+    return { cart: await updateCartItem(token, productId, draw), error: tooMany(draw) }
   } catch (error) {
     unstable_rethrow(error)
     console.error('[cart] could not set an over-drawn line back', error)
-    return { ok: false, error: tooMany(draw), totalItems: cart.totalItems, line }
+    return { cart, error: tooMany(draw) }
   }
 }
 
-/** A product's quantity in the cart the API just returned; 0 once it is gone. */
-function lineOf(cart: Cart, productId: string): CartLineResult {
-  const item = cart.items.find((line) => line.productId === productId)
-  return { productId, quantity: item?.quantity ?? 0 }
-}
-
 async function afterNotFound(
+  sid: string,
   token: string,
   productId: string,
   copy: WriteOptions,
@@ -327,31 +316,40 @@ async function afterNotFound(
     console.error('[cart] could not re-check the cart after a 404', error)
     return { ok: false, error: copy.failed }
   }
-  if (!cart) return copy.onExpired ? copy.onExpired() : expired()
-  refresh()
-  return {
-    ok: false,
-    error: copy.gone,
-    totalItems: cart.totalItems,
-    line: lineOf(cart, productId),
+  if (!cart) {
+    await sessionStore.clearCart(sid)
+    return copy.onExpired ? copy.onExpired() : expired()
   }
+  const answer = { ...(await save(sid, token, cart)), line: lineOf(cart, productId) }
+  return { ok: false, error: copy.gone, ...answer }
 }
 
-/** Forgets an expired cart; the refresh re-renders `/cart` as empty. */
-async function expired(): Promise<CartActionResult> {
-  await clearCartToken()
-  refresh()
-  return { ok: false, error: EXPIRED, totalItems: 0 }
+/**
+ * Saves the API's latest answer as the mirror and answers what the client
+ * applies. A save that fails is logged by the store; the answer is still the
+ * API's, and the next cart page view corrects the mirror.
+ */
+async function save(
+  sid: string,
+  token: string,
+  cart: Cart,
+): Promise<{ totalItems: number; lines: Line[] }> {
+  const mirror = mirrorOf(token, cart)
+  await sessionStore.setCart(sid, mirror)
+  return { totalItems: mirror.totalItems, lines: mirror.lines }
 }
 
-/** The cart to order, or `null` when there is nothing orderable. */
-async function orderableCart(token: string): Promise<Cart | null> {
-  try {
-    const cart = await getCart(token)
-    return cart && cart.items.length > 0 ? cart : null
-  } catch (error) {
-    unstable_rethrow(error)
-    console.error('[cart] could not read the cart to place the order', error)
-    return null
-  }
+function mirrorOf(token: string, cart: Cart) {
+  return { token, currency: cart.currency, lines: toLines(cart), totalItems: cart.totalItems }
+}
+
+/** A product's quantity in the cart the API just returned; 0 once it is gone. */
+function lineOf(cart: Cart, productId: string): CartLineResult {
+  const item = cart.items.find((line) => line.productId === productId)
+  return { productId, quantity: item?.quantity ?? 0 }
+}
+
+/** The answer for a cart that no longer exists: empty, with no lines. */
+function expired(): CartActionResult {
+  return { ok: false, error: EXPIRED, totalItems: 0, lines: [] }
 }

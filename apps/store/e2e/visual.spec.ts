@@ -1,6 +1,5 @@
-import { readFileSync } from 'node:fs'
-import { expect, test, type BrowserContext, type Page } from '@playwright/test'
-import { seedVisit } from './visit'
+import { expect, test, type Page } from '@playwright/test'
+import { catalogueIds, seedSession, seedVisit } from './visit'
 
 /**
  * Visual regression: four pages in light and dark at 375 and 1280. A diff
@@ -62,58 +61,8 @@ async function shoot(page: Page, name: string) {
 const PRODUCT = '/products/matte-black-insulated-tumbler'
 const PRODUCT_ID = 'tumbler_001'
 
-/** The API credentials, from the environment or from `.env.local`. */
-function api(): { base: string; token: string } {
-  const file = new Map<string, string>()
-  try {
-    for (const line of readFileSync('.env.local', 'utf8').split('\n')) {
-      const [, key, value] = /^([A-Z_]+)=(.*)$/.exec(line.trim()) ?? []
-      if (key && value !== undefined) file.set(key, value.replace(/^["']|["']$/g, ''))
-    }
-  } catch {
-    // Absent when the values come from the environment.
-  }
-  const base = process.env.API_BASE_URL ?? file.get('API_BASE_URL') ?? ''
-  const token = process.env.API_BYPASS_TOKEN ?? file.get('API_BYPASS_TOKEN') ?? ''
-  return { base, token }
-}
-
-/**
- * Puts one known product in the cart and hands the browser its token, so the
- * cart page renders the same line every run. Cart writes ignore stock, so
- * this works whatever stock says.
- */
-async function seedCart(context: BrowserContext) {
-  const { base, token } = api()
-  const headers = { 'x-vercel-protection-bypass': token }
-  const created = await fetch(`${base}/cart/create`, { method: 'POST', headers })
-  const cartToken =
-    created.headers.get('x-cart-token') ??
-    (((await created.json()) as { data: { token: string } }).data.token)
-  await fetch(`${base}/cart`, {
-    method: 'POST',
-    headers: { ...headers, 'content-type': 'application/json', 'x-cart-token': cartToken },
-    body: JSON.stringify({ productId: PRODUCT_ID, quantity: 1 }),
-  })
-  await context.addCookies([
-    { name: 'cart_token', value: cartToken, url: 'http://localhost:3000' },
-  ])
-}
-
+/** Every product id, learned once per worker through the first test's session. */
 let catalogue: Promise<string[]> | null = null
-
-/** Every product id, read straight from the API rather than through the store. */
-function catalogueIds(): Promise<string[]> {
-  catalogue ??= (async () => {
-    const { base, token } = api()
-    const response = await fetch(`${base}/products?limit=100`, {
-      headers: { 'x-vercel-protection-bypass': token },
-    })
-    const body = (await response.json()) as { data: { id: string }[] }
-    return body.data.map((product) => product.id)
-  })()
-  return catalogue
-}
 
 async function openProduct(page: Page) {
   await page.goto(PRODUCT)
@@ -126,7 +75,8 @@ for (const width of [375, 1280] as const) {
       test.use({ viewport: { width, height: 900 }, colorScheme })
 
       test.beforeEach(async ({ context }) => {
-        const ids = await catalogueIds()
+        catalogue ??= catalogueIds(context)
+        const ids = await catalogue
         await seedVisit(context, {
           ...Object.fromEntries(ids.map((id) => [id, OTHERS_STOCK])),
           [PRODUCT_ID]: SEEDED_STOCK,
@@ -150,7 +100,9 @@ for (const width of [375, 1280] as const) {
       })
 
       test('cart with a line', async ({ page, context }) => {
-        await seedCart(context)
+        // A real cart holding one known product, so the page shows the same
+        // line every run. Cart writes ignore stock.
+        await seedSession(context, { cart: [{ productId: PRODUCT_ID, quantity: 1 }] })
         await page.goto('/cart')
         await expect(page.getByRole('main').getByRole('listitem').first()).toBeVisible({
           timeout: 30_000,

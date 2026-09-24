@@ -18,6 +18,7 @@ import {
   QUANTITY_PAUSE_MS,
   type Coalescer,
 } from '@/lib/cart/coalesce'
+import { inOrder } from '@/lib/cart/in-order'
 import type { Line, LineChange } from '@/lib/cart/lines'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
 import { exceedsDraw, tooMany } from '@/lib/visit/limits'
@@ -33,11 +34,15 @@ import { cn } from '@/lib/utils'
  * A line already above it keeps its real quantity in the control, because a
  * row that silently showed fewer than the cart holds would be a lie; it says
  * how many there are instead, and the summary refuses to check out.
+ *
+ * A `pending` line holds an add that is still saving. It says so, and its
+ * stepper and Remove take no input until the add answers.
  */
 export function CartLine({
   line,
   currency,
   draw,
+  pending = false,
   error,
   priority = false,
   onChange,
@@ -48,6 +53,7 @@ export function CartLine({
   line: Line
   currency: string
   draw: number | null
+  pending?: boolean
   error: string | null
   /**
    * The first row's photo is the cart page's largest paint. It streams inside
@@ -57,14 +63,17 @@ export function CartLine({
   priority?: boolean
   onChange: (change: LineChange) => void
   onDraft: (productId: string, quantity: number | null, onlyIf?: number) => void
-  /** The cart as the action saved it, which replaces the lines under the optimistic ones. */
+  /**
+   * The cart as the action saved it, from a success or a failure that read
+   * it, which replaces the lines under the optimistic ones.
+   */
   onSaved: (lines: Line[]) => void
   onResult: (productId: string, error: string | null) => void
 }) {
   const { productId } = line
   const overDrawn = exceedsDraw(line.quantity, draw)
   const message = error ?? (overDrawn && draw !== null ? tooMany(draw) : null)
-  const [pending, startTransition] = useTransition()
+  const [changing, startTransition] = useTransition()
   const { confirm } = useCartCount()
   const { confirmLine } = useVisit()
 
@@ -74,10 +83,10 @@ export function CartLine({
       // Held with the transition, so the draft gives way to the server's
       // lines only once they arrive, and never if a newer draft replaced it.
       onDraft(productId, null, quantity)
-      const result = await action()
+      const result = await inOrder(action)
       startTransition(() => {
         if (result.totalItems !== undefined) confirm(result.totalItems)
-        if (result.ok && result.lines) onSaved(result.lines)
+        if (result.lines) onSaved(result.lines)
         if (result.line) confirmLine(result.line.productId, result.line.quantity)
         onResult(productId, result.ok ? null : result.error)
       })
@@ -116,8 +125,8 @@ export function CartLine({
 
   return (
     <li
-      className={cn('py-4 transition-opacity', pending && 'opacity-60')}
-      aria-busy={pending || undefined}
+      className={cn('py-4 transition-opacity', changing && 'opacity-60')}
+      aria-busy={changing || pending || undefined}
     >
       <div className="flex gap-4">
         <div className="relative size-24 shrink-0 overflow-hidden rounded-lg border border-border bg-bg-secondary">
@@ -156,6 +165,7 @@ export function CartLine({
               min={1}
               max={Math.max(draw ?? CART_MAX_QUANTITY, line.quantity)}
               defaultValue={line.quantity}
+              pending={pending}
               labelClassName="sr-only md:not-sr-only"
               onCommit={change}
             />
@@ -164,6 +174,8 @@ export function CartLine({
               variant="ghost"
               size="lg"
               aria-label={`Remove ${line.name}`}
+              disabled={pending}
+              className={cn(pending && 'disabled:opacity-100')}
               onClick={remove}
             >
               Remove
@@ -174,11 +186,12 @@ export function CartLine({
       <p
         role="status"
         className={cn(
-          'text-sm leading-6 text-danger',
-          message ? 'mt-2' : 'sr-only',
+          'text-sm leading-6',
+          pending ? 'text-fg-secondary' : 'text-danger',
+          pending || message ? 'mt-2' : 'sr-only',
         )}
       >
-        {message}
+        {pending ? 'Saving…' : message}
       </p>
     </li>
   )

@@ -20,9 +20,9 @@ export const LOW_STOCK_THRESHOLD = 5
  * the visit's draw and what the visitor's own cart already holds. The label
  * always carries the meaning, so colour is never the only cue.
  *
- * `draw` is `null` when the visit has no count for this product, either
- * because the draw failed or the cookie had no room: the page says so rather
- * than guessing, and Add to Cart stays disabled.
+ * `draw` is `null` when the visit has no count for this product, because the
+ * draw failed: the page says so rather than guessing, and Add to Cart stays
+ * disabled.
  */
 export function stockStatus(draw: number | null, inCart = 0): StockStatus {
   if (draw === null) {

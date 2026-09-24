@@ -1,32 +1,15 @@
-import { expect, type BrowserContext, type Page } from '@playwright/test'
+import { expect, type APIResponse, type BrowserContext, type Page } from '@playwright/test'
 
 /**
- * Helpers for the visit cookie (specs/E19-stable-visit.md). Seeding it is what
- * makes stock and the promotion known in a test: the API redraws both on every
- * request, so without this a suite can only follow whatever it was handed.
+ * Helpers for the session (specs/E24-session-store.md). Seeding the visit is
+ * what makes stock and the promotion known in a test: the API redraws both on
+ * every request, so without this a suite can only follow whatever it was
+ * handed. Every call goes to `/api/test/session`, which exists because
+ * `playwright.config.ts` sets `E2E_SEED`, through the context's own request,
+ * so it acts on the browser's session and a new `sid` lands in the browser.
  */
 
-const ORIGIN = 'http://localhost:3000'
-
-/**
- * base64url, the encoding the cookie carries (`lib/visit/visit.ts` states
- * why). Written out here because that module is server-only and this file
- * runs in Playwright's plain Node.
- */
-export function encodeVisit(json: string): string {
-  let binary = ''
-  for (const byte of new TextEncoder().encode(json)) binary += String.fromCharCode(byte)
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-}
-
-export function decodeVisit(value: string): string | null {
-  try {
-    const binary = atob(value.replace(/-/g, '+').replace(/_/g, '/'))
-    return new TextDecoder().decode(Uint8Array.from(binary, (c) => c.charCodeAt(0)))
-  } catch {
-    return null
-  }
-}
+const SESSION = '/api/test/session'
 
 /** A promotion no API call can change, so the strip reads the same every run. */
 export const SEEDED_PROMOTION = {
@@ -40,39 +23,84 @@ export const SEEDED_PROMOTION = {
   active: true,
 }
 
-/** Gives the browser a visit holding `stock`, encoded the way the store writes it. */
-export async function seedVisit(
-  context: BrowserContext,
-  stock: Record<string, number>,
-  promotion: typeof SEEDED_PROMOTION | null = SEEDED_PROMOTION,
-): Promise<void> {
-  const visit = { v: 1, drawnAt: Math.floor(Date.now() / 1000), stock, promotion }
-  await context.addCookies([
-    {
-      name: 'visit',
-      value: encodeVisit(JSON.stringify(visit)),
-      url: ORIGIN,
-    },
-  ])
+type Promotion = typeof SEEDED_PROMOTION
+
+/** The visit as the store keeps it, or `null` before anything was drawn. */
+export type Visit = { stock: Record<string, number>; promotion: Promotion | null } | null
+
+/** What the seed route takes; each key replaces its part of the session. */
+type Seed = {
+  stock?: Record<string, number>
+  promotion?: Promotion | null
+  cart?: { productId: string; quantity: number }[]
 }
 
-/** The product id the page states in its Product JSON-LD. */
-export async function productIdOf(page: Page): Promise<string> {
-  const blocks = await page.locator('script[type="application/ld+json"]').allTextContents()
-  const product = blocks
-    .map((block) => JSON.parse(block) as { '@type': string; sku?: string })
-    .find((block) => block['@type'] === 'Product')
-  const sku = product?.sku
-  if (!sku) throw new Error('The product page states no sku')
-  return sku
+async function answer(response: APIResponse): Promise<Visit> {
+  if (response.status() === 404) {
+    throw new Error(`${SESSION} answered 404: the server runs without E2E_SEED=1`)
+  }
+  expect(response.ok(), await response.text()).toBe(true)
+  return (await response.json()) as Visit
 }
 
 /**
- * Opens a product and gives the visitor a known number of it. The first load
- * is only there to learn the id, which the page carries in its JSON-LD. It
- * waits for the stock line first, because that is the visit arriving: seeding
- * before it lands would be overwritten by the cookie the store is about to
- * write. The reload is the one the test looks at.
+ * Seeds the browser's session and answers the visit it now holds. A browser
+ * without a session first gets one from the proxy, so the seed never depends
+ * on which of the proxy's and the route's ids the browser keeps.
+ */
+export async function seedSession(context: BrowserContext, seed: Seed): Promise<Visit> {
+  if (!(await context.cookies()).some((cookie) => cookie.name === 'sid')) {
+    await context.request.get(SESSION)
+  }
+  return answer(await context.request.post(SESSION, { data: seed }))
+}
+
+/**
+ * Gives the browser a visit holding exactly `stock` and `promotion`. A render
+ * draws every product `stock` leaves out.
+ */
+export async function seedVisit(
+  context: BrowserContext,
+  stock: Record<string, number>,
+  promotion: Promotion | null = SEEDED_PROMOTION,
+): Promise<void> {
+  await seedSession(context, { stock, promotion })
+}
+
+/** The visit the store keeps for the browser's session. */
+export async function readVisit(context: BrowserContext): Promise<Visit> {
+  return answer(await context.request.get(SESSION))
+}
+
+/** The visit's draws, empty when there is no visit. */
+export async function visitStock(context: BrowserContext): Promise<Record<string, number>> {
+  return (await readVisit(context))?.stock ?? {}
+}
+
+/** The product id the open page states in its Product JSON-LD. */
+export async function productIdOf(page: Page): Promise<string> {
+  return skuIn(await page.locator('script[type="application/ld+json"]').allTextContents())
+}
+
+/** The same id, read from the page's HTML without opening it in the browser. */
+async function productIdAt(context: BrowserContext, href: string): Promise<string> {
+  const html = await (await context.request.get(href)).text()
+  const blocks = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)]
+  return skuIn(blocks.map(([, json]) => json ?? ''))
+}
+
+function skuIn(blocks: string[]): string {
+  const product = blocks
+    .map((block) => JSON.parse(block) as { '@type': string; sku?: string })
+    .find((block) => block['@type'] === 'Product')
+  if (!product?.sku) throw new Error('The product page states no sku')
+  return product.sku
+}
+
+/**
+ * Opens a product holding `stock` of it. The id comes from the page's HTML,
+ * fetched with the browser's session, so the seed is in place before the
+ * browser renders the page once.
  */
 export async function openWithStock(
   page: Page,
@@ -80,38 +108,34 @@ export async function openWithStock(
   href: string,
   stock: number,
 ): Promise<string> {
-  await page.goto(href)
-  await expect(
-    page.getByRole('main').getByText(/^(In stock|Only \d+ left|Out of stock)$/),
-  ).toBeVisible({ timeout: 30_000 })
-  const productId = await productIdOf(page)
+  const productId = await productIdAt(context, href)
   await seedVisit(context, { [productId]: stock })
-  await page.reload()
+  await page.goto(href)
   return productId
 }
 
-/** The stock map in the browser's visit cookie, empty when there is none. */
-export async function visitStock(
-  context: BrowserContext,
-): Promise<Record<string, number>> {
-  const cookie = (await context.cookies()).find((candidate) => candidate.name === 'visit')
-  if (!cookie) return {}
-  const json = decodeVisit(cookie.value)
-  return json ? (JSON.parse(json).stock as Record<string, number>) : {}
+/**
+ * Every product id in the catalogue, learned from the visit a render draws
+ * for the whole catalogue. Nothing else in the store exposes the ids to a
+ * test, and hard-coding them would tie the suite to today's catalogue.
+ */
+export async function catalogueIds(context: BrowserContext): Promise<string[]> {
+  await context.request.get('/products')
+  const ids = Object.keys(await visitStock(context))
+  expect(ids.length).toBeGreaterThan(1)
+  return ids
 }
 
 /**
- * Every product id in the catalogue, learned by letting the store open a visit
- * of its own. Nothing in the store exposes the ids to a test otherwise, and
- * hard-coding them would tie the suite to today's catalogue.
+ * Asserts the session id is the only cookie the browser holds for the store:
+ * httpOnly, Secure, SameSite Lax, on `/`, for thirty days.
  */
-export async function catalogueIds(
-  page: Page,
-  context: BrowserContext,
-): Promise<string[]> {
-  await page.goto('/products')
-  await expect
-    .poll(async () => Object.keys(await visitStock(context)).length, { timeout: 30_000 })
-    .toBeGreaterThan(1)
-  return Object.keys(await visitStock(context))
+export async function expectOnlySessionCookie(context: BrowserContext): Promise<void> {
+  const cookies = await context.cookies()
+  expect(cookies.map((cookie) => cookie.name)).toEqual(['sid'])
+  const [sid] = cookies
+  expect(sid).toMatchObject({ httpOnly: true, secure: true, sameSite: 'Lax', path: '/' })
+  const days = ((sid?.expires ?? 0) - Date.now() / 1000) / 86_400
+  expect(days).toBeGreaterThan(29)
+  expect(days).toBeLessThanOrEqual(30)
 }

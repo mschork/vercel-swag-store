@@ -15,11 +15,10 @@ export const RESERVED_BOX =
   'flex min-h-9 items-center bg-accent text-accent-fg motion-reduce:min-h-19 motion-reduce:md:min-h-14 motion-reduce:lg:min-h-9'
 
 /**
- * The promotion's words. A client leaf so the strip fills in as soon as a
- * first-time visitor's visit opens, without waiting for a page load;
- * `serverPromotion` is what the cookie held in this render, and is used until
- * the provider has a visit of its own, and while hydrating, so the first
- * client render repeats the server's HTML.
+ * The promotion's words. A client leaf so a reset of the visit shows its new
+ * promotion without a page load; `serverPromotion` is the visit's promotion
+ * as this render read it, and is used until the provider holds a visit, and
+ * while hydrating, so the first client render repeats the server's HTML.
  */
 export function PromoStrip({ serverPromotion }: { serverPromotion: Promotion | null }) {
   const { promotion: held } = useVisit()

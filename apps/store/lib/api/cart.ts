@@ -5,9 +5,10 @@ import type { Cart } from './types'
 
 /**
  * Cart calls. Live data, never cached. The token is an explicit argument so
- * this module never touches `cookies()` and stays unit-testable; cookie
- * handling lives in `app/cart/actions.ts`. Every call is single-attempt:
- * a write must not repeat, and a read is cheap enough to fail fast.
+ * this module never reads the session and stays unit-testable; the token
+ * lives in the session store (`lib/session/store.ts`). Every call is
+ * single-attempt: a write must not repeat, and a read is cheap enough to
+ * fail fast.
  *
  * The API's `{itemId}` path segment is the product id, not a line-item id.
  */
