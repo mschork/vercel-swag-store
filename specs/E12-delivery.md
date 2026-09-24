@@ -54,7 +54,7 @@ Sections, in this order, each short:
 
 ### Final checklist (`docs/release-checklist.md`)
 
-One line per requirement in `the requirements`, ticked with the route or file that satisfies it. Include: header, footer, layout, responsive, root metadata, page metadata, OG, Cache Components enabled, hero, promo, featured grid, PDP image, info, stock, quantity, Add to Cart, cart add, badge, view, item display, adjust, remove, subtotal, persistence, search input, triggers, default, results, category, empty, loading, URL persistence.
+One line per requirement in the requirements, ticked with the route or file that satisfies it. Include: header, footer, layout, responsive, root metadata, page metadata, OG, Cache Components enabled, hero, promo, featured grid, PDP image, info, stock, quantity, Add to Cart, cart add, badge, view, item display, adjust, remove, subtotal, persistence, search input, triggers, default, results, category, empty, loading, URL persistence.
 
 ### Email
 

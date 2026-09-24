@@ -1,10 +1,8 @@
-import { readFile } from 'node:fs/promises'
-import { join } from 'node:path'
 import { cacheLife, cacheTag } from 'next/cache'
 import { ImageResponse } from 'next/og'
 import { TRIANGLE_PATH, TRIANGLE_VIEWBOX } from '@/components/logo'
 import { getStoreConfig } from '@/lib/api/store'
-import { HERO_IMAGE } from '@/lib/content/fallbacks'
+import { HERO_FALLBACK } from '@/lib/content/fallbacks'
 import { loadOgFonts, OG_FONT_FAMILY } from '@/lib/og-font'
 import { getHomePageForMetadata, getSiteSettingsForMetadata } from '@/lib/sanity/content'
 import { sanityCoverUrl } from '@/lib/sanity/image'
@@ -15,15 +13,9 @@ export const alt = 'Vercel Swag Store'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
-/** The bundled hero photo as a data URI; the renderer cannot read `public/`. */
-async function bundledHero() {
-  const file = await readFile(join(process.cwd(), 'public', HERO_IMAGE.src))
-  return `data:image/jpeg;base64,${file.toString('base64')}`
-}
-
 /** What `renderCard` draws; plain values, so they can key its cache entry. */
 type CardInput = {
-  /** A Sanity URL, or `null` for the bundled hero photo. */
+  /** A Sanity URL, or `null` when the editor set no image. */
   photoUrl: string | null
   /** `null` when the photo is the whole card. */
   words: { storeName: string; headline: string } | null
@@ -39,7 +31,7 @@ async function renderCard({ photoUrl, words }: CardInput): Promise<string> {
   'use cache'
   cacheTag('sanity')
   cacheLife('content')
-  const photo = photoUrl ? await sanityImageDataUri(photoUrl) : await bundledHero()
+  const photo = photoUrl ? await sanityImageDataUri(photoUrl) : null
   const image = new ImageResponse(<Card photo={photo} words={words} />, {
     ...size,
     fonts: await loadOgFonts(),
@@ -62,17 +54,21 @@ export default async function Image() {
   const card = sharingCard(settings, home)
   const png = await renderCard({
     photoUrl: card.photo ? sanityCoverUrl(card.photo, size) : null,
+    // Without a photo the words are the card, so they are always drawn.
     words:
-      card.kind === 'hero'
-        ? { storeName: settings?.storeName || storeName, headline: card.headline }
+      card.kind === 'hero' || !card.photo
+        ? {
+            storeName: settings?.storeName || storeName,
+            headline: card.kind === 'hero' ? card.headline : HERO_FALLBACK.headline,
+          }
         : null,
   })
   return new Response(Buffer.from(png, 'base64'), { headers: { 'Content-Type': contentType } })
 }
 
 /** Colours are literal because the image renderer cannot read the CSS tokens. */
-function Card({ photo, words }: { photo: string; words: CardInput['words'] }) {
-  const cover = (
+function Card({ photo, words }: { photo: string | null; words: CardInput['words'] }) {
+  const cover = photo ? (
     <img
       src={photo}
       alt=""
@@ -80,7 +76,7 @@ function Card({ photo, words }: { photo: string; words: CardInput['words'] }) {
       height={size.height}
       style={{ position: 'absolute', top: 0, left: 0, objectFit: 'cover' }}
     />
-  )
+  ) : null
   return !words ? (
       <div style={{ width: '100%', height: '100%', display: 'flex' }}>{cover}</div>
     ) : (
@@ -89,8 +85,8 @@ function Card({ photo, words }: { photo: string; words: CardInput['words'] }) {
           width: '100%',
           height: '100%',
           display: 'flex',
-          background: '#fff',
-          color: '#000',
+          background: photo ? '#fff' : '#000',
+          color: photo ? '#000' : '#fff',
           fontFamily: OG_FONT_FAMILY,
         }}
       >
@@ -103,8 +99,9 @@ function Card({ photo, words }: { photo: string; words: CardInput['words'] }) {
             left: 0,
             width: '100%',
             height: '100%',
-            backgroundImage:
-              'linear-gradient(215deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 45%)',
+            backgroundImage: photo
+              ? 'linear-gradient(215deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 45%)'
+              : 'linear-gradient(215deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 55%)',
           }}
         />
         {/* Top right: the hero photo keeps its subject on the left. */}
@@ -122,7 +119,7 @@ function Card({ photo, words }: { photo: string; words: CardInput['words'] }) {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 30 }}>
-            <svg viewBox={TRIANGLE_VIEWBOX} width="36" height="31" fill="#000">
+            <svg viewBox={TRIANGLE_VIEWBOX} width="36" height="31" fill={photo ? '#000' : '#fff'}>
               <path d={TRIANGLE_PATH} />
             </svg>
             {words.storeName}

@@ -42,7 +42,7 @@ packages/sanity       schemas, client factory, GROQ queries, generated types
 packages/demand       the search-gap loop's shared logic: filters, ids, prompt, schema, validation, Sanity queries (E13)
 sanity.blueprint.ts   everything Sanity runs for this repo, declared in code; at the root, beside the lockfile
 packages/config       shared tsconfig and eslint config
-specs/                one spec per epic (E01 to E14), decisions.md, api-reference.md, improvements.md, callout.md
+specs/                one spec per epic (E01 to E14), decisions.md, openapi.json (token redacted), improvements.md, callout.md
 working/              local-only documents (unredacted API reference, notes); git-ignored, never committed
 ```
 

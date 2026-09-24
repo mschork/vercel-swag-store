@@ -19,7 +19,7 @@ The API cannot hold either fact, so the store holds them per visitor. Everything
 
 ## The requirements
 
-`the requirements` asks for "real-time stock availability", a stock indicator "fetched from the provided API", a quantity selector "respecting stock limits" and an Add to Cart button "disabled when the product is out of stock". All four still hold, and the last two become true for the first time, because a limit that is redrawn before the add lands was never a limit:
+The requirements ask for "real-time stock availability", a stock indicator "fetched from the provided API", a quantity selector "respecting stock limits" and an Add to Cart button "disabled when the product is out of stock". All four still hold, and the last two become true for the first time, because a limit that is redrawn before the add lands was never a limit:
 
 - Every count is an answer from `GET /products/{id}/stock`, and every promotion an answer from `GET /promotions`. Nothing is invented or derived from a hash.
 - What the visitor sees is live in the sense that matters to them: the count minus what their own cart holds, updated on every cart action.

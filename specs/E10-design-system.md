@@ -41,10 +41,10 @@ Installed: `button`, `input`, `native-select`, `skeleton` (E03 to E07), plus `ba
 
 ### Home hero `components/home/hero.tsx`
 
-- Full-bleed band, edge to edge, directly under the banner. Image `/hero.jpg` from `public/` (converted from the supplied 1774 x 887 PNG; the source stays out of the repo), `next/image` with `priority`, `fill`, `object-cover`, `sizes="100vw"`; the only image with `priority` on the page and the LCP element.
+- Full-bleed band, edge to edge, directly under the banner. The editor's hero image from Sanity, `next/image` with `priority`, `fill`, `object-cover`, `sizes="100vw"`; the only image with `priority` on the page and the LCP element. The store ships no photo of its own, so without one the section is the copy alone.
 - Height: `min(60svh, 640px)` at md and up, positioned so the figure on the left stays in frame. Below md the band is `aspect-[4/3]` with `object-position: left center`.
 - Copy: headline at 67 (32 on phones) and the paragraph, nothing else: no button, no link, no product. At md and up the copy sits over the sky on the right half of the column, in `--color-on-photo`, with no scrim; below md the copy sits under the band in the column in normal `fg`.
-- Content: `HeroContent` becomes `{ headline, description }`; `HERO_FALLBACK` drops `ctaLabel`, `ctaHref` and `productSlug`, and `getProduct` leaves the component. The Sanity `homePage.hero` (E08) carries the same two fields plus an image; E09 falls back to `/hero.jpg` when the image is unset.
+- Content: `HeroContent` becomes `{ headline, description }`; `HERO_FALLBACK` drops `ctaLabel`, `ctaHref` and `productSlug`, and `getProduct` leaves the component. The Sanity `homePage.hero` (E08) carries the same two fields plus an image.
 
 ### Product card `components/product-card.tsx`
 
