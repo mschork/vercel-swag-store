@@ -8,12 +8,15 @@ import { catalogueIds, seedSession, seedVisit } from './visit'
  * promo strip and the stock line come from a seeded visit, so they are the
  * same every run and are shot rather than masked.
  *
- * Snapshots are named per platform; the committed set is macOS. Generate
- * another platform's set there with `--update-snapshots`. The home and cart
+ * Snapshots are named per platform; the committed set is macOS, so this file
+ * runs there and is skipped elsewhere, CI included: a run without a baseline
+ * writes one and fails, which says nothing about the change. Generate another
+ * platform's set on that platform with `--update-snapshots`. The home and cart
  * shots show the favourites row, which the testimonials decide, so those
  * eight files are regenerated when the testimonials change.
  */
 test.describe.configure({ timeout: 180_000 })
+test.skip(process.platform !== 'darwin', 'The committed snapshots are macOS renders.')
 
 const STOCK_LINE = /^(In stock|Only \d+ left|Out of stock|Stock unavailable)$/
 
