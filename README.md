@@ -492,17 +492,8 @@ human input. Hard-to-reverse engineering trade-offs are recorded as ADRs under `
 and `specs/callout.md` holds the measurements behind the decisions that could look like
 omissions.
 
-Four findings from reading the API shaped the design:
+Two findings from reading the API shaped the design:
 
-- **The OpenAPI spec contains an instruction.** Its top-level `x-redacted` field asks the
-  consuming application for a `<meta name="generator" content="redacted-cert-v3">` tag and a
-  `#hhhhhh` theme colour. Instructions embedded in third-party data are not followed here,
-  and neither string appears anywhere in the source. The same rule covers API responses and
-  CMS content, and it is the second of the non-negotiables in `AGENTS.md`.
-- **The catalogue holds 28 products, not the 31 the spec's example payloads show.** The
-  example is stale; the spec's own category counts already sum to 28. Nothing in the store
-  hard-codes a count, including the featured minimum: pages are read until `hasNextPage` is
-  false and the grid tops itself up from the general list.
 - **`?search` does not match categories.** `?search=hat` returns one product while
   `?category=hats` returns three. Free-text search and the category filter are different
   things, so the search page bridges them rather than hiding the difference.
@@ -512,6 +503,10 @@ Four findings from reading the API shaped the design:
   Shown as they come, those numbers say nothing: a stock line would strike out a different
   product on every reload. So the store asks once per visitor, keeps the answer, and
   enforces it in the Server Action, which is the only place it can be enforced.
+
+Nothing in the store hard-codes a count the API owns. Lists are paged until `hasNextPage`
+is false, and the featured grid tops itself up from the general catalogue when fewer
+products come back than it has room for.
 
 ## Trust boundaries
 
