@@ -1,0 +1,94 @@
+name: CI
+
+# `verify` is the check to require for a merge. `e2e` runs the browser suite,
+# whose visual comparisons depend on the renderer, so a difference there
+# should not block a merge (specs/E12-delivery.md).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # The catalogue is read at build time, so a build needs the API and Sanity.
+  # The two Sanity values are public; only the bypass token is a secret, and
+  # the placeholder keeps a fork's build going while the API accepts calls
+  # without it.
+  API_BASE_URL: ${{ vars.API_BASE_URL || 'https://vercel-swag-store-api.vercel.app/api' }}
+  API_BYPASS_TOKEN: ${{ secrets.API_BYPASS_TOKEN || 'ci-placeholder' }}
+  NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://vercel-swag-store-ms.vercel.app' }}
+  NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ vars.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+  NEXT_PUBLIC_SANITY_DATASET: ${{ vars.NEXT_PUBLIC_SANITY_DATASET || 'production' }}
+  SANITY_STUDIO_PROJECT_ID: ${{ vars.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+  SANITY_STUDIO_DATASET: ${{ vars.NEXT_PUBLIC_SANITY_DATASET || 'production' }}
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # No Upstash variables, so the session store runs in memory.
+      - run: pnpm --filter store build
+      - run: pnpm --filter store exec playwright install --with-deps chromium firefox
+      - run: pnpm --filter store exec playwright test
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/store/test-results
+          retention-days: 7
+
+  studio:
+    name: deploy studio
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The token carries the Deploy Studio role. Without it the Studio is
+      # deployed by hand, so the step says so instead of failing the run.
+      - name: Deploy to sanity.studio
+        env:
+          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+        run: |
+          if [ -z "$SANITY_AUTH_TOKEN" ]; then
+            echo "SANITY_AUTH_TOKEN is not set; skipping the Studio deploy."
+            exit 0
+          fi
+          pnpm --filter studio exec sanity deploy
