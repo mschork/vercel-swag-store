@@ -16,8 +16,8 @@ Decisions that are not in this spec are in `docs/adr/0007-the-session-store.md`.
 
 ## The session
 
-- `apps/store/proxy.ts` runs on every request except `_next/static`, `_next/image`, `_vercel`, `favicon.ico`, `robots.txt`, `sitemap.xml`, `llms.txt`, `/api/revalidate` and `/api/demand`. When the request carries no `sid` cookie, or one that is not a UUID, it sets one: `crypto.randomUUID()`, httpOnly, Secure, SameSite=Lax, path `/`, `maxAge` 30 days. It never reads Redis and does nothing else. A request that carries a valid `sid` passes through untouched, so the cookie is never renewed.
-- `lib/session/cookie.ts` exports `SESSION_COOKIE = 'sid'`, `SESSION_MAX_AGE_SECONDS`, `isSessionId(value)` and `getSessionId()`, which reads `cookies()` and returns the id or `null`. The proxy and the cookie module share `isSessionId`.
+- `apps/store/proxy.ts` mints the id: `crypto.randomUUID()`, httpOnly, Secure, SameSite=Lax, path `/`, `maxAge` 30 days. It never reads Redis and does nothing else. Its matcher leaves out `_next/static`, `_next/image`, `_vercel`, `favicon.ico`, `robots.txt`, `sitemap.xml`, `llms.txt`, `/api/revalidate` and `/api/demand`, and carries a `missing` condition on a `sid` cookie holding a UUID, so a request that already has one never invokes it and its page is served from the CDN. A crawler or a link preview, which `userAgent().isBot` reports, gets no id at all.
+- `lib/session/id.ts` exports `SESSION_COOKIE = 'sid'`, `SESSION_MAX_AGE_SECONDS` and `isSessionId(value)`, which the proxy and the server share; `lib/session/cookie.ts` exports `getSessionId()`, which reads `cookies()` and answers the id or `null`. A page rendered for a first request already sees the id the proxy minted; a route handler does not.
 - The id identifies a browser and nothing more. It is the only cookie the store sets. Non-negotiable 4 in `AGENTS.md` now reads: the cart token lives only on the server, in the session store, and no cookie ever carries it.
 - Today's `visit` and `cart_token` cookies are ignored and left to expire. Nothing reads them and nothing deletes them.
 
@@ -36,10 +36,11 @@ claimPromotion(sid, promotion: Promotion): Promise<Promotion>                   
 setStock(sid, draws: Record<string, number>): Promise<void>                       // overwrite, used after an order
 clearVisit(sid): Promise<void>
 setCart(sid, record: CartRecord): Promise<void>                                   // SET with a one-day expiry, renewed on every call
+claimCart(sid, record: CartRecord): Promise<CartRecord | null>                    // SET NX; answers the cart that won, so two opens keep one
 clearCart(sid): Promise<void>
 ```
 
-- Keys: `sess:<sid>:visit`, a hash with fields `stock:<productId>`, `promotion` and `drawnAt`, expiry one day set with `EXPIRE NX` so it counts from the first draw; `sess:<sid>:cart`, a JSON string with a one-day expiry renewed by every `setCart`. Redis makes the first write win, so a seed hole and a stock hole rendering in parallel always agree.
+- Keys: `swag:sess:<sid>:visit`, a hash with fields `stock:<productId>`, `promotion` and `drawnAt`, expiry one day set with `EXPIRE NX` so it counts from the first draw; `swag:sess:<sid>:cart`, a JSON string with a one-day expiry renewed by every `setCart`. Redis makes the first write win, so a seed hole and a stock hole rendering in parallel always agree.
 - Two adapters behind one interface. `lib/session/upstash.ts` posts pipelines to `KV_REST_API_URL` with `KV_REST_API_TOKEN` as a bearer, using plain `fetch` with `AbortSignal.timeout(REDIS_TIMEOUT_MS)`, `REDIS_TIMEOUT_MS = 300`. `lib/session/memory.ts` is a `Map` with expiries, used when the variables are unset: a reviewer's clone, CI and the unit tests. `lib/env.ts` adds both variables as optional, with the comment pattern the file already uses. No new dependency.
 - Values read from Redis cross a trust boundary and are parsed with zod in `lib/session/records.ts`. A record that fails to parse counts as absent.
 - When Redis errors or times out, `readSession` answers `'unavailable'` and the error is logged once per request, never with the token. The claim and set functions swallow the same errors. Surfaces then degrade: stock is drawn straight from the API and shown without being kept, the banner shows whatever the API answers, the cart page and the badge render a "cart unavailable" state that never says the cart is empty, and an add answers `{ ok: false, error }` with a message that says to try again. Because the token lives only in Redis, a cart cannot be reached while Redis is down; that is the cost of holding one cookie, and `docs/adr/0007-the-session-store.md` records it.
@@ -54,8 +55,8 @@ clearCart(sid): Promise<void>
 
 ## The cart
 
-- `lib/cart/get-cart.ts` becomes the read of the mirror: `loadCart()` answers the session's `CartRecord`, or `null`, or `'unavailable'`. It never calls the API. `lib/cart/cookie.ts` is deleted.
-- Every cart action in `app/cart/actions.ts` reads the token from the mirror, calls the API, and on success writes the API's answer back with `setCart`. `prepareCart` creates the cart and stores its token. A 404 for the cart clears the mirror and starts a new cart on the next add. No action sets a cookie and none calls `refresh()`. `addToCart` answers `{ ok, totalItems, line, lines }` like `updateQuantity` and `removeItem`. `placeOrder` clears the mirror and keeps its redirect.
+- `lib/cart/get-cart.ts` becomes the read of the mirror: `loadCart()` answers the mirror without its token, `{ currency, lines, totalItems }`, or `null`, or `'unavailable'`. It never calls the API. `lib/cart/cookie.ts` is deleted.
+- Every cart action in `app/cart/actions.ts` reads the token from the mirror, calls the API, and on success writes the API's answer back with `setCart`. `prepareCart` creates the cart and stores its token. A 404 for the cart clears the mirror and starts a new cart on the next add. No action sets a cookie, and only `placeOrder` calls `refresh()`, because its redirect keeps the layout and the badge would go on showing the cart it ordered. `addToCart` answers `{ ok, totalItems, line, lines }` like `updateQuantity` and `removeItem`, and a failure carries `lines` whenever the action learnt the cart's state. `placeOrder` orders the mirror without an API read, clears it and keeps its redirect.
 - `components/cart/cart-badge.tsx`, `components/visit/visit-seed.tsx` and `components/cart/cart-contents.tsx` read the mirror and drop their `next-action` checks.
 - `cart-contents.tsx` schedules one read of the API in `after()`, `getCart(token)`, and writes the answer with `setCart`, or clears the mirror on a 404. The page already on screen never changes; the next render sees the corrected mirror.
 - The favourites row under the cart no longer gets a re-render when a product is added from it. It hides a product whose id is in the lines the cart view holds, through a small client wrapper; move the row under `CartView` if that is the shortest way.
@@ -95,7 +96,7 @@ Against a preview deploy, then production after the merge:
 
 - [x] The only cookie the store sets is `sid`, httpOnly, Secure, SameSite=Lax, 30 days, set once.
 - [x] A first visit renders a stock number on the product page in the HTML, and every later render of any surface shows the same number until the visit is reset or an order lowers it.
-- [ ] The cart page renders its lines without a cart API call; measured on production, its hole arrives in under 0.5 s where it took 1.6 to 2 s.
+- [x] The cart page renders its lines without a cart API call; measured on production, its hole arrives in under 0.5 s where it took 1.6 to 2 s.
 - [x] The header badge on a full page load makes no cart API call.
 - [x] Opening the cart within a second of Add to Cart shows the product as a saving row, never an empty cart, and the row settles without a reload when the save lands.
 - [x] Two quick adds of different products both show as saving rows.
@@ -104,4 +105,4 @@ Against a preview deploy, then production after the merge:
 - [x] With Redis unreachable, a page render still completes, shows the API's stock, and the cart says it is unavailable rather than empty.
 - [x] `POST /api/test/session` answers 404 on the preview.
 - [x] Build output marks every page as before, and `pnpm verify` passes.
-- [ ] Before and after timings are recorded in `callout.md`, measured on production.
+- [x] Before and after timings are recorded in `callout.md`, measured on production.
