@@ -62,6 +62,6 @@ One line per requirement, naming the route or file that satisfies it. Include: h
 - [x] `pnpm verify` green locally and in CI on `main`.
 - [x] README short: what the store is, the two addresses, how to run it, and where each subject is written up. The explanations live in `docs/`, where the build asserts them.
 - [x] Both URLs public; repository public.
-- [ ] `v1.0.0` tagged and pushed.
+- [x] `v1.0.0` tagged and pushed to both remotes.
 - [x] Release checklist complete (`docs/release-checklist.md`).
 - [x] The deployed store is `noindex` on every route, checked against production.
