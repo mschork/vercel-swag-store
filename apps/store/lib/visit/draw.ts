@@ -54,21 +54,37 @@ export const pinnedPromotion = cache(async (): Promise<Promotion | null> => {
  * for is drawn and claimed, and the promotion is pinned when `visit` has none.
  * With no `sid` nothing is kept and the fresh draws are the answer. A draw
  * that fails is left out, and the product reads as having no count.
+ *
+ * `productIds` is the catalogue when the caller read it outside a Suspense
+ * boundary; without it the catalogue is read here, which inside a boundary
+ * is an API call on every request (`catalogueIds`).
  */
 export async function completeVisit(
   sid: string | null,
   visit: VisitRecord | null,
+  productIds?: readonly string[],
 ): Promise<{ stock: Record<string, number>; promotion: Promotion | null }> {
   const kept = visit?.stock ?? {}
-  const products = (await loadOptional('Visit: catalogue', getAllProducts)) ?? []
-  const missing = products
-    .map((product) => product.id)
-    .filter((id) => !Object.hasOwn(kept, id))
+  const missing = (productIds ?? (await catalogueIds()) ?? []).filter(
+    (id) => !Object.hasOwn(kept, id),
+  )
   const [won, promotion] = await Promise.all([
     drawAll(missing).then((drawn) => (sid ? sessionStore.claimStock(sid, drawn) : drawn)),
     visit?.promotion !== undefined ? visit.promotion : claimPromotion(sid),
   ])
   return { stock: { ...kept, ...won }, promotion }
+}
+
+/**
+ * Every product id in the catalogue, or `null` when it cannot be read. Called
+ * outside a Suspense boundary it runs during the prerender, so the resumed
+ * render finds its answer in the prerender's cache entries. Inside a boundary
+ * it depends on the in-memory cache, which on Vercel is usually empty, so it
+ * costs a catalogue call on most requests.
+ */
+export async function catalogueIds(): Promise<string[] | null> {
+  const products = await loadOptional('Visit: catalogue', getAllProducts)
+  return products?.map((product) => product.id) ?? null
 }
 
 async function claimPromotion(sid: string | null): Promise<Promotion | null> {
