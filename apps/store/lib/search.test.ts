@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { product } from '@/test/helpers'
 import type { Category } from './api/types'
-import { expandQuery, mergeResults, normaliseQuery } from './search'
+import { expandQuery, matchesQuery, mergeResults, normaliseQuery, searchCatalogue } from './search'
 
 /** The live category list, so the expansion is tested against real names. */
 const categories: Category[] = [
@@ -180,5 +180,66 @@ describe('mergeResults', () => {
     const merged = mergeResults([], [inCat('a'), inCat('b')], 'bags')
     expect(ids(merged)).toEqual(['a', 'b'])
     expect(merged.added).toBe(true)
+  })
+})
+
+describe('matchesQuery', () => {
+  const mug = { id: 'mug_001', name: 'Glossy Black Ceramic Mug', description: 'Holds coffee.', tags: ['kitchen'], category: 'mugs' }
+
+  it('matches the name, the description or a tag, ignoring case', () => {
+    expect(matchesQuery(mug, 'CERAMIC')).toBe(true)
+    expect(matchesQuery(mug, 'coffee')).toBe(true)
+    expect(matchesQuery(mug, 'kitch')).toBe(true)
+  })
+
+  it('matches a substring, not words: a category name matches nothing', () => {
+    expect(matchesQuery(mug, 'mugs')).toBe(false)
+    expect(matchesQuery(mug, 'black ceramic')).toBe(true)
+    expect(matchesQuery(mug, 'black mug')).toBe(false)
+  })
+})
+
+describe('searchCatalogue', () => {
+  const entry = (id: string, category: string, name = id) => ({ id, name, description: '', tags: [], category })
+  const catalogue = [
+    entry('cap', 'hats', 'Black Cap'),
+    entry('beanie', 'hats', 'Black Beanie'),
+    entry('bucket', 'hats', 'Black Bucket Hat'),
+    ...['a', 'b', 'c', 'd', 'e', 'f'].map((id) => entry(`pen_${id}`, 'stationery', `Black Pen ${id}`)),
+  ]
+  const search = (query: string, slug: string | null = null) =>
+    searchCatalogue({
+      query,
+      category: categories.find((item) => item.slug === slug) ?? null,
+      catalogue,
+      categories,
+      featuredIds: ['pen_a', 'cap'],
+      featuredHeading: 'Explore',
+    })
+
+  it('shows the featured products when nothing is set', () => {
+    expect(search('')).toEqual({ ids: ['pen_a', 'cap'], heading: 'Explore', hint: null, capped: false })
+  })
+
+  it('lists a category alone, capped, and says how many there were', () => {
+    expect(search('', 'hats').ids).toEqual(['cap', 'beanie', 'bucket'])
+    expect(search('', 'stationery')).toMatchObject({ heading: 'Showing 5 of 6 results', capped: true })
+  })
+
+  it('narrows a query to the chosen category', () => {
+    expect(search('black', 'hats')).toMatchObject({ ids: ['cap', 'beanie', 'bucket'], heading: '3 results' })
+  })
+
+  it('merges the category a query names in behind its hits', () => {
+    expect(search('hats')).toEqual({
+      ids: ['cap', 'beanie', 'bucket'],
+      heading: '3 results',
+      hint: 'Includes everything in Hats',
+      capped: false,
+    })
+  })
+
+  it('finds nothing for a query no product mentions', () => {
+    expect(search('umbrella').ids).toEqual([])
   })
 })

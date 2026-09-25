@@ -19,6 +19,7 @@ export const siteSettings = defineType({
     { name: 'seo', title: 'SEO and sharing', default: true },
     { name: 'chrome', title: 'Header and footer' },
     { name: 'productPage', title: 'Product page' },
+    { name: 'searchPage', title: 'Search page' },
   ],
   fields: [
     defineField({
@@ -119,6 +120,22 @@ export const siteSettings = defineType({
           title: 'Questions',
           type: 'string',
           description: 'Default: “Common questions”.',
+        }),
+      ],
+    }),
+    defineField({
+      name: 'searchPage',
+      title: 'Search page',
+      type: 'object',
+      group: 'searchPage',
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({
+          name: 'featuredHeading',
+          title: 'Heading over the featured products',
+          type: 'string',
+          description:
+            'Shown above the featured products before anything is searched, so they do not read as results. Default: “Explore our featured products”.',
         }),
       ],
     }),
