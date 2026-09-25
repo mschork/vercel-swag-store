@@ -65,6 +65,16 @@ export async function getProductsAtRequestTime(
   return getProducts(params)
 }
 
+/** `getFeaturedProducts` for a render that runs at request time, for the same reason. */
+export async function getFeaturedProductsAtRequestTime(
+  options: Parameters<typeof getFeaturedProducts>[0],
+): Promise<Product[]> {
+  'use cache: remote'
+  cacheTag(TAGS.products)
+  cacheLife(CATALOG_PROFILE)
+  return getFeaturedProducts(options)
+}
+
 /**
  * The featured grid: every featured product the API returns (up to `limit`),
  * topped up with ordinary catalogue products when fewer than `min` are
