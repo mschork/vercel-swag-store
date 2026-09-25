@@ -51,6 +51,21 @@ export async function getProducts(
 }
 
 /**
+ * `getProducts` for a render that runs at request time, such as a search.
+ * Kept in the platform's shared cache: on Vercel the in-memory cache behind
+ * `"use cache"` is usually empty at request time, so each search would
+ * otherwise be a catalogue call.
+ */
+export async function getProductsAtRequestTime(
+  params: ProductListParams = {},
+): Promise<ProductListResult> {
+  'use cache: remote'
+  cacheTag(TAGS.products)
+  cacheLife(CATALOG_PROFILE)
+  return getProducts(params)
+}
+
+/**
  * The featured grid: every featured product the API returns (up to `limit`),
  * topped up with ordinary catalogue products when fewer than `min` are
  * flagged, so the grid never falls below the required minimum if someone

@@ -1,7 +1,7 @@
 import { ProductGrid, ProductGridSkeleton } from '@/components/product-grid'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getCategories } from '@/lib/api/categories'
-import { getFeaturedProducts, getProducts } from '@/lib/api/products'
+import { getFeaturedProducts, getProductsAtRequestTime } from '@/lib/api/products'
 import type { Category, Product } from '@/lib/api/types'
 import { RESULT_CAP, expandQuery, mergeResults, normaliseQuery } from '@/lib/search'
 import { recordGapAfterResponse } from '@/lib/search/record-gap'
@@ -142,7 +142,7 @@ async function search(
 }
 
 const listProducts = (params: { search?: string; category?: string }) =>
-  getProducts({ ...params, limit: RESULT_CAP })
+  getProductsAtRequestTime({ ...params, limit: RESULT_CAP })
 
 /** One API call, so the API's own `total` says how much was left behind. */
 function plain({

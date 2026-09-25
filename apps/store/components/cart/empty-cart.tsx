@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 export function EmptyCart() {
   return (
     <EmptyState title="Your cart is empty">
-      <Button size="lg" render={<Link href="/search" />}>
+      <Button size="lg" nativeButton={false} render={<Link href="/search" />}>
         Search products
       </Button>
     </EmptyState>

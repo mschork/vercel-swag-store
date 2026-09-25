@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { InCartHidden } from '@/components/cart/in-cart-hidden'
+import { BuyableItems } from '@/components/cart/buyable-items'
 import { SortableGrid } from '@/components/listing/sortable-grid'
 import { ProductCard } from '@/components/product-card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -44,48 +44,51 @@ export type GridVariant = keyof typeof VARIANTS
  *
  * `slot` renders under a card, inside the list item but outside the link, so a
  * grid can carry a control without putting a button inside a link. With
- * `hideInCart` a card leaves the grid once its product is in the cart. Only
- * the cart page's favourites row uses either.
+ * `buyableLimit` the grid shows at most that many cards, and only for products
+ * the visitor can buy (`BuyableItems`). Only the cart page's favourites row
+ * uses either.
  */
 export async function ProductGrid({
   products,
   variant,
   preloadCount = 0,
   slot,
-  hideInCart = false,
+  buyableLimit,
 }: {
   products: readonly Product[]
   variant: GridVariant
   preloadCount?: number
   slot?: (product: Product) => ReactNode
-  hideInCart?: boolean
+  buyableLimit?: number
 }) {
   const { grid, sizes } = VARIANTS[variant]
   const categories = await getCategories()
   const nameOf = (slug: string) =>
     categories.find((category) => category.slug === slug)?.name ?? slug
+  const item = (product: Product, index: number) => (
+    <>
+      <ProductCard
+        product={product}
+        categoryName={nameOf(product.category)}
+        sizes={sizes}
+        preload={index < preloadCount}
+      />
+      {slot?.(product)}
+    </>
+  )
   return (
     <ul className={grid}>
-      {products.map((product, index) => {
-        const item = (
-          <>
-            <ProductCard
-              product={product}
-              categoryName={nameOf(product.category)}
-              sizes={sizes}
-              preload={index < preloadCount}
-            />
-            {slot?.(product)}
-          </>
-        )
-        return hideInCart ? (
-          <InCartHidden key={product.id} productId={product.id}>
-            {item}
-          </InCartHidden>
-        ) : (
-          <li key={product.id}>{item}</li>
-        )
-      })}
+      {buyableLimit === undefined ? (
+        products.map((product, index) => <li key={product.id}>{item(product, index)}</li>)
+      ) : (
+        <BuyableItems
+          items={products.map((product, index) => ({
+            productId: product.id,
+            node: item(product, index),
+          }))}
+          limit={buyableLimit}
+        />
+      )}
     </ul>
   )
 }

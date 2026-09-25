@@ -5,12 +5,14 @@ import {
   CartContents,
   CartSkeleton,
 } from '@/components/cart/cart-contents'
+import { CartFavourites } from '@/components/cart/cart-favourites'
 
 export const metadata: Metadata = { title: 'Cart', robots: { index: false } }
 
 /**
- * The heading is prerendered with the shell; everything that depends on the
- * visitor's session streams inside one boundary.
+ * The heading and the favourites row are prerendered with the shell;
+ * everything that depends on the visitor's session streams inside one
+ * boundary.
  */
 export default function CartPage() {
   return (
@@ -19,6 +21,7 @@ export default function CartPage() {
       <Suspense fallback={<CartSkeleton />}>
         <CartContents />
       </Suspense>
+      <CartFavourites />
     </Container>
   )
 }

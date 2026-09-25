@@ -10,7 +10,7 @@ import { Header } from '@/components/header'
 import { NoScriptNotice } from '@/components/no-script-notice'
 import { PromoBanner, PromoBannerSkeleton } from '@/components/promo-banner'
 import { VisitProvider } from '@/components/visit/visit-provider'
-import { VisitSeed } from '@/components/visit/visit-seed'
+import { VisitSeedBoundary } from '@/components/visit/visit-seed'
 import { getStoreConfig } from '@/lib/api/store'
 import { getSiteSettingsForMetadata } from '@/lib/sanity/content'
 import { publicEnv } from '@/lib/env.public'
@@ -79,9 +79,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         <CartCountProvider>
           <VisitProvider>
             {/* Seeds the visit's stock and promotion; renders nothing. */}
-            <Suspense fallback={null}>
-              <VisitSeed />
-            </Suspense>
+            <VisitSeedBoundary />
             <Header />
             <Suspense fallback={<PromoBannerSkeleton />}>
               <PromoBanner />

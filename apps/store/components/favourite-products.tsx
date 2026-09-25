@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { ProductGrid } from '@/components/product-grid'
 import type { Product } from '@/lib/api/types'
-import { getFavourites } from '@/lib/home'
+import { MAX_FAVOURITES, getFavourites } from '@/lib/home'
 
 /**
  * The products testimonials name most. Sanity ranks them, counting published
@@ -9,35 +9,39 @@ import { getFavourites } from '@/lib/home'
  * product the API has dropped never appears. Both reads are cached and
  * tagged, so this stays part of the static shell and a published entry
  * refreshes it. Renders nothing without testimonials. The cart page renders
- * the same row and passes both the products already in the cart and the ones
- * the visitor has none of as `exclude`, so the row it shows is all buyable;
- * the home page's row is static, so an unavailable favourite is badged there
- * rather than dropped.
+ * the same row with `buyable`: the whole ranking goes into the shell, and the
+ * browser shows the first products the visitor can buy (`BuyableItems`). The
+ * home page's row shows every favourite, and an unavailable one is badged
+ * there rather than dropped.
  */
 export async function FavouriteProducts({
   heading,
-  exclude = [],
   slot,
-  hideInCart = false,
+  buyable = false,
 }: {
   heading: string
-  exclude?: readonly string[]
   /** Rendered under each card; the cart page puts an Add to Cart there. */
   slot?: (product: Product) => ReactNode
-  /** Drops a card from the row once its product is in the cart. */
-  hideInCart?: boolean
+  /** Shows only products the visitor can buy. */
+  buyable?: boolean
 }) {
-  const products = await getFavourites(exclude)
+  const products = await getFavourites(buyable ? null : MAX_FAVOURITES)
   if (products.length === 0) return null
   return (
     <section
       aria-labelledby="favourites-heading"
-      className="flex flex-col gap-6 border-t border-border py-12 md:py-16"
+      // A buyable row can end up with no card once the visit arrives.
+      className="flex flex-col gap-6 border-t border-border py-12 has-[ul:empty]:hidden md:py-16"
     >
       <h2 id="favourites-heading" className="text-2xl font-medium tracking-tight">
         {heading}
       </h2>
-      <ProductGrid products={products} variant="favourites" slot={slot} hideInCart={hideInCart} />
+      <ProductGrid
+        products={products}
+        variant="favourites"
+        slot={slot}
+        buyableLimit={buyable ? MAX_FAVOURITES : undefined}
+      />
     </section>
   )
 }

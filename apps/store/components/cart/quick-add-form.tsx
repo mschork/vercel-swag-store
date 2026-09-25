@@ -21,7 +21,7 @@ import { prepareOnIntent, useCartAdd } from './use-cart-add'
  *
  * With JavaScript a submit records a pending line with `display`, which the
  * cart view shows as a saving row, and the row hides this card at once
- * (`InCartHidden`). A failed add brings the card back, and the cart view says
+ * (`BuyableItems`). A failed add brings the card back, and the cart view says
  * why.
  */
 export function QuickAddForm({

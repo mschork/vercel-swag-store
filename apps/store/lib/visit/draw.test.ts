@@ -160,6 +160,13 @@ describe('completeVisit', () => {
     expect((await kept())?.stock).toEqual({ bottle_001: 3, pin_001: 0 })
   })
 
+  it('draws from the ids it is given without reading the catalogue', async () => {
+    const complete = await completeVisit(sid, null, ['pin_001'])
+
+    expect(complete.stock).toEqual({ pin_001: 0 })
+    expect(mocked.getAllProducts).not.toHaveBeenCalled()
+  })
+
   it('answers the draws that won over a visit read before a parallel claim', async () => {
     await sessionStore.claimStock(sid, { bottle_001: 3 })
 
