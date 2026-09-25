@@ -10,7 +10,7 @@ One table for the whole store: what is cached, what is live, and what makes cach
 | `/products` | Heading, every card, the category chips | Promo strip, cart badge | `products`, `categories` | Same |
 | `/products/category/[slug]` | Heading, the Sanity intro, the category's cards | Promo strip, cart badge | `products`, `categories`, `sanity` | Same |
 | `/products/[slug]` | Gallery, name, price, descriptions, testimonials, questions, breadcrumb, JSON-LD | Stock with Add to Cart, promo strip, cart badge | `products`, `categories`, `store`, `sanity` | Same |
-| `/search` | Heading, search form, results region | Results grid, form state, promo strip, cart badge | `products`, `categories` | Same. Results vary by `searchParams`; each argument set is cached on its own in the shared remote cache (`getProductsAtRequestTime`) |
+| `/search` | Heading, search form, results region | Results grid, form state, promo strip, cart badge | `products`, `categories` | Same. Results vary by `searchParams`; each argument set is cached on its own in the shared remote cache (`getProductsAtRequestTime`, `getFeaturedProductsAtRequestTime` for the default state) |
 | `/cart` | Heading, skeleton box, favourites row, chrome | Cart contents, promo strip, cart badge | `products`, `categories`, `store`, `sanity` | Cart data is never cached; it is read from the cart mirror. The browser hides favourites already in the cart or drawn at zero |
 | `/checkout` | Whole page | Promo strip, cart badge | `store`, `sanity` | Hourly revalidate or a Sanity publish |
 | `/md/**`, `/llms.txt` | Whole file | none | `products`, `categories`, `sanity` | Same as the pages they mirror; never live data |
