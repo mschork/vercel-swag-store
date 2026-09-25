@@ -281,13 +281,11 @@ test('the cart cross-sells only what can be bought', async ({ page, context }) =
   await expect(favouritesOf(page).getByRole('listitem')).not.toHaveCount(0)
   await expect(favouritesOf(page).getByText('Out of stock').first()).toBeVisible()
 
-  // The cart page's row is dynamic, so it has nothing left to offer.
+  // The cart page's row is filtered in the browser, so it has nothing left to
+  // offer and hides itself.
   await page.goto('/cart')
   await expect(page.getByRole('main').getByRole('heading', { level: 1 })).toBeVisible()
-  await expect(page.locator('section[aria-labelledby="favourites-heading"]')).toHaveCount(
-    0,
-    SAVED,
-  )
+  await expect(page.locator('section[aria-labelledby="favourites-heading"]')).toBeHidden(SAVED)
 })
 
 declare global {
@@ -407,12 +405,13 @@ test('a quick add from the favourites row adds a row and hides that card', async
   expect(actions.addsAnswered()).toBe(0)
   await expect(badge(page, 'Cart, 1 item')).toBeVisible()
 
-  // The save lands: the row settles, and the favourites row stays one card
-  // shorter, because nothing renders it again.
+  // The save lands: the row settles, and the favourites row keeps the card
+  // out. It may take the next favourite the visitor can buy in its place, so
+  // it never grows.
   await expect.poll(actions.addsAnswered, SAVED).toBe(1)
   await expect(statusOf(row)).not.toHaveText('Saving…')
   await expect(row.getByLabel('Quantity', { exact: true })).toHaveValue('1')
-  await expect(favourites.getByRole('listitem')).toHaveCount(before - 1)
+  expect(await favourites.getByRole('listitem').count()).toBeLessThanOrEqual(before)
   await expect(favourites.locator(`a[href="${addedHref}"]`)).toHaveCount(0)
 })
 

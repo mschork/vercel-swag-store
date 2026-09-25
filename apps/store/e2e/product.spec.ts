@@ -191,6 +191,8 @@ test('a failed add retracts its confirmation and says why', async ({
 })
 
 test('the footer reset draws a whole new visit', async ({ page, context }) => {
+  // The page load and the reset each draw the whole catalogue from the API.
+  test.slow()
   const href = await firstFeaturedHref(page)
   await openWithStock(page, context, href, 3)
   await expect(stockLine(page)).toHaveText('Only 3 left')
