@@ -46,6 +46,7 @@ packages/config  shared tsconfig and ESLint config
 
 | | |
 |---|---|
+| Each requirement and the file that satisfies it | `docs/release-checklist.md` |
 | What is prerendered and what streams, per route | `docs/static-vs-dynamic.md` |
 | The build output that is asserted on every build | `docs/build-output.md` |
 | Decisions that were hard to reverse | `docs/adr/` |

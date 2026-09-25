@@ -54,13 +54,14 @@ Sections, in this order, each short:
 
 ### Final checklist (`docs/release-checklist.md`)
 
-One line per requirement in the requirements, ticked with the route or file that satisfies it. Include: header, footer, layout, responsive, root metadata, page metadata, OG, Cache Components enabled, hero, promo, featured grid, PDP image, info, stock, quantity, Add to Cart, cart add, badge, view, item display, adjust, remove, subtotal, persistence, search input, triggers, default, results, category, empty, loading, URL persistence.
+One line per requirement, naming the route or file that satisfies it. Include: header, footer, layout, responsive, root metadata, page metadata, OG, Cache Components enabled, hero, promo, featured grid, PDP image, info, stock, quantity, Add to Cart, cart add, badge, view, item display, adjust, remove, subtotal, persistence, search input, triggers, default, results, category, empty, loading, URL persistence.
 
 
 ## Acceptance criteria
 
-- [ ] `pnpm verify` green locally and in CI on `main`.
-- [ ] README complete; a reader who has not seen the code can explain the caching model from it.
-- [ ] Both URLs public; repo public; tag pushed.
-- [ ] Release checklist fully ticked.
+- [x] `pnpm verify` green locally and in CI on `main`.
+- [x] README short: what the store is, the two addresses, how to run it, and where each subject is written up. The explanations live in `docs/`, where the build asserts them.
+- [x] Both URLs public; repository public.
+- [ ] `v1.0.0` tagged and pushed.
+- [x] Release checklist complete (`docs/release-checklist.md`).
 - [x] The deployed store is `noindex` on every route, checked against production.
