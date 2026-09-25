@@ -14,8 +14,8 @@ const ADDING_LABEL_MS = 1000
 
 /**
  * Add to Cart as a Server Action form. `max` is what remains of the visit's
- * draw; `disabled` is set when nothing does or the count is unknown. It stays
- * a native Server Action form, so it works before hydration.
+ * draw; `disabled` is set when nothing does. It stays a native Server Action
+ * form, so it works before hydration.
  *
  * With JavaScript the button does not wait for the save
  * (specs/E22-add-to-cart-wait.md). A submit records a pending line with
