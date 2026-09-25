@@ -28,6 +28,7 @@ pnpm dev                                           # store on :3000, studio on :
 ```sh
 pnpm verify     # lint, typecheck, build, test, then the two build checks
 pnpm test       # Vitest alone
+pnpm e2e        # Playwright, after a production build; several minutes
 ```
 
 No Redis is needed: without `KV_REST_API_URL` the session store runs in memory, which is

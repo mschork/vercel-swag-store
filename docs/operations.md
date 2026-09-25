@@ -14,11 +14,13 @@ changed. Preview deployments are protected; production is public.
 | Job | What it runs | Required |
 |---|---|---|
 | `verify` | `pnpm verify`: ESLint with warnings as errors, `tsc --noEmit`, both builds, Vitest, then the two build checks below | yes |
-| `e2e` | Playwright, smoke and visual | no |
+| `e2e` | Playwright, smoke and visual, on pull requests that change more than docs, specs and Markdown | no |
 | `deploy studio` | `sanity deploy` to `swagstore-ms.sanity.studio`, on `main` only | — |
 
 `e2e` is not required because its visual comparisons depend on the renderer, and a
 screenshot taken on another machine should not block a merge. Its failure stays visible.
+It does not run again on the push to `main` after a merge, which carries the code the pull
+request already tested. `pnpm e2e` runs the same suite locally, build included.
 The visual comparisons are skipped off macOS, where their baselines were made; the smoke
 tests run everywhere.
 
