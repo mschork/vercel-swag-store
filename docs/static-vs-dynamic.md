@@ -10,8 +10,8 @@ One table for the whole store: what is cached, what is live, and what makes cach
 | `/products` | Heading, every card, the category chips | Promo strip, cart badge | `products`, `categories` | Same |
 | `/products/category/[slug]` | Heading, the Sanity intro, the category's cards | Promo strip, cart badge | `products`, `categories`, `sanity` | Same |
 | `/products/[slug]` | Gallery, name, price, descriptions, testimonials, questions, breadcrumb, JSON-LD | Stock with Add to Cart, promo strip, cart badge | `products`, `categories`, `store`, `sanity` | Same |
-| `/search` | Heading, search form, results region | Results grid, form state, promo strip, cart badge | `products`, `categories` | Same. Results themselves vary by `searchParams`, and each argument set is cached on its own |
-| `/cart` | Heading, skeleton box, chrome | Cart contents, favourites row, promo strip, cart badge | `store` (chrome only) | Cart data is never cached; it is read from the cart mirror |
+| `/search` | Heading, search form, results region | Results grid, form state, promo strip, cart badge | `products`, `categories` | Same. Results vary by `searchParams`; each argument set is cached on its own in the shared remote cache (`getProductsAtRequestTime`) |
+| `/cart` | Heading, skeleton box, favourites row, chrome | Cart contents, promo strip, cart badge | `products`, `categories`, `store`, `sanity` | Cart data is never cached; it is read from the cart mirror. The browser hides favourites already in the cart or drawn at zero |
 | `/checkout` | Whole page | Promo strip, cart badge | `store`, `sanity` | Hourly revalidate or a Sanity publish |
 | `/md/**`, `/llms.txt` | Whole file | none | `products`, `categories`, `sanity` | Same as the pages they mirror; never live data |
 | `/robots.txt`, `/sitemap.xml` | Whole file | none | `products` for the sitemap's product URLs | Same |
@@ -80,5 +80,6 @@ Twenty-eight files carry `"use client"`, all interactive leaves. No page and no 
 - Anything reading `cookies()`, `headers()` or `searchParams` renders inside a Suspense boundary. The session id is a cookie, so the visit seed, the promo strip, the stock hole, the cart badge and the cart contents are such cases, and so are the search results.
 - `proxy.ts` mints the session cookie with no I/O, and its matcher skips every request that already carries a valid id, so those are served from the CDN without invoking it.
 - `/search` passes the `searchParams` promise down without awaiting it; awaiting it in the page would make the whole route dynamic.
+- A `"use cache"` read inside a Suspense boundary is free only when the route's prerender made the same read: the resumed render reuses the prerender's entries, and on Vercel the in-memory cache behind `"use cache"` is usually empty. So the layout reads the catalogue outside the visit seed's boundary, and the cart's favourites row sits in the shell. A read that must happen at request time, a search, uses `'use cache: remote'`.
 - Every fetch of API data lives in `apps/store/lib/` behind a typed function with an explicit policy. No component fetches directly.
 - Cart calls are server-only, and the cart token lives only in the session store, so it never reaches the browser (`docs/adr/0002-cart-server-side-only.md`, `docs/adr/0007-the-session-store.md`).
