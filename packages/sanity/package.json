@@ -26,12 +26,12 @@
   },
   "devDependencies": {
     "@repo/config": "workspace:*",
-    "@types/node": "^26.6.1",
+    "@types/node": "^24.13.6",
     "@types/react": "^19",
-    "react": "19.2.8",
+    "react": "19.3.0",
     "sanity": "^6.16.0",
     "typescript": "^5",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.1"
   },
   "peerDependencies": {
     "sanity": "^6",
