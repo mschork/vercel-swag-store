@@ -35,6 +35,14 @@ const nextConfig: NextConfig = {
         { source: '/products.md', destination: '/md/products' },
         { source: '/products/category/:slug([^/]+)\\.md', destination: '/md/category/:slug' },
         { source: '/products/:slug([^/]+)\\.md', destination: '/md/product/:slug' },
+        // A category search with no query is one of a closed set, so it is
+        // served from a prerendered page (app/search/category/[slug]).
+        {
+          source: '/search',
+          has: [{ type: 'query', key: 'category', value: '(?<category>[a-z0-9-]+)' }],
+          missing: [{ type: 'query', key: 'q' }],
+          destination: '/search/category/:category',
+        },
       ],
       afterFiles: [],
       fallback: [],

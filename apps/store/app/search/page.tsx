@@ -1,31 +1,15 @@
 import type { Metadata } from 'next'
-import { Suspense } from 'react'
-import { Container } from '@/components/container'
-import { SearchForm } from '@/components/search/search-form'
-import {
-  ResultsSkeleton,
-  SearchResults,
-} from '@/components/search/search-results'
-import {
-  SearchResultsRegion,
-  SearchTransition,
-} from '@/components/search/search-transition'
+import { SearchView } from '@/components/search/search-view'
 import { normaliseQuery } from '@/lib/search'
 
 type Props = PageProps<'/search'>
-
-const DESCRIPTION = 'Search the store by name and narrow the results by category.'
 
 /**
  * Awaits `searchParams`, so the metadata streams in rather than being part of
  * the prerender; the page itself stays a partial prerender. Results are never
  * indexed: they are a slice of the catalogue under an arbitrary URL, and the
- * product pages are the pages worth finding.
- *
- * Streamed metadata lands in the body, where a tool that reads only the head
- * finds no description. The description does not depend on the query, so the
- * page renders it and its Open Graph twin in the static shell and this leaves
- * both out.
+ * product pages are the pages worth finding. The description is rendered by
+ * `SearchView`, so this leaves it out.
  */
 export async function generateMetadata({
   searchParams,
@@ -38,26 +22,10 @@ export async function generateMetadata({
 }
 
 /**
- * The heading and the form are the static shell. `searchParams` is passed on
- * unawaited: awaiting it here would make the whole route dynamic. The Suspense
- * boundary is not re-keyed per search, so the previous grid stays on screen
- * while the next one loads.
+ * The search page for a query. A category with no query never reaches it:
+ * `next.config.ts` rewrites that URL to `/search/category/[slug]`, which is
+ * prerendered.
  */
 export default function SearchPage({ searchParams }: Props) {
-  return (
-    <SearchTransition>
-      {/* React moves it into the head of the prerendered shell. */}
-      <meta name="description" content={DESCRIPTION} />
-      <meta property="og:description" content={DESCRIPTION} />
-      <Container className="flex flex-col gap-6 py-8 md:gap-8 md:py-12">
-        <h1 className="text-3xl font-medium tracking-tight">Search</h1>
-        <SearchForm />
-        <SearchResultsRegion>
-          <Suspense fallback={<ResultsSkeleton />}>
-            <SearchResults searchParams={searchParams} />
-          </Suspense>
-        </SearchResultsRegion>
-      </Container>
-    </SearchTransition>
-  )
+  return <SearchView searchParams={searchParams} />
 }
