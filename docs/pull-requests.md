@@ -2100,7 +2100,7 @@ https://claude.ai/code/session_01CSXtY9ATgQCfhdAzo8ShH3
 
 ## Summary
 
-A check of the social sharing tags against the requirements ( "Include Open Graph metadata (`openGraph`) for social sharing") found one gap. Every page carried `og:description` except `/search`.
+A check of the social sharing tags against the requirements ("Include Open Graph metadata (`openGraph`) for social sharing") found one gap. Every page carried `og:description` except `/search`.
 
 ## The gap
 

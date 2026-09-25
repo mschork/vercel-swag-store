@@ -4,7 +4,7 @@ Settled choices that every epic spec inherits. Change here first, then in the sp
 
 ## Scope and delivery
 
-- Deliverables: public GitHub repo plus two Vercel deployments (store, studio); links shared.
+- Deliverables: a public GitHub repository plus two Vercel deployments, the store and the Studio.
 - Licence: none. The repo is public to be read; the README states the code is not licensed for reuse.
 - No fixed deadline. Plan for about one week for E1 to E7 and E10 to E12; Sanity extras (testimonials, collections, guides, extra routes) are stretch.
 - Build workflow: Claude Code run locally, one spec file per epic under `specs/`, plus `AGENTS.md` at the repo root. One branch and PR per epic; Vercel preview deployment with comments enabled for review before merge. Working documents that must not be committed (unredacted API reference, scratch notes) live under `working/`, which is git-ignored; anything under `specs/` is committed and must contain no secrets.

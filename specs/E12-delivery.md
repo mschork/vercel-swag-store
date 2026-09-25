@@ -4,7 +4,7 @@ Branch: `epic/E12-delivery`. Depends on: everything required (E01 to E07, E10, E
 
 ## Goal
 
-A release someone can open cold: a public repo whose README explains the architecture in the terms the requirements use, two working deployments, machine-checked verification, and the email.
+A release someone can open cold: a public repo whose README explains the architecture in the terms the requirements use, two working deployments, and machine-checked verification.
 
 ## Scope
 
@@ -56,9 +56,6 @@ Sections, in this order, each short:
 
 One line per requirement in the requirements, ticked with the route or file that satisfies it. Include: header, footer, layout, responsive, root metadata, page metadata, OG, Cache Components enabled, hero, promo, featured grid, PDP image, info, stock, quantity, Add to Cart, cart add, badge, view, item display, adjust, remove, subtotal, persistence, search input, triggers, default, results, category, empty, loading, URL persistence.
 
-### Email
-
-
 
 ## Acceptance criteria
 
@@ -66,5 +63,4 @@ One line per requirement in the requirements, ticked with the route or file that
 - [ ] README complete; a reader who has not seen the code can explain the caching model from it.
 - [ ] Both URLs public; repo public; tag pushed.
 - [ ] Release checklist fully ticked.
-- [ ] Email draft in `docs/email.md`.
 - [x] The deployed store is `noindex` on every route, checked against production.
