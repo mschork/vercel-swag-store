@@ -19,9 +19,12 @@ export function getHomeFeatured(): Promise<Product[]> {
 /**
  * The products testimonials name most, as the home page shows them: Sanity
  * ranks, the API supplies every fact, and a product the API dropped never
- * appears. `exclude` drops products the caller already shows.
+ * appears. `limit` is `null` for the whole ranking.
  */
-export async function getFavourites(exclude: readonly string[] = []): Promise<Product[]> {
+export async function getFavourites(
+  limit: number | null = MAX_FAVOURITES,
+): Promise<Product[]> {
   const [rows, catalogue] = await Promise.all([getFavouriteProducts(), getAllProducts()])
-  return favouriteProducts(rows ?? [], catalogue, exclude).slice(0, MAX_FAVOURITES)
+  const ranked = favouriteProducts(rows ?? [], catalogue)
+  return limit === null ? ranked : ranked.slice(0, limit)
 }
