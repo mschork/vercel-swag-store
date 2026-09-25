@@ -1,7 +1,10 @@
 import { ProductGrid, ProductGridSkeleton } from '@/components/product-grid'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getCategories } from '@/lib/api/categories'
-import { getFeaturedProducts, getProductsAtRequestTime } from '@/lib/api/products'
+import {
+  getFeaturedProductsAtRequestTime,
+  getProductsAtRequestTime,
+} from '@/lib/api/products'
 import type { Category, Product } from '@/lib/api/types'
 import { RESULT_CAP, expandQuery, mergeResults, normaliseQuery } from '@/lib/search'
 import { recordGapAfterResponse } from '@/lib/search/record-gap'
@@ -103,7 +106,7 @@ async function search(
   categories: readonly Category[],
 ): Promise<Outcome> {
   if (!query && !category) {
-    const products = await getFeaturedProducts({
+    const products = await getFeaturedProductsAtRequestTime({
       limit: DEFAULT_COUNT,
       min: DEFAULT_COUNT,
     })
