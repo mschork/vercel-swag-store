@@ -99,6 +99,8 @@ test('the response to a visitor without a visit holds the buy panel and the prom
   page,
   request,
 }) => {
+  // Three responses to a visitor without a visit, each drawing the catalogue.
+  test.slow()
   await page.goto('/')
   const href = await firstProductHref(page)
 

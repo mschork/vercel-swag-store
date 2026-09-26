@@ -324,7 +324,7 @@ test('the cart opened at once after Add to Cart shows the add as a saving row, n
   await expect(statusOf(row)).toHaveText('Saving…', AT_ONCE)
   expect(actions.addsAnswered()).toBe(0)
   await expect(row.getByRole('button', { name: `Remove ${product.name}` })).toBeDisabled()
-  await expect(page.getByRole('button', { name: 'Checkout' })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Saving…' })).toBeDisabled()
 
   // The save lands and the row settles in place.
   await expect.poll(actions.addsAnswered, SAVED).toBe(1)
@@ -447,6 +447,25 @@ test('two rows changed together each keep their own saved quantity', async ({
   await page.reload()
   await expect(rows(page).nth(0).getByLabel('Quantity', { exact: true })).toHaveValue('2', SAVED)
   await expect(rows(page).nth(1).getByLabel('Quantity', { exact: true })).toHaveValue('3', SAVED)
+})
+
+test('a product added from the row leaves it, and the next one takes the last place', async ({
+  page,
+  context,
+}) => {
+  const row = await openCartToAddFrom(page, context)
+  const cards = row.getByRole('listitem')
+  const hrefs = () =>
+    cards.evaluateAll((items) => items.map((item) => item.querySelector('a')?.getAttribute('href')))
+  const [added, ...rest] = await hrefs()
+
+  await cards.first().getByRole('button', { name: /^Add to Cart/ }).click()
+  // It fades in place first, out of the tab order, and then the row closes up.
+  await expect(cards.first()).toHaveAttribute('inert', '', AT_ONCE)
+  await expect.poll(hrefs, AT_ONCE).not.toContain(added)
+  const after = await hrefs()
+  expect(after.slice(0, rest.length)).toEqual(rest)
+  expect(after).toHaveLength(rest.length + 1)
 })
 
 test('an order placed from a cart that was empty on load clears the badge', async ({
