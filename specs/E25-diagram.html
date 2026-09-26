@@ -34,8 +34,6 @@
   .sw.new { border-color: var(--new); } .sw.changed { border-color: var(--changed); border-style: dashed; } .sw.reused { border-color: var(--reused); }
   .sw.num { width: 18px; height: 18px; border-radius: 50%; background: #fff; border-color: #fff; }
   .frame { position: relative; border: 1px solid var(--line); background: var(--bg); overflow-x: auto; }
-  .frame::before, .frame::after { content: "+"; position: absolute; font: 300 22px/1 var(--sans); color: var(--muted); }
-  .frame::before { top: -12px; left: -7px; } .frame::after { bottom: -12px; right: -7px; }
   .frame svg { display: block; min-width: 1140px; width: 100%; height: auto; }
   svg text { font-family: var(--mono); }
   .lane { font-size: 11px; letter-spacing: .1em; fill: var(--muted); }
