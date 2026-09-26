@@ -19,6 +19,7 @@ export const siteSettings = defineType({
     { name: 'seo', title: 'SEO and sharing', default: true },
     { name: 'chrome', title: 'Header and footer' },
     { name: 'productPage', title: 'Product page' },
+    { name: 'productListing', title: 'Product listing' },
     { name: 'searchPage', title: 'Search page' },
   ],
   fields: [
@@ -120,6 +121,25 @@ export const siteSettings = defineType({
           title: 'Questions',
           type: 'string',
           description: 'Default: “Common questions”.',
+        }),
+      ],
+    }),
+    defineField({
+      name: 'productListing',
+      title: 'Product listing',
+      type: 'object',
+      group: 'productListing',
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({
+          name: 'intro',
+          title: 'Intro for all products',
+          type: 'text',
+          rows: 2,
+          validation: (rule) =>
+            rule.max(SEO_DESCRIPTION_LENGTH).warning('Also the page’s description; keep it short.'),
+          description:
+            'The line under “All products”, and the page’s description. A category’s own intro is set on the category. Default: “Filter through our great range of swag products.”',
         }),
       ],
     }),
