@@ -120,9 +120,9 @@ export const ADD_CARD_CLASS_NAME = 'group block h-full rounded-lg'
 
 /**
  * What an add card shows, for a card that is an add button rather than a
- * link: one white tile with the photo, the name and the price, and on a touch
- * screen an "Add to cart" strip, because there is no hover to show that the
- * card adds; with a pointer a plus on the photo says it. The tile is the
+ * link: one white tile with the photo, the name, the price and an "Add to
+ * cart" strip. The strip turns to the accent colour on hover or focus, and is
+ * in it from the start on a touch screen, which has no hover. The tile is the
  * photos' white in both themes. Spans throughout, because a button holds only
  * phrasing content.
  */
@@ -143,12 +143,6 @@ export function AddCardBody({
           className="motion-safe:transition-transform motion-safe:duration-400 motion-safe:ease-[cubic-bezier(.2,.7,.2,1)] group-hover:scale-[1.035]"
         />
         <CardStock productId={product.id} />
-        <span
-          aria-hidden="true"
-          className="absolute right-2.5 bottom-2.5 flex size-8 items-center justify-center rounded-full border border-border bg-photo text-lg leading-none pointer-coarse:hidden motion-safe:transition-colors motion-safe:duration-250 group-hover:border-accent group-hover:bg-accent group-hover:text-accent-fg group-focus-visible:border-accent group-focus-visible:bg-accent group-focus-visible:text-accent-fg"
-        >
-          +
-        </span>
       </span>
       <span className="flex flex-1 flex-col gap-1 px-3 pt-2 pb-3 text-left">
         {/* The size first: tailwind-merge drops a `leading-*` that precedes a `text-*` size. */}
@@ -157,8 +151,8 @@ export function AddCardBody({
         </span>
         <Price cents={product.price} currency={product.currency} size="sm" className="mt-auto" />
       </span>
-      <span aria-hidden="true" className="hidden px-2 pb-2 pointer-coarse:block">
-        <span className="flex justify-center rounded-md bg-accent py-2 text-xs leading-4 font-medium text-accent-fg">
+      <span aria-hidden="true" className="block px-2 pb-2">
+        <span className="flex justify-center rounded-md bg-on-photo/5 py-2 text-xs leading-4 font-medium text-on-photo pointer-coarse:bg-accent pointer-coarse:text-accent-fg motion-safe:transition-colors motion-safe:duration-200 group-hover:bg-accent group-hover:text-accent-fg group-focus-visible:bg-accent group-focus-visible:text-accent-fg">
           Add to cart
         </span>
       </span>
