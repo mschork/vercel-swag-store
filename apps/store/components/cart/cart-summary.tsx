@@ -3,6 +3,7 @@
 import { useFormStatus } from 'react-dom'
 import { placeOrder } from '@/app/cart/actions'
 import { Price } from '@/components/price'
+import { Spinner } from '@/components/spinner'
 import { Button } from '@/components/ui/button'
 
 /**
@@ -14,8 +15,9 @@ import { Button } from '@/components/ui/button'
  * `blocked` means a line holds more than there is of it. Checkout is disabled
  * and says why; the action refuses the same order, so a native post made
  * before hydration lands back on this page rather than going through.
- * `saving` means an add is still saving; Checkout waits for it, because the
- * order is placed from the cart mirror, which does not hold it yet.
+ * `saving` means an add is still saving; Checkout waits for it, spinning,
+ * because the order is placed from the cart mirror, which does not hold it
+ * yet.
  */
 export function CartSummary({
   totalItems,
@@ -54,9 +56,9 @@ export function CartSummary({
         </div>
       </dl>
       <form action={placeOrder} className="flex flex-col gap-2">
-        <CheckoutButton blocked={blocked || saving} />
+        <CheckoutButton blocked={blocked} saving={saving} />
         {saving ? (
-          <p role="status" className="text-sm leading-6 text-fg-secondary">
+          <p role="status" className="sr-only">
             Your cart is saving. Checkout opens when it is saved.
           </p>
         ) : blocked ? (
@@ -69,16 +71,23 @@ export function CartSummary({
   )
 }
 
-function CheckoutButton({ blocked }: { blocked: boolean }) {
+function CheckoutButton({ blocked, saving }: { blocked: boolean; saving: boolean }) {
   const { pending } = useFormStatus()
   return (
     <Button
       type="submit"
       size="lg"
-      disabled={pending || blocked}
+      disabled={pending || blocked || saving}
       className="h-11 w-full"
     >
-      Checkout
+      {saving ? (
+        <>
+          <Spinner />
+          Saving…
+        </>
+      ) : (
+        'Checkout'
+      )}
     </Button>
   )
 }
