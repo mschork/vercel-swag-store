@@ -21,7 +21,7 @@ export default defineConfig({
     environment: 'node',
     include: ['**/*.integration.test.ts'],
     exclude: ['node_modules/**', '.next/**'],
-    setupFiles: ['./test/setup.ts'],
+    setupFiles: ['./test/integration-setup.ts', './test/setup.ts'],
     testTimeout: 60_000,
     // Hermetic: no step of the workflow may reach Sanity or a model from here.
     env: { SANITY_API_WRITE_TOKEN: '', DEMAND_ANALYSE_SECRET: '' },
