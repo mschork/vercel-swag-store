@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import { withBotId } from 'botid/next/config'
 import { withWorkflow } from 'workflow/next'
 import { IMAGE_HOSTS, parseStudioOrigins, securityHeaders } from './lib/security-headers'
 
@@ -68,4 +69,4 @@ const nextConfig: NextConfig = {
 
 // Vercel Workflow compiles `workflows/` and adds its own routes under
 // /.well-known/workflow. Every other route keeps its rendering mode.
-export default withWorkflow(nextConfig)
+export default withWorkflow(withBotId(nextConfig))

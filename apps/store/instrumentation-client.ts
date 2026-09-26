@@ -1,3 +1,4 @@
+import { initBotId } from 'botid/client/core'
 import { noteNavigation } from '@/lib/cart/adds-in-flight'
 
 /**
@@ -11,3 +12,12 @@ export function onRouterTransitionStart(
 ): void {
   noteNavigation(navigationType !== 'traverse')
 }
+
+// Spike: BotID on the testimonial chat routes.
+initBotId({
+  protect: [
+    { path: '/api/testimonials/chat', method: 'POST' },
+    { path: '/api/testimonials/chat/*/message', method: 'POST' },
+    { path: '/api/testimonials/chat/*/stream', method: 'GET' },
+  ],
+})
