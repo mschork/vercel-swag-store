@@ -30,6 +30,7 @@ The browser downsizes and re-encodes the photo before upload, which removes EXIF
 
 ## Consequences
 
-- `@ai-sdk/workflow` requires Workflow 5, which is in beta while 4.x is the stable line. The demand loop moves to it too.
+- `@ai-sdk/workflow` requires Workflow 5, which is in beta while 4.x is the stable line. The store pins both packages to exact versions and upgrades them deliberately; the demand loop moves to Workflow 5 too. Pinning freezes the SDK, not Vercel's hosted workflow backend, which a beta SDK depends on; the `streamText` fallback above is the way out if that changes under us.
+- Writing the agent loop by hand on Workflow 4 was the stable alternative: the same durability in about a hundred lines. `WorkflowAgent` was chosen because this is a demonstration of the platform's current affordances.
 - Resend is a new vendor for the verification code and the outcome emails. Vercel has no email product; it is installed from the Vercel Marketplace and called over `fetch`, with an adapter that logs instead of sending when no key is set.
 - The email address is removed from the submission once the outcome email is sent.
