@@ -15,7 +15,7 @@ export async function CartBadge() {
       href="/cart"
       className="inline-flex rounded-full hover:bg-bg-secondary"
     >
-      <CartCount serverCount={count} />
+      <CartCount serverRead={{ count }} />
     </Link>
   )
 }

@@ -29,7 +29,7 @@ const AT_ONCE = { timeout: 2_000 }
 
 test.describe.configure({ timeout: 180_000 })
 
-const STOCK_LINE = /^(In stock|Only \d+ left|Out of stock)$/
+const STOCK_LINE = /^(In stock|Only \d+ left|This item is out of stock at the moment\. Check back soon\.)$/
 const PRICE = /^\$\d{1,3}(,\d{3})*\.\d{2}$/
 
 const usd = (cents: number) =>
@@ -222,9 +222,7 @@ test('the cart refuses more than the visit holds, and blocks checkout', async ({
   // With both in the cart there is nothing left to ask for.
   await expect(page.getByRole('main').getByText('All 2 are in your cart')).toBeVisible()
   await expect(page.getByLabel('Quantity', { exact: true })).toBeDisabled()
-  await expect(
-    page.getByRole('button', { name: 'Add to Cart', exact: true }),
-  ).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'All in your cart' })).toBeDisabled()
 
   // A restock that draws fewer leaves the line above what there is.
   await page.goto('/cart')
@@ -468,4 +466,21 @@ test('a product added from the row leaves it, and the next one takes the last pl
   const after = await hrefs()
   expect(after.slice(0, rest.length)).toEqual(rest)
   expect(after).toHaveLength(rest.length + 1)
+})
+
+test('an order placed from a cart that was empty on load clears the badge', async ({
+  page,
+  context,
+}) => {
+  // The badge's first server read is 0; the add changes it on the client only.
+  const row = await openCartToAddFrom(page, context)
+  await row.getByRole('button', { name: /^Add to Cart/ }).first().click()
+  await expect(badge(page, 'Cart, 1 item')).toBeVisible(SAVED)
+  await expect(page.getByRole('button', { name: 'Checkout', exact: true })).toBeEnabled(SAVED)
+
+  await page.getByRole('button', { name: 'Checkout', exact: true }).click()
+  await expect(page).toHaveURL(/\/checkout$/, SAVED)
+  await expect(badge(page, 'Cart, 0 items')).toBeVisible(SAVED)
+  await page.getByRole('link', { name: 'Products', exact: true }).click()
+  await expect(badge(page, 'Cart, 0 items')).toBeVisible()
 })

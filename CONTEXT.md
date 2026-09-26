@@ -120,6 +120,10 @@ _Avoid_: AI page, LLM view, text export
 The page that shows every product the API returns, optionally narrowed to one category. For browsing; search is for finding.
 _Avoid_: Overview, shop, catalogue page, all products
 
+**Listing intro**:
+The line under a product listing's heading. For one category it is that category's intro; for the unfiltered listing it is a line an editor writes once in the site settings. Every listing has one, so a listing never changes height when the category changes.
+_Avoid_: Subtitle, tagline, description
+
 **Featured product**:
 A product the API flags as featured; a human choice, not a popularity measure.
 _Avoid_: Popular, trending, bestseller

@@ -18,7 +18,7 @@ import { catalogueIds, seedSession, seedVisit } from './visit'
 test.describe.configure({ timeout: 180_000 })
 test.skip(process.platform !== 'darwin', 'The committed snapshots are macOS renders.')
 
-const STOCK_LINE = /^(In stock|Only \d+ left|Out of stock|Stock unavailable)$/
+const STOCK_LINE = /^(In stock|Only \d+ left|This item is out of stock at the moment\. Check back soon\.|Stock unavailable)$/
 
 /** What the seeded visit holds of the shot product, so its line reads the same. */
 const SEEDED_STOCK = 12

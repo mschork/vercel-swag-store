@@ -3,8 +3,11 @@ export type StockTone = 'success' | 'warning' | 'danger' | 'muted'
 export interface StockStatus {
   label: string
   tone: StockTone
-  /** Add to Cart is enabled only when there is something left to add. */
-  canAddToCart: boolean
+  /**
+   * What the button says in place of Add to Cart when nothing is left to
+   * add; null when there is something to add.
+   */
+  unavailableLabel: string | null
   /** The largest quantity the stepper allows: what remains, 0 when nothing does. */
   maxQuantity: number
 }
@@ -14,6 +17,9 @@ export interface StockStatus {
  * `lowStock` flag: true from 1 to 5, false from 6 up.
  */
 export const LOW_STOCK_THRESHOLD = 5
+
+/** The button when the product cannot be had, known or not. */
+const UNAVAILABLE = 'Currently unavailable'
 
 /**
  * Everything a product's stock line and Add to Cart button derive from
@@ -29,15 +35,15 @@ export function stockStatus(draw: number | null, inCart = 0): StockStatus {
     return {
       label: 'Stock unavailable',
       tone: 'muted',
-      canAddToCart: false,
+      unavailableLabel: UNAVAILABLE,
       maxQuantity: 0,
     }
   }
   if (draw === 0) {
     return {
-      label: 'Out of stock',
+      label: 'This item is out of stock at the moment. Check back soon.',
       tone: 'danger',
-      canAddToCart: false,
+      unavailableLabel: UNAVAILABLE,
       maxQuantity: 0,
     }
   }
@@ -46,14 +52,14 @@ export function stockStatus(draw: number | null, inCart = 0): StockStatus {
     return {
       label: `All ${draw} are in your cart`,
       tone: 'warning',
-      canAddToCart: false,
+      unavailableLabel: 'All in your cart',
       maxQuantity: 0,
     }
   }
   return {
     label: remaining <= LOW_STOCK_THRESHOLD ? `Only ${remaining} left` : 'In stock',
     tone: remaining <= LOW_STOCK_THRESHOLD ? 'warning' : 'success',
-    canAddToCart: true,
+    unavailableLabel: null,
     maxQuantity: remaining,
   }
 }

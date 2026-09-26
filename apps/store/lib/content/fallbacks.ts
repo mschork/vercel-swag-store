@@ -55,6 +55,17 @@ export const FAVOURITES_FALLBACK = {
 } as const
 
 /**
+ * The listing intro of the unfiltered product listing, until
+ * `siteSettings.productListing.intro` says otherwise.
+ */
+export const LISTING_FALLBACK = {
+  intro: 'Filter through our great range of swag products.',
+} as const
+
+/** A category's listing intro and description, until its document has an intro. */
+export const categoryIntroFallback = (name: string) => `Browse all ${name} in the store.`
+
+/**
  * The heading over the search page's default grid, matching
  * `siteSettings.searchPage`. It invites rather than labels, so the featured
  * products do not read as the results of a search.

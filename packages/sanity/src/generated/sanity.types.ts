@@ -279,6 +279,9 @@ export type SiteSettings = {
     testimonialsHeading?: string
     faqHeading?: string
   }
+  productListing?: {
+    intro?: string
+  }
   searchPage?: {
     featuredHeading?: string
   }
@@ -446,7 +449,7 @@ export type AllSanitySchemaTypes =
 
 // Source: ../store/lib/sanity/queries.ts
 // Variable: siteSettingsQuery
-// Query: *[_type == "siteSettings"][0]{    storeName, seoTitle, seoDescription, footerText,    productPage{ aboutHeading, careHeading, testimonialsHeading, faqHeading },    searchPage{ featuredHeading },    "ogImage": ogImage{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio },    socialLinks[]{ label, url }  }
+// Query: *[_type == "siteSettings"][0]{    storeName, seoTitle, seoDescription, footerText,    productPage{ aboutHeading, careHeading, testimonialsHeading, faqHeading },    productListing{ intro },    searchPage{ featuredHeading },    "ogImage": ogImage{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio },    socialLinks[]{ label, url }  }
 export type SiteSettingsQueryResult = {
   storeName: string
   seoTitle: string | null
@@ -457,6 +460,9 @@ export type SiteSettingsQueryResult = {
     careHeading: string | null
     testimonialsHeading: string | null
     faqHeading: string | null
+  } | null
+  productListing: {
+    intro: string | null
   } | null
   searchPage: {
     featuredHeading: string | null

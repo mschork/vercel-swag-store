@@ -6,7 +6,7 @@ describe('stockStatus', () => {
     expect(stockStatus(12)).toEqual({
       label: 'In stock',
       tone: 'success',
-      canAddToCart: true,
+      unavailableLabel: null,
       maxQuantity: 12,
     })
   })
@@ -15,7 +15,6 @@ describe('stockStatus', () => {
     expect(stockStatus(LOW_STOCK_THRESHOLD)).toMatchObject({
       label: `Only ${LOW_STOCK_THRESHOLD} left`,
       tone: 'warning',
-      canAddToCart: true,
     })
   })
 
@@ -25,9 +24,9 @@ describe('stockStatus', () => {
 
   it('is out of stock at a draw of 0, and cannot be added', () => {
     expect(stockStatus(0)).toEqual({
-      label: 'Out of stock',
+      label: 'This item is out of stock at the moment. Check back soon.',
       tone: 'danger',
-      canAddToCart: false,
+      unavailableLabel: 'Currently unavailable',
       maxQuantity: 0,
     })
   })
@@ -36,7 +35,7 @@ describe('stockStatus', () => {
     expect(stockStatus(null)).toEqual({
       label: 'Stock unavailable',
       tone: 'muted',
-      canAddToCart: false,
+      unavailableLabel: 'Currently unavailable',
       maxQuantity: 0,
     })
   })
@@ -49,7 +48,7 @@ describe('stockStatus', () => {
     expect(stockStatus(4, 4)).toEqual({
       label: 'All 4 are in your cart',
       tone: 'warning',
-      canAddToCart: false,
+      unavailableLabel: 'All in your cart',
       maxQuantity: 0,
     })
   })
@@ -57,7 +56,6 @@ describe('stockStatus', () => {
   it('never goes below nothing left when the cart holds more than the draw', () => {
     expect(stockStatus(2, 7)).toMatchObject({
       label: 'All 2 are in your cart',
-      canAddToCart: false,
       maxQuantity: 0,
     })
   })

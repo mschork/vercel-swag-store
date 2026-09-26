@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { ProductListing } from '@/components/listing/product-listing'
 import { findCategory, getCategories } from '@/lib/api/categories'
+import { categoryIntroFallback } from '@/lib/content/fallbacks'
 import { categoryPath } from '@/lib/listing'
 import { markdownAlternate } from '@/lib/markdown/paths'
 import {
@@ -41,17 +42,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: category.name,
     // The editor's intro when there is one; read without stega, because a
     // description is exported to machines.
-    description: document?.intro || `Browse all ${category.name} in the store.`,
+    description: document?.intro || categoryIntroFallback(category.name),
     alternates: markdownAlternate(categoryPath(category.slug)),
   }
 }
 
 /**
  * The intro comes from the cached Sanity read; a missing document or a failed
- * call is `null`, and the page is then exactly the API-only listing.
+ * call is `null`, and the page then shows the fallback intro.
  */
 export default async function CategoryPage({ params }: Props) {
   const category = await categoryFor(params)
   const document = await getCategoryDocument(category.slug)
-  return <ProductListing category={category} intro={document?.intro} />
+  return (
+    <ProductListing
+      category={category}
+      intro={document?.intro || categoryIntroFallback(category.name)}
+    />
+  )
 }

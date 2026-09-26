@@ -81,14 +81,14 @@ A real category with no products renders the shared `components/empty-state.tsx`
 
 ### Read `lib/sanity/content.ts`
 
-- `getCategoryDocument(apiSlug)` through `sanityFetch`, tags `sanity:category` and `sanity:category-<slug>`, wrapped in `loadOptional`: a missing document, an empty intro or a Sanity outage all mean "no paragraph", and the listing renders exactly as in slice 1.
+- `getCategoryDocument(apiSlug)` through `sanityFetch`, tags `sanity:category` and `sanity:category-<slug>`, wrapped in `loadOptional`: a missing document, an empty intro or a Sanity outage all mean the fallback intro, "Browse all {name} in the store.", which is also the slice 1 meta description.
 - `getCategoryDocumentForMetadata(apiSlug)` with `stega: false` for the description.
 - The publish webhook's tag mapping covers `category` documents.
-- `/products` has no intro: it has no document behind it, and a singleton for one sentence is not worth a schema.
+- `/products` takes its intro from `siteSettings.productListing.intro`, with the fallback "Filter through our great range of swag products.", so every listing has one and the chips never move when the category changes.
 
 ### Render
 
-The intro is a paragraph under the h1, above the count, in the secondary text colour, `max-w-prose`. The meta description is the intro when there is one, the slice 1 sentence otherwise.
+The intro is a paragraph under the h1, above the count, in the secondary text colour, `max-w-prose`, with two lines' height reserved. The meta description is the intro when there is one, the fallback otherwise.
 
 ### Draft mode and Presentation
 
@@ -123,7 +123,7 @@ Slice 1
 Slice 2
 
 - [x] An editor's intro shows under the category heading and as the meta description; publishing updates the page through the webhook.
-- [x] No intro, no document or no Sanity: the page equals slice 1.
+- [x] No intro, no document or no Sanity: the page shows the fallback intro.
 - [ ] In draft mode the intro is click-to-edit, and the category document shows its location in the Studio.
 - [x] A sync run leaves `intro` untouched; the seed never overwrites one.
 
