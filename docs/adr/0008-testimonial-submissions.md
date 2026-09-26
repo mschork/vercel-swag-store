@@ -24,6 +24,7 @@ The browser downsizes and re-encodes the photo before upload, which removes EXIF
 ## Considered options
 
 - A `streamText` route for the chat, with the draft in the session store, and a workflow started at submit. Fewer moving parts and no dependency on Workflow 5, but a dropped connection loses the turn in flight, and the conversation has no durable record. This is the fallback if the Workflow 5 upgrade fails its spike.
+- The agent loop written by hand on stable Workflow 4: a step per model call, a hook per widget answer. The same durability in about a hundred lines and no beta; `WorkflowAgent` was chosen because this store demonstrates the platform's current affordances.
 - Two runs, one for the conversation and one for the review. Nothing is gained: the second run would start from data the first already holds.
 - The photo in Sanity from the start. Where the other photos are, but public before moderation.
 - Writing visitor submissions as `testimonial` documents with a status. Every public query would have to filter on status forever, and the email address would sit in a type the store reads anonymously.
@@ -31,6 +32,5 @@ The browser downsizes and re-encodes the photo before upload, which removes EXIF
 ## Consequences
 
 - `@ai-sdk/workflow` requires Workflow 5, which is in beta while 4.x is the stable line. The store pins both packages to exact versions and upgrades them deliberately; the demand loop moves to Workflow 5 too. Pinning freezes the SDK, not Vercel's hosted workflow backend, which a beta SDK depends on; the `streamText` fallback above is the way out if that changes under us.
-- Writing the agent loop by hand on Workflow 4 was the stable alternative: the same durability in about a hundred lines. `WorkflowAgent` was chosen because this is a demonstration of the platform's current affordances.
 - Resend is a new vendor for the verification code and the outcome emails. Vercel has no email product; it is installed from the Vercel Marketplace and called over `fetch`, with an adapter that logs instead of sending when no key is set.
 - The email address is removed from the submission once the outcome email is sent.
