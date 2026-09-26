@@ -76,7 +76,7 @@ async function settled(page: Page) {
 /** The panel a visitor with an empty cart sees for `draw`, as `recordPanel` writes it. */
 function panelFor(draw: number | undefined): string {
   if (draw === undefined) return 'no draw kept'
-  if (draw === 0) return 'This item is out of stock at the moment. Check back soon.|1'
+  if (draw === 0) return 'This item is out of stock at the moment. Check back soon.|0'
   return `${draw <= LOW_STOCK ? `Only ${draw} left` : 'In stock'}|${draw}`
 }
 

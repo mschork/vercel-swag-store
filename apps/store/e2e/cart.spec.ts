@@ -221,7 +221,7 @@ test('the cart refuses more than the visit holds, and blocks checkout', async ({
 
   // With both in the cart there is nothing left to ask for.
   await expect(page.getByRole('main').getByText('All 2 are in your cart')).toBeVisible()
-  await expect(page.getByLabel('Quantity', { exact: true })).toBeHidden()
+  await expect(page.getByLabel('Quantity', { exact: true })).toBeDisabled()
   await expect(page.getByRole('button', { name: 'All in your cart' })).toBeDisabled()
 
   // A restock that draws fewer leaves the line above what there is.

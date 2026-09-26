@@ -41,7 +41,7 @@ Branch: `epic/E05-pdp`. Depends on: E02, E03. Blocks: E06 (needs the Add to Cart
 
 - Client component. `<form action={addToCart}>` where `addToCart` is the Server Action from E06 (in this epic, a stub action that logs and returns `{ ok: true }` so the epic ships independently; E06 replaces the body).
 - Hidden `productId`, `<QuantityStepper name="quantity" min={1} max={max} />` (client, native number input plus minus and plus buttons, clamped, `aria-live` on the value).
-- Submit button text exactly "Add to Cart". When nothing is left it is disabled and reads "Currently unavailable" (out of stock, or no count) or "All in your cart", and the stepper is hidden in its own space, so the panel keeps its height.
+- Submit button text exactly "Add to Cart". When nothing is left it is disabled and reads "Currently unavailable" (out of stock, or no count) or "All in your cart", and the stepper stays in place, disabled at 0 and faded to 30% opacity.
 - After a successful action, show an inline "Added" confirmation with a link to `/cart`.
 
 ### Tests

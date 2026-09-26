@@ -56,7 +56,8 @@ test('says so and disables Add to Cart when the visit holds none', async ({
   await openFeatured(page, context, 0)
   await expect(stockLine(page)).toHaveText('This item is out of stock at the moment. Check back soon.')
   await expect(page.getByRole('button', { name: 'Currently unavailable' })).toBeDisabled()
-  await expect(page.getByLabel('Quantity', { exact: true })).toBeHidden()
+  await expect(page.getByLabel('Quantity', { exact: true })).toHaveValue('0')
+  await expect(page.getByLabel('Quantity', { exact: true })).toBeDisabled()
 })
 
 test('shows the same count on every reload', async ({ page, context }) => {

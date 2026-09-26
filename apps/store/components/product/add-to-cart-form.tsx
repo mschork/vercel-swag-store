@@ -15,7 +15,7 @@ const ADDING_LABEL_MS = 1000
 /**
  * Add to Cart as a Server Action form. `max` is what remains of the visit's
  * draw; when nothing does, `unavailable` is the disabled button's label and
- * the stepper is hidden in its own space, so the panel keeps its height. It
+ * the stepper stays in place, faded and at 0, so the panel keeps its shape. It
  * stays a native Server Action form, so it works before hydration.
  *
  * With JavaScript the button does not wait for the save
@@ -76,8 +76,13 @@ export function AddToCartForm({
     >
       <input type="hidden" name="productId" value={productId} />
       <div className="flex flex-col gap-3 md:flex-row md:items-end">
-        <div className={unavailable !== null ? 'invisible' : undefined}>
-          <QuantityStepper name="quantity" min={1} max={max} disabled={unavailable !== null} />
+        <div className={unavailable !== null ? 'opacity-30' : undefined}>
+          <QuantityStepper
+            name="quantity"
+            min={unavailable !== null ? 0 : 1}
+            max={max}
+            disabled={unavailable !== null}
+          />
         </div>
         <Button
           type="submit"
