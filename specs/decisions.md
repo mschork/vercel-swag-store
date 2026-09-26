@@ -61,7 +61,7 @@ Store, E11: `CATALOG_REVALIDATE_SECRET`.
 Store, E24, both optional and server only: `KV_REST_API_URL`, `KV_REST_API_TOKEN`. Playwright only: `E2E_SEED`.
 Store, E13 only: `SANITY_API_WRITE_TOKEN` (server only), `DEMAND_ANALYSE_SECRET`. No AI Gateway key: on Vercel the AI SDK authenticates with the deployment's OIDC token; locally `vercel env pull` provides one.
 Sanity Functions, E13 only: `STORE_URL` and `DEMAND_ANALYSE_SECRET` on `gap-threshold`, set with `sanity functions env add`, never in `sanity.blueprint.ts`.
-Store, E25 only, server only: `BLOB_READ_WRITE_TOKEN`, `RESEND_API_KEY`, `EMAIL_DOMAIN`, `TESTIMONIAL_PHOTO_SECRET`, `TESTIMONIAL_DECISION_SECRET`.
+Store, E25 only, server only: `SANITY_API_WRITE_TOKEN` (shared with E13), `BLOB_READ_WRITE_TOKEN`, `RESEND_API_KEY`, `EMAIL_DOMAIN`, `TESTIMONIAL_PHOTO_SECRET`, `TESTIMONIAL_DECISION_SECRET`.
 Sanity Functions, E25 only: `STORE_URL` and `TESTIMONIAL_DECISION_SECRET` on `submission-decided`.
 Studio: `SANITY_STUDIO_PROJECT_ID`, `SANITY_STUDIO_DATASET`. No API variables: the product picker reads `catalogProduct` documents.
 Local scripts only: `SANITY_API_WRITE_TOKEN` for the seed script.
