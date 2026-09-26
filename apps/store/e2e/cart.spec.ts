@@ -450,3 +450,20 @@ test('two rows changed together each keep their own saved quantity', async ({
   await expect(rows(page).nth(0).getByLabel('Quantity', { exact: true })).toHaveValue('2', SAVED)
   await expect(rows(page).nth(1).getByLabel('Quantity', { exact: true })).toHaveValue('3', SAVED)
 })
+
+test('an order placed from a cart that was empty on load clears the badge', async ({
+  page,
+  context,
+}) => {
+  // The badge's first server read is 0; the add changes it on the client only.
+  const row = await openCartToAddFrom(page, context)
+  await row.getByRole('button', { name: /^Add to Cart/ }).first().click()
+  await expect(badge(page, 'Cart, 1 item')).toBeVisible(SAVED)
+  await expect(page.getByRole('button', { name: 'Checkout', exact: true })).toBeEnabled(SAVED)
+
+  await page.getByRole('button', { name: 'Checkout', exact: true }).click()
+  await expect(page).toHaveURL(/\/checkout$/, SAVED)
+  await expect(badge(page, 'Cart, 0 items')).toBeVisible(SAVED)
+  await page.getByRole('link', { name: 'Products', exact: true }).click()
+  await expect(badge(page, 'Cart, 0 items')).toBeVisible()
+})
