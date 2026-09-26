@@ -82,7 +82,7 @@ The agent leads. Every fact arrives through a widget, a client-side tool with no
 | Tool | Kind | What happens |
 |---|---|---|
 | `askPhoto` | client | an upload button; the browser downsizes to `MAX_PHOTO_EDGE` px and re-encodes as JPEG through a canvas, which drops EXIF including location, then uploads to private Blob and answers the pathname |
-| `analysePhoto` | server | one vision call with structured output: quality (score, issues), safety (ok, reason), candidate products (slug, confidence). Runs against the catalogue from `getAllProducts` |
+| `analysePhoto` | server | one vision call with structured output: quality (score, issues), safety (ok, reason), `markVisible` (the store's mark, see below), candidate products (slug, confidence), a suggested alt text. Runs against the catalogue from `getAllProducts` |
 | `confirmProduct` | client | the top candidate's card with its API image: Yes, or "Pick another" showing the next two and a catalogue picker |
 | `askName` | client | a text input; the name is published exactly as typed |
 | `reviewQuote` | client | an editable text area holding the visitor's words, or the agent's shorter suggestion when they run over 240 characters; the visitor approves the exact text |
@@ -98,6 +98,7 @@ Rules the agent follows, enforced by code, not by the prompt:
 
 - **The draft lives in the run.** Only tool results change it. `submit` reads the draft, never the model's arguments, so the model cannot invent a product, a verified email or consent.
 - **Photo.** An unsafe photo is refused and the visitor may try once more. A photo too blurred, dark or small to use gets one retry with the reason, then the same refusal. `MAX_PHOTO_ATTEMPTS = 2`.
+- **The mark.** Every product the store sells carries its mark: a white, upward-pointing equilateral triangle on a black item, sometimes large (a book cover), sometimes small (a pen clip, a sock cuff). `MARK_DESCRIPTION` in `@repo/testimonials` states it once for the prompt. The model first answers whether the mark is visible, then which product it is from the item's type and shape, since colour does not tell the products apart. No visible mark caps every candidate below `PRODUCT_CONFIDENCE`: the agent asks for a photo that shows the triangle, then offers the picker. A lookalike (another brand's black mug, a triangle pointing down) is never matched on shape alone.
 - **Product.** When no candidate reaches `PRODUCT_CONFIDENCE`, the agent asks for another photo once, then offers the picker. Several products in one photo: the visitor picks one; the agent may record the others as `products[]` after the visitor confirms them. The submission records `productSource: 'agent' | 'visitor'`.
 - **Caps.** `MAX_TURNS = 20` per run. After that the agent says goodbye and the run ends.
 - **Off topic.** The agent declines and steers back. It never recommends, compares or prices products.
@@ -183,7 +184,7 @@ Answer on a throwaway branch and record the answers in the PR description.
 4. **Vision model.** `scripts/eval-identify.ts` in `apps/store`, run by hand, never in CI. The set:
    - the published testimonials with a photo, labelled by their `products[]` (22 on 26 Sep 2026, three with several products); the main measure
    - every product's API image, cropped, rotated, shrunk and recompressed with macOS `sips`, for products no testimonial shows
-   - under `working/testimonial-eval/`, never committed, sources in its `SOURCES.md`: `unrelated/` (photos with no product in them), `near-miss/` (generic or other brands' mugs, bottles, hoodies, t-shirts, caps, totes: the model must not claim them as ours) and `unusable/` (blurred, tiny, too dark)
+   - under `working/testimonial-eval/`, never committed, sources in its `SOURCES.md`: `unrelated/` (photos with no product in them), `near-miss/` (generic or other brands' mugs, bottles, hoodies, t-shirts, caps, totes, and catalogue images flipped so the triangle points down: the model must not claim them as ours) and `unusable/` (blurred, tiny, too dark)
    Run the set through `analysePhoto` with the two or three best vision models the Gateway free tier serves. Pick the model, set `PRODUCT_CONFIDENCE` from the results and record top-1 and top-3 accuracy per group in the PR. If top-1 on the testimonial photos is under 80 %, add a second pass that compares the photo with the images of the top five candidates. The testimonial photos are generated images and cleaner than a phone photo; the real hit rate comes from live submissions, which record the confidence and whether the visitor corrected the product.
 5. **Blob client upload and CSP.** Record the origin the browser uploads to and add exactly that to `connect-src`. Check whether `handleUploadPresigned` works with OIDC, which would remove `BLOB_READ_WRITE_TOKEN`.
 6. **BotID and CSP.** Record any script or connect origin BotID needs.
@@ -225,7 +226,7 @@ Answer on a throwaway branch and record the answers in the PR description.
 - [ ] `/testimonials` is prerendered; the build output shows it static, and the chat's JavaScript is not in its first load.
 - [ ] `/testimonials#share` from the footer opens the chat; opening it starts no run.
 - [ ] A visitor can go from photo to submitted in one conversation, and a reload in the middle resumes it.
-- [ ] A photo of a catalogue product is identified and confirmed; a photo of something else leads to one retry, then the picker; the submission records which.
+- [ ] A photo of a catalogue product with its mark visible is identified and confirmed; a black item without the mark, or with the triangle pointing down, is not matched; a photo of something else leads to one retry, then the picker; the submission records which.
 - [ ] An unsafe or unusable photo never reaches Sanity or an editor.
 - [ ] A name or quote with abusive words is refused with a request to rephrase.
 - [ ] The published quote is exactly the text the visitor approved.
