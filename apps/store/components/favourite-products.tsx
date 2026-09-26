@@ -38,7 +38,7 @@ export async function FavouriteProducts({
       </h2>
       <ProductGrid
         products={products}
-        variant="favourites"
+        variant={addCard ? 'addCards' : 'favourites'}
         addCard={addCard}
         buyableLimit={buyable ? MAX_FAVOURITES : undefined}
       />

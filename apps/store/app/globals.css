@@ -21,6 +21,8 @@
   --color-danger: #cb2a2f;
   /* Copy over the hero photo, which does not change with the theme. */
   --color-on-photo: #171717;
+  /* The product photos' own background, which does not change either. */
+  --color-photo: #ffffff;
 
   --radius-sm: 4px;
   --radius-lg: 8px;

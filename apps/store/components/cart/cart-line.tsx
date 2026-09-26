@@ -11,6 +11,7 @@ import {
 import { useCartCount } from '@/components/cart/cart-count'
 import { useVisit } from '@/components/visit/visit-provider'
 import { Price } from '@/components/price'
+import { Spinner } from '@/components/spinner'
 import { QuantityStepper } from '@/components/quantity-stepper'
 import { Button } from '@/components/ui/button'
 import {
@@ -178,7 +179,16 @@ export function CartLine({
               className={cn(pending && 'disabled:opacity-100')}
               onClick={remove}
             >
-              Remove
+              {/* While saving, the button's place says so, so the row keeps
+                  its height; the status line below announces it. */}
+              {pending ? (
+                <>
+                  <Spinner />
+                  <span aria-hidden="true">Saving…</span>
+                </>
+              ) : (
+                'Remove'
+              )}
             </Button>
           </div>
         </div>
@@ -188,7 +198,7 @@ export function CartLine({
         className={cn(
           'text-sm leading-6',
           pending ? 'text-fg-secondary' : 'text-danger',
-          pending || message ? 'mt-2' : 'sr-only',
+          message && !pending ? 'mt-2' : 'sr-only',
         )}
       >
         {pending ? 'Saving…' : message}

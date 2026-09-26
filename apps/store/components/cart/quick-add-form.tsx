@@ -52,14 +52,14 @@ export function QuickAddForm({
       onSubmit={submit}
       onPointerEnter={prepareOnIntent}
       onFocus={prepareOnIntent}
-      className="flex flex-col gap-1"
+      className="flex h-full flex-col gap-1"
     >
       <input type="hidden" name="productId" value={productId} />
       <input type="hidden" name="quantity" value="1" />
       <button
         type="submit"
         aria-label={`Add ${display.name} to cart`}
-        className={cn(className, 'w-full cursor-pointer text-left')}
+        className={cn(className, 'w-full flex-1 cursor-pointer text-left')}
       >
         {children}
       </button>

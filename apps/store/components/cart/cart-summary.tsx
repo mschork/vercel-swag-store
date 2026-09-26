@@ -80,10 +80,10 @@ function CheckoutButton({ blocked, saving }: { blocked: boolean; saving: boolean
       disabled={pending || blocked || saving}
       className="h-11 w-full"
     >
-      {saving ? (
+      {saving || pending ? (
         <>
           <Spinner />
-          Saving…
+          {pending ? 'Placing order…' : 'Saving…'}
         </>
       ) : (
         'Checkout'

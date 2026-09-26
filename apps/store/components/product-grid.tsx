@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { BuyableItems } from '@/components/cart/buyable-items'
 import { SortableGrid } from '@/components/listing/sortable-grid'
-import { cardClassName, ProductCard, ProductCardBody } from '@/components/product-card'
+import { ADD_CARD_CLASS_NAME, AddCardBody, ProductCard } from '@/components/product-card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getCategories } from '@/lib/api/categories'
 import type { Product } from '@/lib/api/types'
@@ -44,7 +44,7 @@ export async function ProductGrid({
       preload: index < preloadCount,
     }
     return addCard ? (
-      addCard(product, <ProductCardBody {...props} adds />, cardClassName())
+      addCard(product, <AddCardBody product={product} sizes={sizes} />, ADD_CARD_CLASS_NAME)
     ) : (
       <ProductCard {...props} />
     )
