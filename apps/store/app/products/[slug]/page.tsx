@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { Suspense } from 'react'
 import { Container } from '@/components/container'
 import { Price } from '@/components/price'
 import { JsonLd } from '@/components/json-ld'
@@ -16,7 +15,6 @@ import {
 } from '@/components/product/enrichment'
 import { ProductGallery } from '@/components/product/gallery'
 import { StockAndCart } from '@/components/product/stock-and-cart'
-import { StockSkeleton } from '@/components/product/stock-skeleton'
 import { getAllProductSlugs } from '@/lib/api/products'
 import { getStoreConfig } from '@/lib/api/store'
 import { publicEnv } from '@/lib/env.public'
@@ -117,9 +115,7 @@ export default async function ProductPage({ params }: Props) {
             </p>
           </div>
           <p className="max-w-prose text-base text-fg-secondary">{product.description}</p>
-          <Suspense fallback={<StockSkeleton />}>
-            <StockAndCart product={product} />
-          </Suspense>
+          <StockAndCart product={product} />
         </div>
       </article>
       {enriched ? (

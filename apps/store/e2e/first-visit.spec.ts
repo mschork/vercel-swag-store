@@ -11,6 +11,8 @@ const STOCK_LINE = /^(In stock|Only \d+ left|Out of stock)$/
 
 /** Where "Only N left" starts (`LOW_STOCK_THRESHOLD` in lib/stock-status.ts). */
 const LOW_STOCK = 5
+/** The stepper's limit before the draw reaches it (`CART_MAX_QUANTITY` in lib/quantity.ts). */
+const CART_MAX = 99
 
 declare global {
   interface Window {
@@ -45,6 +47,21 @@ async function recordPanel(page: Page) {
 }
 
 const panelStates = (page: Page) => page.evaluate(() => window.__panel.filter(Boolean))
+
+/**
+ * Holds a recorded panel to the one-number rule. The stock line shows one
+ * number from its first paint, and the panel ends as `expected`. The form is
+ * in the prerendered page and learns the draw when the stock line does, so
+ * until then its limit may be the cart's maximum, and nothing else.
+ */
+function expectOneNumber(states: string[], expected: string) {
+  const lines = states
+    .map((state) => state.split('|')[0])
+    .filter((line, index, all) => line !== all[index - 1])
+  expect(lines).toHaveLength(1)
+  expect(states.at(-1)).toBe(expected)
+  for (const state of states.slice(0, -1)) expect(state).toBe(`${lines[0]}|${CART_MAX}`)
+}
 
 /**
  * Waits until a number the provider was seeded with would have replaced the
@@ -106,16 +123,13 @@ test('the number in the HTML is the number the visit keeps', async ({ page, cont
   await page.goto(href)
   await expect(stockLine(page)).toBeVisible()
   await settled(page)
-  const first = await panelStates(page)
-  expect(first).toHaveLength(1)
-
   const kept = (await readVisit(context))?.stock[await productIdOf(page)]
-  expect(first[0]).toBe(panelFor(kept))
+  expectOneNumber(await panelStates(page), panelFor(kept))
 
   await page.reload()
   await expect(stockLine(page)).toBeVisible()
   await settled(page)
-  expect(await panelStates(page)).toEqual(first)
+  expectOneNumber(await panelStates(page), panelFor(kept))
 })
 
 test('the promotion in the HTML is the promotion the visit keeps', async ({ page, context }) => {
@@ -148,8 +162,6 @@ test('a product opened while the home page draws the visit never shows two numbe
     .click()
   await expect(stockLine(page)).toBeVisible({ timeout: 15_000 })
   await settled(page)
-  const states = await panelStates(page)
-  expect(states).toHaveLength(1)
   const kept = (await readVisit(context))?.stock[await productIdOf(page)]
-  expect(states[0]).toBe(panelFor(kept))
+  expectOneNumber(await panelStates(page), panelFor(kept))
 })
