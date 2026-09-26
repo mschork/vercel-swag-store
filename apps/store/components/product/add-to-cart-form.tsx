@@ -14,8 +14,9 @@ const ADDING_LABEL_MS = 1000
 
 /**
  * Add to Cart as a Server Action form. `max` is what remains of the visit's
- * draw; `disabled` is set when nothing does. It stays a native Server Action
- * form, so it works before hydration.
+ * draw; when nothing does, `unavailable` is the disabled button's label and
+ * the stepper is hidden in its own space, so the panel keeps its height. It
+ * stays a native Server Action form, so it works before hydration.
  *
  * With JavaScript the button does not wait for the save
  * (specs/E22-add-to-cart-wait.md). A submit records a pending line with
@@ -29,12 +30,12 @@ export function AddToCartForm({
   productId,
   display,
   max,
-  disabled,
+  unavailable,
 }: {
   productId: string
   display: LineDisplay
   max: number
-  disabled: boolean
+  unavailable: string | null
 }) {
   const [posted, formAction] = useActionState(addToCart, null)
   const [answered, setAnswered] = useState<AddToCartState>(null)
@@ -75,16 +76,23 @@ export function AddToCartForm({
     >
       <input type="hidden" name="productId" value={productId} />
       <div className="flex flex-col gap-3 md:flex-row md:items-end">
-        <QuantityStepper name="quantity" min={1} max={max} disabled={disabled} />
-        <Button type="submit" size="lg" disabled={disabled} className="h-11 md:flex-1">
-          {justClicked ? (
+        <div className={unavailable !== null ? 'invisible' : undefined}>
+          <QuantityStepper name="quantity" min={1} max={max} disabled={unavailable !== null} />
+        </div>
+        <Button
+          type="submit"
+          size="lg"
+          disabled={unavailable !== null}
+          className="h-11 md:flex-1"
+        >
+          {unavailable ?? (justClicked ? (
             <>
               <Spinner />
               Adding…
             </>
           ) : (
             'Add to Cart'
-          )}
+          ))}
         </Button>
       </div>
       <p role="status" className="min-h-6 text-sm leading-6">

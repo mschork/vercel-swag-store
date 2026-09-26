@@ -7,7 +7,7 @@ import { expectOnlySessionCookie, openWithStock, readVisit, SEEDED_PROMOTION } f
  * from the home grid rather than a hard-coded slug, and the seeded visit says
  * how much of it there is, so no test depends on what the API drew.
  */
-const STOCK_LINE = /^(In stock|Only \d+ left|Out of stock|All \d+ are in your cart)$/
+const STOCK_LINE = /^(In stock|Only \d+ left|This item is out of stock at the moment\. Check back soon\.|All \d+ are in your cart)$/
 
 /** One cart write and then some (`CART_TIMEOUT_MS` in lib/api/cart.ts). */
 const SAVED = { timeout: 30_000 }
@@ -54,10 +54,9 @@ test('says so and disables Add to Cart when the visit holds none', async ({
   context,
 }) => {
   await openFeatured(page, context, 0)
-  await expect(stockLine(page)).toHaveText('Out of stock')
-  await expect(
-    page.getByRole('button', { name: 'Add to Cart', exact: true }),
-  ).toBeDisabled()
+  await expect(stockLine(page)).toHaveText('This item is out of stock at the moment. Check back soon.')
+  await expect(page.getByRole('button', { name: 'Currently unavailable' })).toBeDisabled()
+  await expect(page.getByLabel('Quantity', { exact: true })).toBeHidden()
 })
 
 test('shows the same count on every reload', async ({ page, context }) => {
@@ -162,9 +161,7 @@ test('says the cart holds them all once the whole draw is added', async ({
   await page.getByRole('button', { name: 'Add to Cart', exact: true }).click()
   // The line flips as the add is sent, and nothing is left to add.
   await expect(stockLine(page)).toHaveText('All 2 are in your cart', { timeout: 5_000 })
-  await expect(
-    page.getByRole('button', { name: 'Add to Cart', exact: true }),
-  ).toBeDisabled(SAVED)
+  await expect(page.getByRole('button', { name: 'All in your cart' })).toBeDisabled(SAVED)
 })
 
 test('a failed add retracts its confirmation and says why', async ({

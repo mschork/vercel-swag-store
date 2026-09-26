@@ -34,14 +34,14 @@ Branch: `epic/E05-pdp`. Depends on: E02, E03. Blocks: E06 (needs the Add to Cart
 ### Stock and cart `components/product/stock-and-cart.tsx`
 
 - Async server component: reads the visit cookie (never cached) and passes the product's draw to a client leaf, which subtracts what the visitor's cart holds. With no visit yet it passes nothing and the leaf keeps the skeleton until one opens.
-- Renders `<StockIndicator>`: "In stock", "Only N left" at 5 or fewer, "Out of stock" at a draw of 0, "All N are in your cart" when the cart holds the whole draw, "Stock unavailable" when the visit has no count for the product. Colour plus text plus icon-free; never colour alone.
-- Renders `<AddToCartForm>` with `max` and `disabled` taken from what remains.
+- Renders `<StockIndicator>`: "In stock", "Only N left" at 5 or fewer, "This item is out of stock at the moment. Check back soon." at a draw of 0, "All N are in your cart" when the cart holds the whole draw, "Stock unavailable" when the visit has no count for the product. Colour plus text plus icon-free; never colour alone.
+- Renders `<AddToCartForm>` with `max` and `unavailable` taken from what remains.
 
 ### Add to Cart form `components/product/add-to-cart-form.tsx`
 
 - Client component. `<form action={addToCart}>` where `addToCart` is the Server Action from E06 (in this epic, a stub action that logs and returns `{ ok: true }` so the epic ships independently; E06 replaces the body).
 - Hidden `productId`, `<QuantityStepper name="quantity" min={1} max={max} />` (client, native number input plus minus and plus buttons, clamped, `aria-live` on the value).
-- Submit button text exactly "Add to Cart"; `disabled` when `disabled` prop is true or while `useFormStatus().pending`.
+- Submit button text exactly "Add to Cart". When nothing is left it is disabled and reads "Currently unavailable" (out of stock, or no count) or "All in your cart", and the stepper is hidden in its own space, so the panel keeps its height.
 - After a successful action, show an inline "Added" confirmation with a link to `/cart`.
 
 ### Tests
