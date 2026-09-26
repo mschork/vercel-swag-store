@@ -39,7 +39,7 @@ No new dependency beyond `@ai-sdk/workflow`, `@ai-sdk/react`, `@vercel/blob`, `b
 footer "Submit a testimonial" ──▶ /testimonials#share  (chat opens)
 /testimonials ──▶ CTA "Submit a testimonial" ──▶ chat loads on demand, URL gains #share
 
-Start ──▶ POST /api/testimonials/chat ──▶ start(testimonial)  run bound to the session id
+first photo or message ──▶ POST /api/testimonials/chat ──▶ start(testimonial)  run bound to the session id
    loop: agent.stream() until it ends or asks for a widget ─▶ await the turn hook (or 30 min idle)
          next message or widget answer ──▶ POST /api/testimonials/chat/<runId>/message ──▶ resumeHook
      photo widget ─▶ browser downsizes, re-encodes (EXIF gone) ─▶ private Blob
@@ -66,7 +66,7 @@ Start ──▶ POST /api/testimonials/chat ──▶ start(testimonial)  run bo
 
 - `app/testimonials/page.tsx`, prerendered. A heading, one line of intro, a "Submit a testimonial" button, and the wall below.
 - The wall is every published testimonial with consent, newest first, `"use cache"` and tagged `sanity:testimonial` through `sanityFetch`. Page 1 renders in the shell. Further pages are prerendered at `/testimonials/page/[n]` with `generateStaticParams` from the count, and a `beforeFiles` rewrite sends `/testimonials?page=:n` there, the way `/search?category=` is rewritten in `next.config.ts`. No `searchParams` read, so no dynamic hole. `WALL_PAGE_SIZE` is a named constant.
-- The chat is a client island loaded with `next/dynamic` only when it opens. The button opens it and sets `#share`; a small client component opens it on load when the URL already has `#share`. The server render is the same either way. The open panel shows a static greeting and a Start button; opening it starts no run, and Start sends the first message.
+- The chat is a client island loaded with `next/dynamic` only when it opens. The button opens it and sets `#share`; a small client component opens it on load when the URL already has `#share`. The server render is the same either way. The chat opens ready to use, with no second click: a greeting written into the component, not generated, and the photo widget already shown. Opening it starts no run. The visitor's first action, choosing a photo or sending a message, starts the run, and from then on the agent leads.
 - The footer gains one link, "Submit a testimonial", to `/testimonials#share`. The copy lives in `siteSettings` with a shipped fallback, like the footer text.
 - Metadata, the sitemap and the Markdown route (`/md/testimonials`) include the page. `robots` follows E20.
 
@@ -165,7 +165,7 @@ Rules the agent follows, enforced by code, not by the prompt:
 - BotID Basic: `initBotId` from `botid/client/core` protects the chat, message and upload routes (POST) and the stream route (GET); each calls `checkBotId()` from `botid/server` and answers 403 to a bot. `withBotId` wraps the Next config together with `withWorkflow`.
 - One Firewall rate-limit rule with a `@vercel/firewall` condition named `testimonials`, called with `checkRateLimit('testimonials', { request })` in the chat, message and upload routes. It keys on the IP address: a session id is free to mint, so it cannot be the limit's key. `checkRateLimit` is marked experimental.
 - The chat, message, stream and upload routes require the `sid` cookie and answer only for the run bound to that session. The photo route is authorised by its HMAC signature and the decision route by its bearer, because the Studio and the Function send no cookie.
-- The upload route authorises the token in `onBeforeGenerateToken`: same session, a live run (Start has already started it), JPEG only, `MAX_UPLOAD_BYTES`, at most `MAX_PHOTO_ATTEMPTS` per run.
+- The upload route authorises the token in `onBeforeGenerateToken`: same session, a live run (choosing a photo starts the run first when there is none), JPEG only, `MAX_UPLOAD_BYTES`, at most `MAX_PHOTO_ATTEMPTS` per run.
 - The run's caps above bound model spend per visitor.
 
 ## Configuration
@@ -238,7 +238,7 @@ Answer on a throwaway branch and record the answers in the PR description.
 ## Acceptance criteria
 
 - [ ] `/testimonials` is prerendered; the build output shows it static, and the chat's JavaScript is not in its first load.
-- [ ] `/testimonials#share` from the footer opens the chat; opening it starts no run, Start does.
+- [ ] `/testimonials#share` from the footer opens the chat ready to use, with no further click; opening it starts no run, the first photo or message does.
 - [ ] A visitor can go from photo to submitted in one conversation, and a reload in the middle resumes it.
 - [ ] A photo of a catalogue product with its mark visible is identified and confirmed; a black item without the mark, or with the triangle pointing down, is not matched; a photo of something else leads to one retry, then the picker; the submission records which.
 - [ ] An unsafe or unusable photo never reaches Sanity or an editor.
