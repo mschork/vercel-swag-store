@@ -13,6 +13,11 @@ export const VARIANTS = {
     grid: 'grid gap-4 md:grid-cols-4',
     sizes: '(min-width: 1152px) 264px, (min-width: 768px) 25vw, 42vw',
   },
+  /** The cart page's add cards: two across below md, as tiles. */
+  addCards: {
+    grid: 'grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4',
+    sizes: '(min-width: 1152px) 264px, (min-width: 768px) 25vw, 50vw',
+  },
   search: {
     grid: 'grid gap-4 md:grid-cols-3 lg:grid-cols-5',
     sizes:

@@ -20,6 +20,7 @@ export const siteSettings = defineType({
     { name: 'chrome', title: 'Header and footer' },
     { name: 'productPage', title: 'Product page' },
     { name: 'productListing', title: 'Product listing' },
+    { name: 'cartPage', title: 'Cart page' },
     { name: 'searchPage', title: 'Search page' },
   ],
   fields: [
@@ -140,6 +141,22 @@ export const siteSettings = defineType({
             rule.max(SEO_DESCRIPTION_LENGTH).warning('Also the page’s description; keep it short.'),
           description:
             'The line under “All products”, and the page’s description. A category’s own intro is set on the category. Default: “Filter through our great range of swag products.”',
+        }),
+      ],
+    }),
+    defineField({
+      name: 'cartPage',
+      title: 'Cart page',
+      type: 'object',
+      group: 'cartPage',
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({
+          name: 'favouritesHeading',
+          title: 'Heading over the favourites',
+          type: 'string',
+          description:
+            'Shown above the favourites under the cart, where a tap on a card adds it, so it reads as an invitation. The home page’s row has its own heading. Default: “Add one of our favourites”.',
         }),
       ],
     }),
