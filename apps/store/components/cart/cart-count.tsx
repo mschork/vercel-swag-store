@@ -49,20 +49,19 @@ export function useCartCount(): CartCountApi {
 }
 
 /**
- * The badge's number. `serverCount` is what the badge read from the cart
+ * The badge's number. `serverRead.count` is what the badge read from the cart
  * mirror in this render, `null` when the session store could not be read.
  * The confirmed count is whichever arrived last: a count read here, or a
- * count an action returned.
+ * count an action returned. Each server render sends a new `serverRead`, so a
+ * read that repeats the last count still replaces one an action set since, as
+ * when an order empties a cart that was empty when the page loaded.
  */
-export function CartCount({
-  serverCount,
-}: {
-  serverCount: number | null | undefined
-}) {
+export function CartCount({ serverRead }: { serverRead: { count: number | null } }) {
   const { confirmed, adding, cartPage, confirm } = useCartCount()
+  const serverCount = serverRead.count
   useEffect(() => {
-    if (serverCount !== undefined) confirm(serverCount)
-  }, [serverCount, confirm])
+    confirm(serverRead.count)
+  }, [serverRead, confirm])
   return (
     <CartIcon
       count={shownCount({ server: serverCount, confirmed, adding, cartPage })}
