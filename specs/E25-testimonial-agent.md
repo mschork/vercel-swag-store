@@ -183,7 +183,7 @@ Answer on a throwaway branch and record the answers in the PR description.
 4. **Vision model.** `scripts/eval-identify.ts` in `apps/store`, run by hand, never in CI. The set:
    - the published testimonials with a photo, labelled by their `products[]` (22 on 26 Sep 2026, three with several products); the main measure
    - every product's API image, cropped, rotated, shrunk and recompressed with macOS `sips`, for products no testimonial shows
-   - about ten photos with no product in them and three blurred or dark ones, kept under `working/testimonial-eval/`, never committed
+   - under `working/testimonial-eval/`, never committed, sources in its `SOURCES.md`: `unrelated/` (photos with no product in them), `near-miss/` (generic or other brands' mugs, bottles, hoodies, t-shirts, caps, totes: the model must not claim them as ours) and `unusable/` (blurred, tiny, too dark)
    Run the set through `analysePhoto` with the two or three best vision models the Gateway free tier serves. Pick the model, set `PRODUCT_CONFIDENCE` from the results and record top-1 and top-3 accuracy per group in the PR. If top-1 on the testimonial photos is under 80 %, add a second pass that compares the photo with the images of the top five candidates. The testimonial photos are generated images and cleaner than a phone photo; the real hit rate comes from live submissions, which record the confidence and whether the visitor corrected the product.
 5. **Blob client upload and CSP.** Record the origin the browser uploads to and add exactly that to `connect-src`. Check whether `handleUploadPresigned` works with OIDC, which would remove `BLOB_READ_WRITE_TOKEN`.
 6. **BotID and CSP.** Record any script or connect origin BotID needs.
