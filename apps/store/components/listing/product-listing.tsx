@@ -18,16 +18,17 @@ const PRELOAD_COUNT = 4
  * The product listing: every product, or one category's
  * (specs/E18-product-listing.md). Everything it reads is cached catalogue
  * data, and nothing here reads the request, so both routes that render it are
- * prerendered whole. The intro is the one editorial line; the products never
- * depend on it.
+ * prerendered whole. The intro is the one editorial line, always present, so
+ * the heading block keeps its height from one category to the next; two
+ * lines are reserved, and a longer intro pushes the chips down.
  */
 export async function ProductListing({
   category,
   intro,
 }: {
   category: Category | null
-  /** The category intro an editor wrote, if any; the page is complete without it. */
-  intro?: string | null
+  /** The listing intro: the editor's, or its fallback. */
+  intro: string
 }) {
   const [products, categories] = await Promise.all([
     category ? getProductsInCategory(category.slug) : getAllProducts(),
@@ -51,7 +52,7 @@ export async function ProductListing({
       ) : null}
       <div className="flex flex-col gap-3">
         <h1 className="text-3xl font-medium tracking-tight">{name}</h1>
-        {intro ? <p className="max-w-prose text-pretty text-fg-secondary">{intro}</p> : null}
+        <p className="min-h-12 max-w-prose text-pretty text-fg-secondary">{intro}</p>
       </div>
       <CategoryChips categories={categories} current={category?.slug ?? null} />
       {products.length > 0 ? (
