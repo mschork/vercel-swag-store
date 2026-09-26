@@ -13,6 +13,7 @@ export const siteSettingsQuery = defineQuery(`
     storeName, seoTitle, seoDescription, footerText,
     productPage{ aboutHeading, careHeading, testimonialsHeading, faqHeading },
     productListing{ intro },
+    cartPage{ favouritesHeading },
     searchPage{ featuredHeading },
     "ogImage": ogImage${IMAGE},
     socialLinks[]{ label, url }

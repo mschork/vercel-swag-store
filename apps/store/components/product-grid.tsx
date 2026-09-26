@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { BuyableItems } from '@/components/cart/buyable-items'
 import { SortableGrid } from '@/components/listing/sortable-grid'
-import { ProductCard } from '@/components/product-card'
+import { cardClassName, ProductCard, ProductCardBody } from '@/components/product-card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getCategories } from '@/lib/api/categories'
 import type { Product } from '@/lib/api/types'
@@ -14,40 +14,41 @@ import { VARIANTS, type GridVariant } from './grid-variants'
  * category names come from the cached list, so a card can show "Bags" rather
  * than the slug.
  *
- * `slot` renders under a card, inside the list item but outside the link, so a
- * grid can carry a control without putting a button inside a link. With
- * `buyableLimit` the grid shows at most that many cards, and only for products
- * the visitor can buy (`BuyableItems`). Only the cart page's favourites row
- * uses either.
+ * `addCard` puts each card in an add button in place of its link, and is
+ * handed the card's content and the wrapper's classes. With `buyableLimit`
+ * the grid shows at most that many cards, and only for products the visitor
+ * can buy (`BuyableItems`). Only the cart page's favourites row uses either.
  */
 export async function ProductGrid({
   products,
   variant,
   preloadCount = 0,
-  slot,
+  addCard,
   buyableLimit,
 }: {
   products: readonly Product[]
   variant: GridVariant
   preloadCount?: number
-  slot?: (product: Product) => ReactNode
+  addCard?: (product: Product, card: ReactNode, className: string) => ReactNode
   buyableLimit?: number
 }) {
   const { grid, sizes } = VARIANTS[variant]
   const categories = await getCategories()
   const nameOf = (slug: string) =>
     categories.find((category) => category.slug === slug)?.name ?? slug
-  const item = (product: Product, index: number) => (
-    <>
-      <ProductCard
-        product={product}
-        categoryName={nameOf(product.category)}
-        sizes={sizes}
-        preload={index < preloadCount}
-      />
-      {slot?.(product)}
-    </>
-  )
+  const item = (product: Product, index: number) => {
+    const props = {
+      product,
+      categoryName: nameOf(product.category),
+      sizes,
+      preload: index < preloadCount,
+    }
+    return addCard ? (
+      addCard(product, <ProductCardBody {...props} adds />, cardClassName())
+    ) : (
+      <ProductCard {...props} />
+    )
+  }
   return (
     <ul className={grid}>
       {buyableLimit === undefined ? (

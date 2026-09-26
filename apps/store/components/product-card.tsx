@@ -42,28 +42,52 @@ const SHAPES = {
   },
 } as const
 
-export function ProductCard({
-  product,
-  categoryName,
-  sizes,
-  preload = false,
-  shape = 'responsive',
-}: {
+/** The classes on the element that wraps a card: its link, or its add button. */
+export const cardClassName = (shape: CardShape = 'responsive') => SHAPES[shape].link
+
+interface CardProps {
   product: Product
   categoryName: string
   sizes: string
   preload?: boolean
   shape?: CardShape
-}) {
-  const c = SHAPES[shape]
+}
+
+export function ProductCard(props: CardProps) {
   return (
-    <Link
-      href={`/products/${product.slug}`}
-      className={c.link}
-    >
-      <div
+    <Link href={`/products/${props.product.slug}`} className={cardClassName(props.shape)}>
+      <ProductCardBody {...props} />
+    </Link>
+  )
+}
+
+/**
+ * What a card shows, for a wrapper other than its link. With `adds` the card
+ * is an add button: a plus sits on the photo, and the price pill follows the
+ * card's hover but not a navigation. Spans throughout, because a button holds
+ * only phrasing content.
+ */
+export function ProductCardBody({
+  product,
+  categoryName,
+  sizes,
+  preload = false,
+  shape = 'responsive',
+  adds = false,
+}: CardProps & { adds?: boolean }) {
+  const c = SHAPES[shape]
+  const pillClassName = cn(
+    'absolute top-2.5 right-2.5 rounded-full border border-border bg-bg px-2 py-0.5 motion-safe:transition-colors motion-safe:duration-250',
+    c.pill,
+  )
+  const price = (
+    <Price cents={product.price} currency={product.currency} size="sm" className="text-xs" />
+  )
+  return (
+    <>
+      <span
         className={cn(
-          'relative aspect-square overflow-hidden rounded-lg border border-border bg-bg-secondary motion-safe:transition-colors motion-safe:duration-250',
+          'relative block aspect-square overflow-hidden rounded-lg border border-border bg-bg-secondary motion-safe:transition-colors motion-safe:duration-250',
           c.frame,
         )}
       >
@@ -77,18 +101,24 @@ export function ProductCard({
             c.image,
           )}
         />
-        <PendingScope
-          className={cn(
-            'absolute top-2.5 right-2.5 rounded-full border border-border bg-bg px-2 py-0.5 motion-safe:transition-colors motion-safe:duration-250',
-            c.pill,
-          )}
-          pendingClassName="border-accent bg-accent text-accent-fg"
-        >
-          <Price cents={product.price} currency={product.currency} size="sm" className="text-xs" />
-        </PendingScope>
+        {adds ? (
+          <span className={pillClassName}>{price}</span>
+        ) : (
+          <PendingScope className={pillClassName} pendingClassName="border-accent bg-accent text-accent-fg">
+            {price}
+          </PendingScope>
+        )}
         <CardStock productId={product.id} />
-      </div>
-      <div className={cn('flex min-w-0 flex-col gap-1', c.text)}>
+        {adds ? (
+          <span
+            aria-hidden="true"
+            className="absolute right-2.5 bottom-2.5 flex size-8 items-center justify-center rounded-full border border-border bg-bg text-lg leading-none motion-safe:transition-colors motion-safe:duration-250 group-hover:border-accent group-hover:bg-accent group-hover:text-accent-fg group-focus-visible:border-accent group-focus-visible:bg-accent group-focus-visible:text-accent-fg"
+          >
+            +
+          </span>
+        ) : null}
+      </span>
+      <span className={cn('flex min-w-0 flex-col gap-1 text-left', c.text)}>
         {c.inlinePrice ? (
           <Price
             cents={product.price}
@@ -102,7 +132,7 @@ export function ProductCard({
           {product.name}
         </span>
         <span className="text-sm text-fg-secondary">{categoryName}</span>
-      </div>
-    </Link>
+      </span>
+    </>
   )
 }

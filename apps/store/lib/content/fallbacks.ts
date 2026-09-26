@@ -54,6 +54,11 @@ export const FAVOURITES_FALLBACK = {
   heading: 'People’s favourites',
 } as const
 
+/** The heading over the cart page's favourites row, until `siteSettings.cartPage` sets one. */
+export const CART_FALLBACK = {
+  favouritesHeading: 'Add one of our favourites',
+} as const
+
 /**
  * The listing intro of the unfiltered product listing, until
  * `siteSettings.productListing.intro` says otherwise.

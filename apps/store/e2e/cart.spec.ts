@@ -81,6 +81,19 @@ const rows = (page: Page) => page.getByRole('main').locator('ul:not([class*="gri
 const rowFor = (page: Page, href: string) =>
   rows(page).filter({ has: page.locator(`a[href="${href}"]`) })
 
+/** The cart's row for the product with this name. */
+const rowNamed = (page: Page, name: string) =>
+  rows(page).filter({ has: page.getByRole('link', { name, exact: true }) })
+
+/** A favourites card is an add button named for its product. */
+const ADD = /^Add (.+) to cart$/
+
+/** The product a favourites card adds. */
+async function productOf(card: ReturnType<Page['locator']>): Promise<string> {
+  const label = await card.getByRole('button', { name: ADD }).getAttribute('aria-label')
+  return label?.match(ADD)?.[1] ?? ''
+}
+
 /** A row's status line; the stepper announces its quantity in a status of its own. */
 const statusOf = (row: ReturnType<typeof rowFor>) => row.locator('p[role="status"]')
 
@@ -97,7 +110,7 @@ async function openCartToAddFrom(page: Page, context: BrowserContext) {
   const ids = await catalogueIds(context)
   await seedVisit(context, Object.fromEntries(ids.map((id) => [id, 20])))
   await page.goto('/cart')
-  await expect(page.getByRole('button', { name: /^Add to Cart/ }).first()).toBeVisible(SAVED)
+  await expect(page.getByRole('button', { name: ADD }).first()).toBeVisible(SAVED)
   // A pending row needs the hydrated form, not the no-JS post.
   await page.waitForLoadState('networkidle')
   return favouritesOf(page)
@@ -346,16 +359,16 @@ test('two quick adds of different products are two saving rows, and a reload kee
 
   // The first card leaves the row at the click, so the same locator then
   // names the next product.
-  const firstHref = await firstCard.getByRole('link').getAttribute('href')
-  await firstCard.getByRole('button', { name: /^Add to Cart/ }).click()
-  await expect(favourites.locator(`a[href="${firstHref}"]`)).toHaveCount(0, AT_ONCE)
-  const secondHref = await firstCard.getByRole('link').getAttribute('href')
-  expect(secondHref).not.toBe(firstHref)
-  await firstCard.getByRole('button', { name: /^Add to Cart/ }).click()
+  const first = await productOf(firstCard)
+  await firstCard.getByRole('button', { name: ADD }).click()
+  await expect(favourites.getByRole('button', { name: `Add ${first} to cart` })).toHaveCount(0, AT_ONCE)
+  const second = await productOf(firstCard)
+  expect(second).not.toBe(first)
+  await firstCard.getByRole('button', { name: ADD }).click()
 
   await expect(rows(page)).toHaveCount(2, AT_ONCE)
-  for (const href of [firstHref, secondHref]) {
-    await expect(statusOf(rowFor(page, href ?? ''))).toHaveText('Saving…', AT_ONCE)
+  for (const name of [first, second]) {
+    await expect(statusOf(rowNamed(page, name))).toHaveText('Saving…', AT_ONCE)
   }
   expect(actions.addsAnswered()).toBe(0)
   await expect(badge(page, 'Cart, 2 items')).toBeVisible()
@@ -363,20 +376,14 @@ test('two quick adds of different products are two saving rows, and a reload kee
   // Next runs one action at a time, so the second save follows the first.
   await expect.poll(actions.addsAnswered, { timeout: 2 * SAVED.timeout }).toBe(2)
   await expect(rows(page).getByText('Saving…')).toHaveCount(0)
-  const shown = await rows(page).getByRole('link').evaluateAll((links) =>
-    links.map((link) => link.getAttribute('href')),
-  )
-  expect(shown).toEqual([firstHref, secondHref])
+  const shown = await rows(page).getByRole('link').allTextContents()
+  expect(shown).toEqual([first, second])
 
   await page.reload()
   await expect(rows(page)).toHaveCount(2, SAVED)
-  expect(
-    await rows(page).getByRole('link').evaluateAll((links) =>
-      links.map((link) => link.getAttribute('href')),
-    ),
-  ).toEqual(shown)
-  for (const href of shown) {
-    await expect(rowFor(page, href ?? '').getByLabel('Quantity', { exact: true })).toHaveValue('1')
+  expect(await rows(page).getByRole('link').allTextContents()).toEqual(shown)
+  for (const name of shown) {
+    await expect(rowNamed(page, name).getByLabel('Quantity', { exact: true })).toHaveValue('1')
   }
   await expect(badge(page, 'Cart, 2 items')).toBeVisible()
 })
@@ -389,16 +396,17 @@ test('a quick add from the favourites row adds a row and hides that card', async
   const before = await favourites.getByRole('listitem').count()
   expect(before).toBeGreaterThan(1)
   const firstCard = favourites.getByRole('listitem').first()
-  // The href identifies the product; the link's text starts with its price.
-  const addedHref = await firstCard.getByRole('link').getAttribute('href')
+  const added = await productOf(firstCard)
   const actions = watchActions(page)
 
-  await firstCard.getByRole('button', { name: /^Add to Cart/ }).click()
+  // The whole card is the button.
+  await firstCard.getByRole('button', { name: ADD }).click()
 
   // At the click: the card leaves the row, the cart gains a saving row for
   // it, and the badge counts it.
-  await expect(favourites.locator(`a[href="${addedHref}"]`)).toHaveCount(0, AT_ONCE)
-  const row = rowFor(page, addedHref ?? '')
+  const card = favourites.getByRole('button', { name: `Add ${added} to cart` })
+  await expect(card).toHaveCount(0, AT_ONCE)
+  const row = rowNamed(page, added)
   await expect(statusOf(row)).toHaveText('Saving…', AT_ONCE)
   expect(actions.addsAnswered()).toBe(0)
   await expect(badge(page, 'Cart, 1 item')).toBeVisible()
@@ -410,7 +418,7 @@ test('a quick add from the favourites row adds a row and hides that card', async
   await expect(statusOf(row)).not.toHaveText('Saving…')
   await expect(row.getByLabel('Quantity', { exact: true })).toHaveValue('1')
   expect(await favourites.getByRole('listitem').count()).toBeLessThanOrEqual(before)
-  await expect(favourites.locator(`a[href="${addedHref}"]`)).toHaveCount(0)
+  await expect(card).toHaveCount(0)
 })
 
 test('two rows changed together each keep their own saved quantity', async ({
@@ -422,7 +430,7 @@ test('two rows changed together each keep their own saved quantity', async ({
   const actions = watchActions(page)
 
   // Two lines, both from the favourites row under the empty cart.
-  const add = favourites.getByRole('listitem').first().getByRole('button', { name: /^Add to Cart/ })
+  const add = favourites.getByRole('listitem').first().getByRole('button', { name: ADD })
   await add.click()
   await expect(rows(page)).toHaveCount(1, AT_ONCE)
   await add.click()
@@ -455,15 +463,17 @@ test('a product added from the row leaves it, and the next one takes the last pl
 }) => {
   const row = await openCartToAddFrom(page, context)
   const cards = row.getByRole('listitem')
-  const hrefs = () =>
-    cards.evaluateAll((items) => items.map((item) => item.querySelector('a')?.getAttribute('href')))
-  const [added, ...rest] = await hrefs()
+  const products = () =>
+    cards.evaluateAll((items) =>
+      items.map((item) => item.querySelector('button')?.getAttribute('aria-label')),
+    )
+  const [added, ...rest] = await products()
 
-  await cards.first().getByRole('button', { name: /^Add to Cart/ }).click()
+  await cards.first().getByRole('button', { name: ADD }).click()
   // It fades in place first, out of the tab order, and then the row closes up.
   await expect(cards.first()).toHaveAttribute('inert', '', AT_ONCE)
-  await expect.poll(hrefs, AT_ONCE).not.toContain(added)
-  const after = await hrefs()
+  await expect.poll(products, AT_ONCE).not.toContain(added)
+  const after = await products()
   expect(after.slice(0, rest.length)).toEqual(rest)
   expect(after).toHaveLength(rest.length + 1)
 })
@@ -474,7 +484,7 @@ test('an order placed from a cart that was empty on load clears the badge', asyn
 }) => {
   // The badge's first server read is 0; the add changes it on the client only.
   const row = await openCartToAddFrom(page, context)
-  await row.getByRole('button', { name: /^Add to Cart/ }).first().click()
+  await row.getByRole('button', { name: ADD }).first().click()
   await expect(badge(page, 'Cart, 1 item')).toBeVisible(SAVED)
   await expect(page.getByRole('button', { name: 'Checkout', exact: true })).toBeEnabled(SAVED)
 

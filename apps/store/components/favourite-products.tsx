@@ -16,12 +16,12 @@ import { MAX_FAVOURITES, getFavourites } from '@/lib/home'
  */
 export async function FavouriteProducts({
   heading,
-  slot,
+  addCard,
   buyable = false,
 }: {
   heading: string
-  /** Rendered under each card; the cart page puts an Add to Cart there. */
-  slot?: (product: Product) => ReactNode
+  /** Makes each card an add button in place of a link (`ProductGrid`). */
+  addCard?: (product: Product, card: ReactNode, className: string) => ReactNode
   /** Shows only products the visitor can buy. */
   buyable?: boolean
 }) {
@@ -39,7 +39,7 @@ export async function FavouriteProducts({
       <ProductGrid
         products={products}
         variant="favourites"
-        slot={slot}
+        addCard={addCard}
         buyableLimit={buyable ? MAX_FAVOURITES : undefined}
       />
     </section>
