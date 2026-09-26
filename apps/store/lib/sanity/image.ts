@@ -1,4 +1,4 @@
-import imageUrlBuilder, { type SanityImageSource } from '@sanity/image-url'
+import { createImageUrlBuilder, type SanityImageSource } from '@sanity/image-url'
 import { publicEnv } from '@/lib/env.public'
 
 /**
@@ -9,7 +9,7 @@ import { publicEnv } from '@/lib/env.public'
  * `lqip` is the tiny blurred copy Sanity stores with every asset; passing it as
  * the placeholder means no grey box while the photo loads.
  */
-const builder = imageUrlBuilder({
+const builder = createImageUrlBuilder({
   projectId: publicEnv.NEXT_PUBLIC_SANITY_PROJECT_ID,
   dataset: publicEnv.NEXT_PUBLIC_SANITY_DATASET,
 })
