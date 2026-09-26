@@ -118,6 +118,18 @@ test('the category select filters, and combined with text it narrows', async ({
   await expect(results(page)).toContainText('No products match "bucket" in Bags')
 })
 
+test('clearing the query keeps the category', async ({ page }) => {
+  await page.goto('/search')
+  await categorySelect(page).selectOption('hats')
+  await queryBox(page).fill('black')
+  await expect(page).toHaveURL('/search?q=black&category=hats')
+
+  await queryBox(page).fill('')
+  await expect(page).toHaveURL('/search?category=hats')
+  await expect(categorySelect(page)).toHaveValue('hats')
+  await expect(cards(page)).toHaveCount(3)
+})
+
 test('a query with no matches offers the categories and says the miss is recorded', async ({
   page,
 }) => {
@@ -132,7 +144,7 @@ test('a query with no matches offers the categories and says the miss is recorde
 
   await results(page).getByRole('link', { name: 'Clear search' }).click()
   await expect(page).toHaveURL('/search')
-  await expect(page.getByRole('heading', { name: 'Featured' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Explore our featured products' })).toBeVisible()
   // The form follows a link that changed the URL.
   await expect(queryBox(page)).toHaveValue('')
 })
@@ -141,8 +153,10 @@ test('the default state shows as many products as a search can', async ({
   page,
 }) => {
   await page.goto('/search')
-  await expect(page.getByRole('heading', { name: 'Featured' })).toBeVisible()
-  await expect(cards(page)).toHaveCount(5)
+  const featured = page.getByRole('region', { name: 'Explore our featured products' })
+  await expect(featured).toBeVisible()
+  await expect(featured.getByRole('listitem')).toHaveCount(5)
+  await expect(cards(page)).toHaveCount(0)
 })
 
 test('a capped result set says so and suggests narrowing', async ({ page }) => {

@@ -21,7 +21,7 @@ export function SearchFormFields({
   categories,
   query,
   category,
-  pending = false,
+  pressed = false,
   onSubmit,
   onQueryChange,
   onCategoryChange,
@@ -30,7 +30,8 @@ export function SearchFormFields({
   /** Controlled value; omitted by the server fallback, which stays uncontrolled. */
   query?: string
   category?: string
-  pending?: boolean
+  /** Shows the button pressed, so a submit by Enter is seen to happen. */
+  pressed?: boolean
   onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void
   onQueryChange?: (value: string) => void
   onCategoryChange?: (value: string) => void
@@ -83,7 +84,12 @@ export function SearchFormFields({
             </NativeSelectOption>
           ))}
         </NativeSelect>
-        <Button type="submit" size="lg" className="h-11 px-4" disabled={pending}>
+        <Button
+          type="submit"
+          size="lg"
+          className="h-11 px-4 data-pressed:translate-y-px data-pressed:opacity-80 data-pressed:transition-none"
+          data-pressed={pressed || undefined}
+        >
           Search
         </Button>
       </div>

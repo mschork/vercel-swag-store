@@ -1,17 +1,125 @@
 import type { Category, Product } from '@/lib/api/types'
 
-/** Longest query sent to the API; longer input is truncated to this. */
+/** Longest query searched; longer input is truncated to this. */
 const MAX_QUERY_LENGTH = 64
 
 /** How many results the requirements allow on the page. */
 export const RESULT_CAP = 5
 
-/**
- * The query as it reaches the API. Empty means "no query": the API answers 422
- * for `search=`, so an empty string must never be sent.
- */
+/** The query as it is searched and recorded. Empty means "no query". */
 export function normaliseQuery(raw: string | undefined | null): string {
   return (raw ?? '').trim().slice(0, MAX_QUERY_LENGTH)
+}
+
+/** What a result needs to be placed: its id and its category. */
+interface Placed {
+  id: string
+  category: string
+}
+
+/** The fields a query is matched against: the ones the API's `search` reads. */
+export interface Searchable extends Placed {
+  name: string
+  description: string
+  tags: readonly string[]
+}
+
+/**
+ * Whether a product matches a query the way the API's `search` does: the
+ * query, ignoring case, is a substring of the name, the description or a tag.
+ * `search-parity.test.ts` holds this against the API's own answers.
+ */
+export function matchesQuery(product: Searchable, query: string): boolean {
+  const needle = query.toLowerCase()
+  return (
+    product.name.toLowerCase().includes(needle) ||
+    product.description.toLowerCase().includes(needle) ||
+    product.tags.some((tag) => tag.toLowerCase().includes(needle))
+  )
+}
+
+/** What the results region shows for one search. */
+export interface SearchOutcome {
+  /** Product ids in display order, at most `RESULT_CAP`. */
+  ids: string[]
+  heading: string
+  /** "Includes everything in {Category}", when the grid holds all of it. */
+  hint: string | null
+  /** The cap cut results, so narrowing by category is worth suggesting. */
+  capped: boolean
+}
+
+const countLabel = (count: number) =>
+  `${count} ${count === 1 ? 'result' : 'results'}`
+
+/** A plain filter: the first `RESULT_CAP`, and how many there were. */
+function plain(matches: readonly Placed[]): SearchOutcome {
+  const ids = matches.slice(0, RESULT_CAP).map((product) => product.id)
+  const capped = matches.length > ids.length
+  return {
+    ids,
+    heading: capped
+      ? `Showing ${ids.length} of ${matches.length} results`
+      : countLabel(ids.length),
+    hint: null,
+    capped,
+  }
+}
+
+/**
+ * One search over the whole catalogue, in the catalogue's order, which is the
+ * order the API answers in. Four routes, chosen by what is set. A query with
+ * no category is the one that needs help: a category name matches no product
+ * text, so "hats" finds nothing while the Hats category holds products. When
+ * the query names a category, its products are merged in behind the hits.
+ * `featuredIds` is the default state, shown when nothing is set, under
+ * `featuredHeading`.
+ */
+export function searchCatalogue({
+  query,
+  category,
+  catalogue,
+  categories,
+  featuredIds,
+  featuredHeading = '',
+}: {
+  query: string
+  category: Category | null
+  catalogue: readonly Searchable[]
+  categories: readonly Category[]
+  featuredIds: readonly string[]
+  featuredHeading?: string
+}): SearchOutcome {
+  if (!query && !category) {
+    const ids = featuredIds.slice(0, RESULT_CAP)
+    return { ids, heading: featuredHeading, hint: null, capped: false }
+  }
+  const inCategory = (slug: string) =>
+    catalogue.filter((product) => product.category === slug)
+  if (!query && category) return plain(inCategory(category.slug))
+  const hits = catalogue.filter((product) => matchesQuery(product, query))
+  if (category) return plain(hits.filter((product) => product.category === category.slug))
+
+  const matched = expandQuery(query, categories)
+  if (!matched) return plain(hits)
+  const merged = mergeResults(
+    hits.slice(0, RESULT_CAP),
+    inCategory(matched.slug).slice(0, RESULT_CAP),
+    matched.slug,
+  )
+  return {
+    ids: merged.products.map((product) => product.id),
+    heading: merged.truncated
+      ? `Showing the first ${merged.products.length}`
+      : countLabel(merged.products.length),
+    // Only promise "everything in X" when the grid holds all of it: the cap
+    // may have cut some of the category away.
+    hint:
+      merged.added && !merged.truncated
+        ? `Includes everything in ${matched.name}`
+        : null,
+    capped: merged.truncated,
+  }
 }
 
 /** Escapes a user string so it can sit inside a `RegExp` literal. */
@@ -58,8 +166,8 @@ export function expandQuery(
 }
 
 /** A merged result set plus what the merge had to do to fit the cap. */
-export interface MergedResults {
-  products: Product[]
+export interface MergedResults<T extends Placed = Product> {
+  products: T[]
   /** The category call contributed at least one product the search missed. */
   added: boolean
   /** The cap dropped at least one product that would otherwise show. */
@@ -75,12 +183,12 @@ export interface MergedResults {
  * "everything in {Category}" only when the category added something and
  * nothing was cut.
  */
-export function mergeResults(
-  searchHits: readonly Product[],
-  categoryItems: readonly Product[],
+export function mergeResults<T extends Placed>(
+  searchHits: readonly T[],
+  categoryItems: readonly T[],
   categorySlug: string,
   cap: number = RESULT_CAP,
-): MergedResults {
+): MergedResults<T> {
   const seen = new Set(searchHits.map((product) => product.id))
   const inCategory = searchHits.filter(
     (product) => product.category === categorySlug,
