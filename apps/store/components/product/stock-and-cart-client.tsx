@@ -42,7 +42,7 @@ export function StockAndCartClient({
         productId={productId}
         display={display}
         max={status ? status.maxQuantity : CART_MAX_QUANTITY}
-        disabled={status ? !status.canAddToCart : false}
+        unavailable={status ? status.unavailableLabel : null}
       />
     </ReportDraw>
   )

@@ -7,7 +7,7 @@ import { productIdOf, readVisit } from './visit'
  * shows is the number the session store keeps. The API draws the number, so
  * the tests compare what they see with what the store kept.
  */
-const STOCK_LINE = /^(In stock|Only \d+ left|Out of stock)$/
+const STOCK_LINE = /^(In stock|Only \d+ left|This item is out of stock at the moment\. Check back soon\.)$/
 
 /** Where "Only N left" starts (`LOW_STOCK_THRESHOLD` in lib/stock-status.ts). */
 const LOW_STOCK = 5
@@ -31,7 +31,7 @@ async function recordPanel(page: Page) {
     const read = () => {
       const main = document.querySelector('main')
       const line = [...(main?.querySelectorAll('p') ?? [])].find((p) =>
-        /^(In stock|Only \d+ left|Out of stock|Stock unavailable)$/.test(p.textContent ?? ''),
+        /^(In stock|Only \d+ left|This item is out of stock at the moment\. Check back soon\.|Stock unavailable)$/.test(p.textContent ?? ''),
       )
       const max = main?.querySelector<HTMLInputElement>('input[name="quantity"]')?.max
       const state = line ? `${line.textContent}|${max ?? ''}` : ''
@@ -76,7 +76,7 @@ async function settled(page: Page) {
 /** The panel a visitor with an empty cart sees for `draw`, as `recordPanel` writes it. */
 function panelFor(draw: number | undefined): string {
   if (draw === undefined) return 'no draw kept'
-  if (draw === 0) return 'Out of stock|1'
+  if (draw === 0) return 'This item is out of stock at the moment. Check back soon.|0'
   return `${draw <= LOW_STOCK ? `Only ${draw} left` : 'In stock'}|${draw}`
 }
 
@@ -105,7 +105,7 @@ test('the response to a visitor without a visit holds the buy panel and the prom
   // Read as text: a browser without JavaScript never reveals a streamed hole,
   // so what this guards is that the server rendered it.
   const html = await (await request.get(href, { headers: { cookie: '' } })).text()
-  expect(html).toMatch(/>(In stock|Only \d+ left|Out of stock)</)
+  expect(html).toMatch(/>(In stock|Only \d+ left|This item is out of stock at the moment\. Check back soon\.)</)
   expect(html).toContain('name="quantity"')
   expect(html).toContain('Add to Cart')
   expect(html).toContain('aria-label="Current promotion"')

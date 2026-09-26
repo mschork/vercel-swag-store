@@ -29,7 +29,7 @@ const AT_ONCE = { timeout: 2_000 }
 
 test.describe.configure({ timeout: 180_000 })
 
-const STOCK_LINE = /^(In stock|Only \d+ left|Out of stock)$/
+const STOCK_LINE = /^(In stock|Only \d+ left|This item is out of stock at the moment\. Check back soon\.)$/
 const PRICE = /^\$\d{1,3}(,\d{3})*\.\d{2}$/
 
 const usd = (cents: number) =>
@@ -222,9 +222,7 @@ test('the cart refuses more than the visit holds, and blocks checkout', async ({
   // With both in the cart there is nothing left to ask for.
   await expect(page.getByRole('main').getByText('All 2 are in your cart')).toBeVisible()
   await expect(page.getByLabel('Quantity', { exact: true })).toBeDisabled()
-  await expect(
-    page.getByRole('button', { name: 'Add to Cart', exact: true }),
-  ).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'All in your cart' })).toBeDisabled()
 
   // A restock that draws fewer leaves the line above what there is.
   await page.goto('/cart')
