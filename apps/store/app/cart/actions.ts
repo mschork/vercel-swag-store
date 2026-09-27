@@ -62,7 +62,7 @@ const ProductId = z.string().trim().min(1)
 
 const AddToCartInput = z.object({
   productId: ProductId,
-  quantity: z.coerce.number().int().positive(),
+  quantity: z.coerce.number().int().positive().max(CART_MAX_QUANTITY),
 })
 
 const UpdateQuantityInput = z.object({
@@ -86,7 +86,7 @@ export async function addToCart(
     return {
       ok: false,
       error: quantityIssue(input.error)
-        ? 'Choose a whole quantity of at least 1.'
+        ? `Choose a whole quantity from 1 to ${CART_MAX_QUANTITY}.`
         : 'This item could not be added.',
     }
   }
@@ -100,7 +100,7 @@ export async function addToCart(
   }
 
   // Checked before the write, so an add the visit cannot cover costs no call.
-  const draw = await drawFor(productId)
+  const draw = await drawFor(productId, session)
   if (exceedsDraw(quantity, draw) && draw !== null) {
     return { ok: false, error: tooMany(draw) }
   }
@@ -156,7 +156,7 @@ export async function updateQuantity(
   if (session === 'unavailable') return { ok: false, error: UNAVAILABLE }
   const token = session.cart?.token
   if (!token) return expired()
-  const draw = await drawFor(input.data.productId)
+  const draw = await drawFor(input.data.productId, session)
   if (exceedsDraw(input.data.quantity, draw) && draw !== null) {
     return { ok: false, error: tooMany(draw) }
   }

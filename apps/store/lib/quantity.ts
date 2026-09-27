@@ -1,7 +1,6 @@
 /**
- * Most of one product a cart line holds, shared by the cart stepper and the
- * `updateQuantity` action. Cart writes are not stock-checked by the API; stock
- * is enforced only when adding on the product page.
+ * Most of one product a cart line holds, shared by the steppers and the cart
+ * actions. The API accepts any quantity, so the actions enforce it.
  */
 export const CART_MAX_QUANTITY = 99
 
