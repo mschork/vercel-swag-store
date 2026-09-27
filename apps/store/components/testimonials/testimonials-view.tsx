@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Container } from '@/components/container'
 import { EmptyState } from '@/components/empty-state'
-import { buttonVariants } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button-variants'
 import { getAllProducts } from '@/lib/api/products'
 import { getSiteSettings, getTestimonialWall } from '@/lib/sanity/content'
 import { chatOffered } from '@/lib/testimonials/chat'

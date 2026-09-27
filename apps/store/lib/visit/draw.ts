@@ -3,7 +3,13 @@ import { getAllProducts } from '@/lib/api/products'
 import { getStock } from '@/lib/api/stock'
 import { loadOptional } from '@/lib/load-optional'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
-import { getSession, sessionStore, type VisitRecord } from '@/lib/session/store'
+import {
+  getSession,
+  sessionStore,
+  type Session,
+  type Unavailable,
+  type VisitRecord,
+} from '@/lib/session/store'
 
 /**
  * The visit, drawn by the server: each draw is read from the API and claimed
@@ -19,10 +25,15 @@ const DRAW_CONCURRENCY = 8
 /**
  * How many of a product the visit says there are, drawing and claiming it
  * when the visit has no draw for it. `null` when the API failed: `addToCart`
- * then refuses the add, and a quantity change is held to no draw.
+ * then refuses the add, and a quantity change is held to no draw. A Server
+ * Action passes the session it read, because `getSession` is not memoized
+ * inside an action.
  */
-export async function drawFor(productId: string): Promise<number | null> {
-  const session = await getSession()
+export async function drawFor(
+  productId: string,
+  current?: Session | Unavailable,
+): Promise<number | null> {
+  const session = current ?? (await getSession())
   if (session !== 'unavailable') {
     const kept = session.visit?.stock
     if (kept && Object.hasOwn(kept, productId)) return kept[productId] as number

@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useEffect, useRef, useSyncExternalStore } from 'react'
-import { buttonVariants } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button-variants'
 import { SHARE_HASH } from '@/lib/testimonials/share'
 import type { ChatProduct } from './chat/types'
 
