@@ -6,7 +6,11 @@
   "exports": {
     ".": "./src/index.ts",
     "./constants": "./src/constants.ts",
-    "./reason": "./src/reason.ts"
+    "./draft": "./src/draft.ts",
+    "./prompt": "./src/prompt.ts",
+    "./schemas": "./src/schemas.ts",
+    "./reason": "./src/reason.ts",
+    "./analyse": "./src/analyse.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -14,6 +18,7 @@
   },
   "dependencies": {
     "@sanity/client": "^8.6.1",
+    "ai": "7.0.116",
     "zod": "^4.6.5"
   },
   "devDependencies": {

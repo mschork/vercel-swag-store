@@ -2,6 +2,7 @@ import { z } from 'zod'
 import {
   BLOB_PREFIX,
   CODE_LENGTH,
+  type ClientTool,
   MAX_CANDIDATES,
   NAME_MAX_LENGTH,
   PRODUCT_SOURCES,
@@ -50,10 +51,18 @@ export const ReviewQuoteInputSchema = z.object({ text: z.string().max(QUOTE_MAX_
 /** A widget the visitor typed past instead of answering. */
 export const TypedInsteadSchema = z.object({ visitorTypedInstead: z.literal(true) })
 
+/** Where a run's photos live in the Blob store. */
+export const photoPrefix = (runId: string) => `${BLOB_PREFIX}${runId}/`
+/** The pathname the upload route chooses for a run's nth upload, from 1. */
+export const photoPathname = (runId: string, attempt: number) => `${photoPrefix(runId)}${attempt}.jpg`
+
+const PHOTO_PATHNAME = new RegExp(`^${BLOB_PREFIX}([A-Za-z0-9_-]+)/\\d+\\.jpg$`)
+
+/** The run a photo pathname belongs to, or `null` for any other pathname. */
+export const runIdOfPathname = (pathname: string) => PHOTO_PATHNAME.exec(pathname)?.[1] ?? null
+
 /** Pathnames the upload route chooses: `testimonials/<runId>/<attempt>.jpg`. */
-export const PhotoUploadedSchema = z.object({
-  pathname: z.string().regex(new RegExp(`^${BLOB_PREFIX}[A-Za-z0-9_-]+/\\d+\\.jpg$`)),
-})
+export const PhotoUploadedSchema = z.object({ pathname: z.string().regex(PHOTO_PATHNAME) })
 
 export const ProductChoiceSchema = z.object({
   productId: z.string().min(1),
@@ -77,6 +86,23 @@ export const EmailProvidedSchema = z.object({ provided: z.literal(true) })
 export const EmailAddressSchema = z.email().max(254)
 
 export const CodeSchema = z.object({ code: z.string().regex(new RegExp(`^\\d{${CODE_LENGTH}}$`)) })
+
+/** The tool's answer to `askCode`: a code entered, which travels beside it, or a request for a new one. */
+export const CodeEnteredSchema = z.union([
+  z.object({ entered: z.literal(true) }),
+  z.object({ resend: z.literal(true) }),
+])
+
+/** What the browser may answer each widget with, besides typing instead. */
+export const CLIENT_TOOL_OUTPUTS = {
+  askPhoto: PhotoUploadedSchema,
+  confirmProduct: ProductChoiceSchema,
+  askName: NameSchema,
+  reviewQuote: QuoteSchema,
+  askConsent: ConsentSchema,
+  askEmail: EmailProvidedSchema,
+  askCode: CodeEnteredSchema,
+} satisfies Record<ClientTool, z.ZodType>
 
 /** What `sendCode` keeps in the run: the code's hash, never the code. */
 export const CodeSentSchema = z.object({ codeHash: z.string().min(1), expiresAt: z.iso.datetime() })

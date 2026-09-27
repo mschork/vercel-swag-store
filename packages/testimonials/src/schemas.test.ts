@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
+  CLIENT_TOOL_OUTPUTS,
   CodeSchema,
   DecisionSchema,
   EmailAddressSchema,
   NameSchema,
   PhotoUploadedSchema,
   QuoteSchema,
+  photoPathname,
+  runIdOfPathname,
 } from './schemas.ts'
 
 describe('DecisionSchema', () => {
@@ -60,5 +63,32 @@ describe('widget answers', () => {
     expect(CodeSchema.safeParse({ code: '12345' }).success).toBe(false)
     expect(EmailAddressSchema.safeParse('ada@example.com').success).toBe(true)
     expect(EmailAddressSchema.safeParse('ada').success).toBe(false)
+  })
+})
+
+describe('photo pathnames', () => {
+  it('round-trip the run id', () => {
+    const pathname = photoPathname('wrun_01ABC', 2)
+    expect(pathname).toBe('testimonials/wrun_01ABC/2.jpg')
+    expect(runIdOfPathname(pathname)).toBe('wrun_01ABC')
+    expect(PhotoUploadedSchema.safeParse({ pathname }).success).toBe(true)
+  })
+
+  it('refuse any other pathname', () => {
+    expect(runIdOfPathname('testimonials/../x/1.jpg')).toBeNull()
+    expect(runIdOfPathname('other/wrun/1.jpg')).toBeNull()
+  })
+})
+
+describe('CLIENT_TOOL_OUTPUTS', () => {
+  it('lets askCode carry no code, only that one was entered or a new one is wanted', () => {
+    expect(CLIENT_TOOL_OUTPUTS.askCode.safeParse({ entered: true }).success).toBe(true)
+    expect(CLIENT_TOOL_OUTPUTS.askCode.safeParse({ resend: true }).success).toBe(true)
+    expect(CLIENT_TOOL_OUTPUTS.askCode.safeParse({ code: '123456' }).success).toBe(false)
+  })
+
+  it('lets askEmail carry no address', () => {
+    expect(CLIENT_TOOL_OUTPUTS.askEmail.safeParse({ provided: true }).success).toBe(true)
+    expect(CLIENT_TOOL_OUTPUTS.askEmail.safeParse({ email: 'ada@example.com' }).success).toBe(false)
   })
 })
