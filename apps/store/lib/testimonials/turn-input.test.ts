@@ -18,11 +18,12 @@ describe('turnOf', () => {
     expect(turnOf({ messages: [user('x'.repeat(5000))] })).toBeNull()
   })
 
-  it("reads a greeting photo of this run only", () => {
-    const body: ChatBody = { messages: [user('Here is my photo.')], photo: 'testimonials/wrun_1/1.jpg' }
-    expect(turnOf(body, 'wrun_1')).toEqual({ kind: 'photo', pathname: 'testimonials/wrun_1/1.jpg' })
-    expect(turnOf(body, 'wrun_2')).toBeNull()
-    expect(turnOf(body)).toBeNull()
+  it('reads the greeting name only when it starts the run', () => {
+    const body: ChatBody = { messages: [user(' Ada ')], name: ' Ada ' }
+    expect(turnOf(body)).toEqual({ kind: 'name', name: 'Ada' })
+    expect(turnOf(body, 'wrun_1')).toBeNull()
+    expect(turnOf({ ...body, name: ' ' })).toBeNull()
+    expect(turnOf({ ...body, name: 'x'.repeat(100) })).toBeNull()
   })
 
   it('reads widget answers with the address and the code beside them', () => {

@@ -3,7 +3,10 @@ import { emptyDraft, type Draft } from '@repo/testimonials/draft'
 import type { PhotoAnalysis } from '@repo/testimonials/schemas'
 import { describe, expect, it, vi } from 'vitest'
 import {
-  PHOTO_MESSAGE,
+  emptyAnswer,
+  nameMessage,
+  needsAnalysis,
+  toolCallMessage,
   TYPED_INSTEAD,
   conversationOver,
   receiveAnswer,
@@ -185,11 +188,29 @@ describe('receiveTurn', () => {
     ])
   })
 
-  it('takes a photo from the greeting', () => {
-    const turn = receiveTurn(start(), [], { kind: 'photo', pathname: photo(1) }, context)
-    expect(turn?.messages).toEqual([{ role: 'user', content: PHOTO_MESSAGE }])
-    expect(turn?.conversation.draft.photo).toEqual({ pathname: photo(1) })
-    expect(receiveTurn(start(), [], { kind: 'photo', pathname: 'testimonials/wrun_9/1.jpg' }, context)).toBeNull()
+  it('asks for an analysis of a new photo only', () => {
+    const uploaded = receiveAnswer(start(), { toolCallId: 'c1', toolName: 'askPhoto', output: { pathname: photo(1) } }, {}, context)
+    expect(needsAnalysis(start().draft)).toBe(false)
+    expect(needsAnalysis(uploaded.conversation.draft)).toBe(true)
+  })
+
+  it("writes the model's side of a call the run makes", () => {
+    expect(toolCallMessage([{ toolCallId: 'a1', toolName: 'analysePhoto' }])).toEqual({
+      role: 'assistant',
+      content: [{ type: 'tool-call', toolCallId: 'a1', toolName: 'analysePhoto', input: {} }],
+    })
+  })
+
+  it('tells emptiness apart from an answer', () => {
+    expect(emptyAnswer({ toolCalls: [], steps: [{ text: ' ' }] })).toBe(true)
+    expect(emptyAnswer({ toolCalls: [], steps: [{ text: 'Hi' }] })).toBe(false)
+    expect(emptyAnswer({ toolCalls: [{}], steps: [{ text: '' }] })).toBe(false)
+  })
+
+  it('records the name from the greeting and tells the model', () => {
+    const turn = receiveTurn(start(), [], { kind: 'name', name: 'Ada' }, context)
+    expect(turn?.messages).toEqual([{ role: 'user', content: nameMessage('Ada') }])
+    expect(turn?.conversation.draft.name).toBe('Ada')
   })
 
   it('applies the answers to open calls and ignores a resend', () => {

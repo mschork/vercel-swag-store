@@ -3,8 +3,7 @@ import {
   CLIENT_TOOL_OUTPUTS,
   CodeSchema,
   EmailAddressSchema,
-  PhotoUploadedSchema,
-  runIdOfPathname,
+  NameSchema,
 } from '@repo/testimonials/schemas'
 import { z } from 'zod'
 import type { ClientAnswer, TurnInput } from './turn'
@@ -30,8 +29,8 @@ const MAX_MESSAGES = 2 * MAX_TURNS + 2
 
 export const ChatBodySchema = z.object({
   messages: z.array(MessageSchema).min(1).max(MAX_MESSAGES),
-  /** A photo chosen in the greeting. */
-  photo: z.string().optional(),
+  /** The name entered in the greeting. */
+  name: z.string().optional(),
   /** The address `askEmail` collected, beside the tool's answer. */
   email: z.string().optional(),
   /** The code `askCode` collected, beside the tool's answer. */
@@ -62,16 +61,15 @@ function answersOf(parts: readonly unknown[]): ClientAnswer[] {
 }
 
 /**
- * What the visitor did, from a parsed body: chose a photo in the greeting,
- * answered widgets, or typed. `null` when the body says none of these. With
- * no `runId` only a typed message counts, because no photo can belong to a
- * run that does not exist yet.
+ * What the visitor did, from a parsed body: entered a name in the greeting,
+ * answered widgets, or typed. `null` when the body says none of these. The
+ * greeting's name counts only without a `runId`, because it starts the run.
  */
 export function turnOf(body: ChatBody, runId?: string): TurnInput | null {
-  if (body.photo !== undefined) {
-    const photo = PhotoUploadedSchema.safeParse({ pathname: body.photo })
-    if (!runId || !photo.success || runIdOfPathname(photo.data.pathname) !== runId) return null
-    return { kind: 'photo', pathname: photo.data.pathname }
+  if (body.name !== undefined) {
+    const name = NameSchema.safeParse({ name: body.name })
+    if (runId || !name.success) return null
+    return { kind: 'name', name: name.data.name }
   }
   const last = body.messages.at(-1)
   if (!last) return null

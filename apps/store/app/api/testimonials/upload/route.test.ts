@@ -5,9 +5,6 @@ const m = vi.hoisted(() => ({
   admit: vi.fn(),
   ownChat: vi.fn(),
   runLive: vi.fn(),
-  start: vi.fn(),
-  cancel: vi.fn(async () => {}),
-  openChat: vi.fn(),
   countUpload: vi.fn(),
   handleUploadPresigned: vi.fn(),
   signUpload: vi.fn(async () => 'token'),
@@ -19,9 +16,7 @@ vi.mock('@/lib/testimonials/guard', () => ({
   runLive: m.runLive,
   refuse: (status: number, error: string) => Response.json({ error }, { status }),
 }))
-vi.mock('workflow/api', () => ({ start: m.start }))
-vi.mock('@/workflows/testimonial', () => ({ testimonial: 'testimonial' }))
-vi.mock('@/lib/session/store', () => ({ sessionStore: { openChat: m.openChat, countUpload: m.countUpload } }))
+vi.mock('@/lib/session/store', () => ({ sessionStore: { countUpload: m.countUpload } }))
 vi.mock('@vercel/blob/client', () => ({ handleUploadPresigned: m.handleUploadPresigned }))
 vi.mock('@/lib/testimonials/blob', () => ({ signUpload: m.signUpload }))
 
@@ -38,8 +33,6 @@ beforeEach(() => {
   m.admit.mockResolvedValue({ sid: 'sid-1' })
   m.ownChat.mockResolvedValue({ sid: 'sid-1', messages: [], turnStart: 0 })
   m.runLive.mockResolvedValue(true)
-  m.start.mockResolvedValue({ runId: 'wrun_new', cancel: m.cancel })
-  m.openChat.mockResolvedValue(true)
   m.countUpload.mockResolvedValue(1)
   m.handleUploadPresigned.mockImplementation(async ({ getSignedToken, body }) => {
     await getSignedToken(body.payload.pathname)
@@ -48,11 +41,9 @@ beforeEach(() => {
 })
 
 describe('reserving a pathname', () => {
-  it('starts the run for a first photo and binds it to the session', async () => {
-    const response = await call({ type: 'reserve', runId: null })
-    await expect(response.json()).resolves.toEqual({ pathname: 'testimonials/wrun_new/1.jpg' })
-    expect(m.start).toHaveBeenCalledWith('testimonial', [null])
-    expect(m.openChat).toHaveBeenCalledWith('sid-1', 'wrun_new')
+  it('refuses a reservation without a run', async () => {
+    expect((await call({ type: 'reserve', runId: null })).status).toBe(400)
+    expect(m.countUpload).not.toHaveBeenCalled()
   })
 
   it('counts the attempts of a named run and refuses past the limit', async () => {
@@ -60,7 +51,6 @@ describe('reserving a pathname', () => {
     await expect((await call({ type: 'reserve', runId: 'wrun_1' })).json()).resolves.toEqual({
       pathname: 'testimonials/wrun_1/2.jpg',
     })
-    expect(m.start).not.toHaveBeenCalled()
     m.countUpload.mockResolvedValue(MAX_PHOTO_ATTEMPTS + 1)
     expect((await call({ type: 'reserve', runId: 'wrun_1' })).status).toBe(409)
   })
@@ -72,10 +62,9 @@ describe('reserving a pathname', () => {
     expect((await call({ type: 'reserve', runId: 'wrun_1' })).status).toBe(410)
   })
 
-  it('cancels the new run when the session store fails', async () => {
-    m.openChat.mockResolvedValue(false)
-    expect((await call({ type: 'reserve', runId: null })).status).toBe(503)
-    expect(m.cancel).toHaveBeenCalled()
+  it('answers 503 when the session store fails', async () => {
+    m.countUpload.mockResolvedValue(null)
+    expect((await call({ type: 'reserve', runId: 'wrun_1' })).status).toBe(503)
   })
 })
 
@@ -102,5 +91,5 @@ describe('signing an upload', () => {
 
 it('answers what admit refuses', async () => {
   m.admit.mockResolvedValue(Response.json({}, { status: 429 }))
-  expect((await call({ type: 'reserve', runId: null })).status).toBe(429)
+  expect((await call({ type: 'reserve', runId: 'wrun_1' })).status).toBe(429)
 })
