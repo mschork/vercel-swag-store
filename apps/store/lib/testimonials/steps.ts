@@ -3,12 +3,14 @@ import { analysePhoto, checkText } from '@repo/testimonials/analyse'
 import { CODE_RESEND_SECONDS, CODE_TTL_MINUTES, MODEL } from '@repo/testimonials/constants'
 import type { Draft } from '@repo/testimonials/draft'
 import type { PromptProduct } from '@repo/testimonials/prompt'
-import type { PhotoAnalysis, TextCheck } from '@repo/testimonials/schemas'
-import { writeSubmission } from '@repo/testimonials'
-import { getAllProducts } from '@/lib/api/products'
-import { codeEmail } from '@/lib/email/templates'
+import type { PhotoAnalysis, ReviewDecision, TextCheck } from '@repo/testimonials/schemas'
+import { closeSubmission, publishTestimonial, writeSubmission } from '@repo/testimonials'
+import { findProduct, getAllProducts } from '@/lib/api/products'
+import { approvalEmail, codeEmail, rejectionEmail } from '@/lib/email/templates'
 import { sendEmail } from '@/lib/email/send'
+import { publicEnv } from '@/lib/env.public'
 import { getWriteClient } from '@/lib/sanity/write-client'
+import { sessionStore } from '@/lib/session/store'
 import { deletePhotos, readPhoto } from './blob'
 import { codeMatches, generateCode, hashCode } from './code'
 import { photoUrl } from './photo-link'
@@ -65,13 +67,62 @@ export function verifyCode(runId: string, email: Draft['email'], code: string, n
   return { verified: codeMatches(runId, code, email.codeHash) }
 }
 
+function writeClient() {
+  const client = getWriteClient()
+  if (!client) throw new Error('SANITY_API_WRITE_TOKEN is not set, so nothing can be written.')
+  return client
+}
+
 /** Writes the pending submission from the draft. */
 export async function submit(runId: string, draft: Draft, now = new Date()): Promise<{ submittedAt: string }> {
-  const client = getWriteClient()
-  if (!client) throw new Error('SANITY_API_WRITE_TOKEN is not set, so the submission cannot be written.')
+  const client = writeClient()
   await writeSubmission(client, { runId, draft, photoUrl: photoUrl(runId), model: MODEL, now })
   return { submittedAt: now.toISOString() }
 }
 
 /** Deletes a run's photos, all but `keep` when it is given. */
 export const dropPhotos = (runId: string, keep?: string) => deletePhotos(runId, keep)
+
+/** Marks the conversation over, so the chat routes stop offering it. */
+export async function endChat(runId: string): Promise<void> {
+  if (!(await sessionStore.endChat(runId))) throw new Error(`Run ${runId} could not mark its chat ended`)
+}
+
+/**
+ * Copies an accepted submission's photo into Sanity assets and publishes the
+ * testimonial from the draft, with the editor's alt text.
+ */
+export async function publish(runId: string, draft: Draft, photoAlt: string, now = new Date()): Promise<string> {
+  const { photo, name, quote, products } = draft
+  if (!photo || !name || !quote || products.length === 0) {
+    throw new Error(`The draft of run ${runId} has nothing to publish`)
+  }
+  const bytes = Buffer.from(await readPhoto(photo.pathname))
+  return publishTestimonial(writeClient(), { runId, person: name, quote, products, photo: bytes, photoAlt, now })
+}
+
+const siteUrl = (path: string) => new URL(path, publicEnv.NEXT_PUBLIC_SITE_URL).href
+
+/**
+ * Emails the editor's decision to the draft's address. The idempotency key
+ * makes Resend send it once, however often the step retries.
+ */
+export async function sendOutcome(runId: string, draft: Draft, decision: ReviewDecision): Promise<void> {
+  const address = draft.email?.address
+  if (!address) throw new Error(`Run ${runId} has no email address to send the outcome to`)
+  let content
+  if (decision.status === 'accepted') {
+    const id = draft.products[0]
+    const product = id ? await findProduct(id) : null
+    if (!product) throw new Error(`Run ${runId} names no product the API knows`)
+    content = approvalEmail({ name: product.name, url: siteUrl(`/products/${product.slug}`) })
+  } else {
+    content = rejectionEmail(decision.rejectionReason, siteUrl('/testimonials#share'))
+  }
+  await sendEmail(address, content, { idempotencyKey: `testimonial-outcome/${runId}` })
+}
+
+/** After the decision: the address and the photo link leave the submission. */
+export async function closeDecision(runId: string, now = new Date()): Promise<void> {
+  await closeSubmission(writeClient(), runId, now)
+}

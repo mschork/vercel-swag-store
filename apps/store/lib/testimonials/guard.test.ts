@@ -7,6 +7,7 @@ const state = vi.hoisted(() => ({
   rateLimited: false,
   chat: null as unknown,
   status: 'running' as string | Error,
+  ended: false as boolean | 'unavailable',
 }))
 
 vi.mock('./chat', () => ({
@@ -15,7 +16,9 @@ vi.mock('./chat', () => ({
   },
 }))
 vi.mock('@/lib/session/cookie', () => ({ getSessionId: async () => state.sid }))
-vi.mock('@/lib/session/store', () => ({ sessionStore: { readChat: async () => state.chat } }))
+vi.mock('@/lib/session/store', () => ({
+  sessionStore: { readChat: async () => state.chat, chatEnded: async () => state.ended },
+}))
 vi.mock('botid/server', () => ({ checkBotId: async () => ({ isBot: state.isBot }) }))
 vi.mock('@vercel/firewall', () => ({ checkRateLimit: async () => ({ rateLimited: state.rateLimited }) }))
 vi.mock('workflow/api', () => ({
@@ -30,7 +33,7 @@ const { admit, ownChat, runLive } = await import('./guard')
 const request = new Request('https://store.test/api/testimonials/chat', { method: 'POST' })
 
 beforeEach(() => {
-  Object.assign(state, { offered: true, sid: 'sid-1', isBot: false, rateLimited: false, chat: null, status: 'running' })
+  Object.assign(state, { offered: true, sid: 'sid-1', isBot: false, rateLimited: false, chat: null, status: 'running', ended: false })
 })
 afterEach(() => vi.unstubAllEnvs())
 
@@ -78,5 +81,12 @@ describe('runLive', () => {
     expect(await runLive('wrun_1')).toBe(false)
     state.status = new Error('not found')
     expect(await runLive('wrun_1')).toBe(false)
+  })
+
+  it('is false once the run has ended the conversation, and falls back to the run when Redis fails', async () => {
+    state.ended = true
+    expect(await runLive('wrun_1')).toBe(false)
+    state.ended = 'unavailable'
+    expect(await runLive('wrun_1')).toBe(true)
   })
 })

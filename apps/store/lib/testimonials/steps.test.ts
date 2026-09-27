@@ -10,15 +10,24 @@ const mocks = vi.hoisted(() => ({
   sendEmail: vi.fn(async () => {}),
   readPhoto: vi.fn(async () => new Uint8Array([1])),
   deletePhotos: vi.fn(async () => {}),
+  publishTestimonial: vi.fn(async () => 'testimonial-wrun_1'),
+  closeSubmission: vi.fn(async () => {}),
+  endChat: vi.fn(async () => true),
 }))
 
 vi.mock('@repo/testimonials/analyse', () => ({ analysePhoto: mocks.analysePhoto, checkText: mocks.checkText }))
-vi.mock('@repo/testimonials', () => ({ writeSubmission: mocks.writeSubmission }))
-vi.mock('@/lib/api/products', () => ({
-  getAllProducts: async () => [
-    { id: 'mug', name: 'Black Mug', slug: 'mug', category: 'drinkware', description: 'A mug', price: 1 },
-  ],
+vi.mock('@repo/testimonials', () => ({
+  writeSubmission: mocks.writeSubmission,
+  publishTestimonial: mocks.publishTestimonial,
+  closeSubmission: mocks.closeSubmission,
 }))
+const mug = { id: 'mug', name: 'Black Mug', slug: 'black-mug', category: 'drinkware', description: 'A mug', price: 1 }
+vi.mock('@/lib/api/products', () => ({
+  getAllProducts: async () => [mug],
+  findProduct: async (id: string) => (id === mug.id ? mug : null),
+}))
+vi.mock('@/lib/env.public', () => ({ publicEnv: { NEXT_PUBLIC_SITE_URL: 'https://store.test' } }))
+vi.mock('@/lib/session/store', () => ({ sessionStore: { endChat: mocks.endChat } }))
 vi.mock('@/lib/email/send', () => ({ sendEmail: mocks.sendEmail }))
 vi.mock('@/lib/sanity/write-client', () => ({ getWriteClient: () => mocks.client }))
 vi.mock('./blob', () => ({ readPhoto: mocks.readPhoto, deletePhotos: mocks.deletePhotos }))
@@ -32,9 +41,7 @@ const provided: Draft['email'] = { address: 'ada@example.com', status: 'provided
 
 beforeEach(() => {
   mocks.client = { id: 'client' }
-  for (const mock of [mocks.analysePhoto, mocks.checkText, mocks.writeSubmission, mocks.sendEmail, mocks.readPhoto, mocks.deletePhotos]) {
-    mock.mockClear()
-  }
+  vi.clearAllMocks()
 })
 
 describe('catalogue', () => {
@@ -133,5 +140,82 @@ describe('dropPhotos', () => {
   it("deletes the run's photos", async () => {
     await steps.dropPhotos('wrun_1', 'keep')
     expect(mocks.deletePhotos).toHaveBeenCalledWith('wrun_1', 'keep')
+  })
+})
+
+const submitted: Draft = {
+  ...emptyDraft(),
+  photo: { pathname: 'testimonials/wrun_1/2.jpg' },
+  products: ['mug'],
+  name: 'Ada',
+  quote: 'Holds coffee.',
+  email: { address: 'ada@example.com', status: 'verified' },
+  submittedAt: new Date(NOW).toISOString(),
+}
+
+describe('endChat', () => {
+  it('marks the chat ended, and throws so the step retries when Redis fails', async () => {
+    await steps.endChat('wrun_1')
+    expect(mocks.endChat).toHaveBeenCalledWith('wrun_1')
+    mocks.endChat.mockResolvedValueOnce(false)
+    await expect(steps.endChat('wrun_1')).rejects.toThrow('could not mark')
+  })
+})
+
+describe('publish', () => {
+  it("publishes the draft with the photo's bytes and the editor's alt text", async () => {
+    const now = new Date(NOW)
+    expect(await steps.publish('wrun_1', submitted, 'A black mug', now)).toBe('testimonial-wrun_1')
+    expect(mocks.readPhoto).toHaveBeenCalledWith('testimonials/wrun_1/2.jpg')
+    expect(mocks.publishTestimonial).toHaveBeenCalledWith(mocks.client, {
+      runId: 'wrun_1',
+      person: 'Ada',
+      quote: 'Holds coffee.',
+      products: ['mug'],
+      photo: Buffer.from([1]),
+      photoAlt: 'A black mug',
+      now,
+    })
+  })
+
+  it('throws for a draft without a photo, and without a write token', async () => {
+    await expect(steps.publish('wrun_1', { ...submitted, photo: null }, 'alt')).rejects.toThrow('nothing to publish')
+    mocks.client = null
+    await expect(steps.publish('wrun_1', submitted, 'alt')).rejects.toThrow('SANITY_API_WRITE_TOKEN')
+  })
+})
+
+describe('sendOutcome', () => {
+  it("emails an approval that links the product page, once per run", async () => {
+    await steps.sendOutcome('wrun_1', submitted, { status: 'accepted', photoAlt: 'A mug' })
+    const [to, email, options] = mocks.sendEmail.mock.calls[0] as unknown as [string, { text: string }, object]
+    expect(to).toBe('ada@example.com')
+    expect(email.text).toContain('https://store.test/products/black-mug')
+    expect(options).toEqual({ idempotencyKey: 'testimonial-outcome/wrun_1' })
+  })
+
+  it('emails a rejection with an invitation back to the chat', async () => {
+    await steps.sendOutcome('wrun_1', submitted, { status: 'rejected', rejectionReason: 'photo' })
+    const [, email] = mocks.sendEmail.mock.calls[0] as unknown as [string, { subject: string; text: string }]
+    expect(email.subject).toBe('About your testimonial')
+    expect(email.text).toContain('https://store.test/testimonials#share')
+  })
+
+  it('throws without an address or a known product', async () => {
+    await expect(
+      steps.sendOutcome('wrun_1', { ...submitted, email: null }, { status: 'rejected', rejectionReason: 'other' }),
+    ).rejects.toThrow('no email address')
+    await expect(
+      steps.sendOutcome('wrun_1', { ...submitted, products: ['gone'] }, { status: 'accepted', photoAlt: 'A mug' }),
+    ).rejects.toThrow('no product')
+    expect(mocks.sendEmail).not.toHaveBeenCalled()
+  })
+})
+
+describe('closeDecision', () => {
+  it('closes the submission with the write client', async () => {
+    const now = new Date(NOW)
+    await steps.closeDecision('wrun_1', now)
+    expect(mocks.closeSubmission).toHaveBeenCalledWith(mocks.client, 'wrun_1', now)
   })
 })

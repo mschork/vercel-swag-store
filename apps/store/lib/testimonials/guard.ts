@@ -41,8 +41,13 @@ export async function ownChat(runId: string, sid: string): Promise<ChatRecord | 
   return chat
 }
 
-/** Whether the run is still going, so it can take another turn. */
+/**
+ * Whether the conversation can take another turn: its run is still going and
+ * has not ended the conversation. A submitted run goes on waiting for an
+ * editor after its conversation is over.
+ */
 export async function runLive(runId: string): Promise<boolean> {
+  if ((await sessionStore.chatEnded(runId)) === true) return false
   const status = await getRun(runId).status.catch(() => null)
   return status === 'pending' || status === 'running'
 }

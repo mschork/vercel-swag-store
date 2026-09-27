@@ -54,6 +54,7 @@ const cartKey = (sid: string) => `swag:sess:${sid}:cart`
 const currentChatKey = (sid: string) => `swag:sess:${sid}:chat`
 const chatKey = (runId: string) => `swag:chat:${runId}`
 const uploadsKey = (runId: string) => `swag:chat:${runId}:uploads`
+const endedKey = (runId: string) => `swag:chat:${runId}:ended`
 
 export function createSessionStore(redis: Redis, now: () => number = Date.now) {
   const run = async (label: string, commands: Command[]): Promise<unknown[] | null> => {
@@ -204,6 +205,20 @@ export function createSessionStore(redis: Redis, now: () => number = Date.now) {
       const replies = await run('current chat', [['GET', currentChatKey(sid)]])
       if (!replies) return 'unavailable'
       return typeof replies[0] === 'string' ? replies[0] : null
+    },
+
+    /**
+     * Marks the conversation over: it takes no more turns, though its run may
+     * still wait for an editor. Written by the run itself.
+     */
+    async endChat(runId: string): Promise<boolean> {
+      const replies = await run('end chat', [['SET', endedKey(runId), '1', 'EX', String(CHAT_TTL_SECONDS)]])
+      return replies !== null
+    },
+
+    async chatEnded(runId: string): Promise<boolean | Unavailable> {
+      const replies = await run('chat ended', [['GET', endedKey(runId)]])
+      return replies ? replies[0] === '1' : 'unavailable'
     },
 
     /** Counts one more photo upload for the run and answers the count, or `null` when Redis failed. */

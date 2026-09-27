@@ -1,6 +1,6 @@
 import { WorkflowAgent, type ModelCallStreamPart } from '@ai-sdk/workflow'
 import type { ModelMessage } from 'ai'
-import { defineHook, getWorkflowMetadata, getWritable, sleep } from 'workflow'
+import { createHook, defineHook, getWorkflowMetadata, getWritable, sleep } from 'workflow'
 import { z } from 'zod'
 // Subpaths, not the package root: the workflow body runs in a sandbox, and
 // the root pulls in the Sanity client and the model calls.
@@ -9,12 +9,14 @@ import {
   MAX_MODEL_CALLS_PER_TURN,
   MAX_TURNS,
   MODEL,
+  REVIEW_HOOK_PREFIX,
   TURN_HOOK_PREFIX,
 } from '@repo/testimonials/constants'
 import { draftView, emptyDraft, type Draft } from '@repo/testimonials/draft'
 import { AGENT_INSTRUCTIONS, type PromptProduct } from '@repo/testimonials/prompt'
-import { ReviewQuoteInputSchema } from '@repo/testimonials/schemas'
+import { ReviewQuoteInputSchema, type ReviewDecision } from '@repo/testimonials/schemas'
 import type { DraftPart, RunPart } from '@/lib/testimonials/stream'
+import { carryOut } from '@/lib/testimonials/decide'
 import * as steps from '@/lib/testimonials/steps'
 import {
   conversationOver,
@@ -40,12 +42,22 @@ import {
  * reach them and it sees only what `lib/testimonials/turn.ts` returns.
  * Started by the chat route with the first message, or by the upload route
  * with none when the first photo comes before any message.
+ *
+ * After submit it waits on the review hook, with no time limit, until the
+ * decision route resumes it; then it publishes or not, emails the visitor
+ * and removes the photo and the address.
  */
 
 /** Resumed by POST /api/testimonials/chat/<runId>/message. */
 export const turnHook = defineHook<TurnInput>()
 
-export type TestimonialResult = { submitted: boolean; turns: number }
+export type TestimonialResult = {
+  submitted: boolean
+  turns: number
+  decision?: ReviewDecision['status']
+  /** False when the outcome email failed all its retries. */
+  emailed?: boolean
+}
 
 const GOODBYE =
   'That is as far as this conversation goes. Thank you for your time; you can start a new one from the testimonials page.'
@@ -110,6 +122,22 @@ async function dropPhotos(runId: string, keep?: string) {
   'use step'
   await steps.dropPhotos(runId, keep)
 }
+async function endChat(runId: string) {
+  'use step'
+  await steps.endChat(runId)
+}
+async function publish(runId: string, draft: Draft, photoAlt: string) {
+  'use step'
+  return steps.publish(runId, draft, photoAlt)
+}
+async function sendOutcome(runId: string, draft: Draft, decision: ReviewDecision) {
+  'use step'
+  await steps.sendOutcome(runId, draft, decision)
+}
+async function closeDecision(runId: string) {
+  'use step'
+  await steps.closeDecision(runId)
+}
 
 async function write(parts: RunPart[]) {
   'use step'
@@ -141,6 +169,8 @@ export async function testimonial(first: TurnInput | null): Promise<TestimonialR
   const { workflowRunId: runId } = getWorkflowMetadata()
   const hook = turnHook.create({ token: `${TURN_HOOK_PREFIX}${runId}` })
   const inputs = hook[Symbol.asyncIterator]()
+  // Created now, so it exists before the submission an editor decides on.
+  const review = createHook<ReviewDecision>({ token: `${REVIEW_HOOK_PREFIX}${runId}` })
   const writable = getWritable<ModelCallStreamPart>()
 
   const products = await loadCatalogue()
@@ -242,8 +272,27 @@ export async function testimonial(first: TurnInput | null): Promise<TestimonialR
   }
 
   hook.dispose()
+  try {
+    await endChat(runId)
+  } catch {
+    // The chat routes still see a live run; its turn hook is gone, so a
+    // message answers 410.
+  }
+  const { draft } = conversation
   // A submitted photo waits for the editor; every other one goes now.
-  if (!conversation.draft.submittedAt) await dropPhotos(runId)
+  if (!draft.submittedAt) await dropPhotos(runId)
   await closeStream()
-  return { submitted: conversation.draft.submittedAt !== null, turns }
+  if (!draft.submittedAt) {
+    review.dispose()
+    return { submitted: false, turns }
+  }
+
+  const decision = await review
+  const { emailed } = await carryOut(decision, {
+    publish: (photoAlt) => publish(runId, draft, photoAlt),
+    sendOutcome: (outcome) => sendOutcome(runId, draft, outcome),
+    dropPhotos: () => dropPhotos(runId),
+    closeDecision: () => closeDecision(runId),
+  })
+  return { submitted: true, turns, decision: decision.status, emailed }
 }

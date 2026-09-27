@@ -141,3 +141,13 @@ export const DecisionSchema = z.discriminatedUnion('status', [
   message: 'the run id does not match the submission',
 })
 export type Decision = z.infer<typeof DecisionSchema>
+
+/** What the decision route hands the run waiting on its review hook. */
+export type ReviewDecision =
+  | { status: 'accepted'; photoAlt: string }
+  | { status: 'rejected'; rejectionReason: (typeof REJECTION_REASONS)[number] }
+
+export const reviewDecisionOf = (decision: Decision): ReviewDecision =>
+  decision.status === 'accepted'
+    ? { status: 'accepted', photoAlt: decision.photoAlt }
+    : { status: 'rejected', rejectionReason: decision.rejectionReason }

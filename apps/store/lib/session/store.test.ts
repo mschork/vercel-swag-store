@@ -143,6 +143,14 @@ describe('testimonial chats', () => {
     expect(await store.currentChat(sid)).toBeNull()
   })
 
+  it('marks a conversation over', async () => {
+    const runId = `wrun_${counter}`
+    expect(await store.chatEnded(runId)).toBe(false)
+    expect(await store.endChat(runId)).toBe(true)
+    expect(await store.chatEnded(runId)).toBe(true)
+    expect(await store.chatEnded(`${runId}_other`)).toBe(false)
+  })
+
   it('counts uploads per run', async () => {
     const runId = `wrun_${counter}`
     expect(await store.countUpload(runId)).toBe(1)
@@ -169,6 +177,8 @@ describe('when Redis fails', () => {
     expect(await broken.saveChat('wrun_1', { sid, messages: [], turnStart: 0 })).toBe(false)
     expect(await broken.currentChat(sid)).toBe('unavailable')
     expect(await broken.countUpload('wrun_1')).toBeNull()
+    expect(await broken.endChat('wrun_1')).toBe(false)
+    expect(await broken.chatEnded('wrun_1')).toBe('unavailable')
     expect(log).toHaveBeenCalledWith('[session] read failed: Upstash did not answer: TimeoutError')
     expect(JSON.stringify(log.mock.calls)).not.toContain('secret-token')
   })

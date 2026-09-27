@@ -8,6 +8,7 @@ import {
   PhotoUploadedSchema,
   QuoteSchema,
   photoPathname,
+  reviewDecisionOf,
   runIdOfPathname,
 } from './schemas.ts'
 
@@ -37,6 +38,17 @@ describe('DecisionSchema', () => {
 
   it('refuses a run id that does not match the submission', () => {
     expect(DecisionSchema.safeParse({ ...base, runId: 'run2', status: 'rejected', rejectionReason: 'other' }).success).toBe(false)
+  })
+})
+
+describe('reviewDecisionOf', () => {
+  const base = { _id: 'testimonialSubmission.run1', runId: 'run1' }
+
+  it('keeps only what the run acts on', () => {
+    const accepted = DecisionSchema.parse({ ...base, status: 'accepted', photoAlt: 'A mug', rejectionReason: null })
+    expect(reviewDecisionOf(accepted)).toEqual({ status: 'accepted', photoAlt: 'A mug' })
+    const rejected = DecisionSchema.parse({ ...base, status: 'rejected', rejectionReason: 'photo', photoAlt: 'A mug' })
+    expect(reviewDecisionOf(rejected)).toEqual({ status: 'rejected', rejectionReason: 'photo' })
   })
 })
 
