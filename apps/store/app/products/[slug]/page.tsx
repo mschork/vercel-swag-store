@@ -22,7 +22,7 @@ import { categoryPath } from '@/lib/listing'
 import { markdownAlternate } from '@/lib/markdown/paths'
 import { openGraphDefaults } from '@/lib/metadata'
 import { getProductView } from '@/lib/product-view'
-import { photoUrls } from '@/lib/sanity/image'
+import { galleryPhotos } from '@/lib/sanity/image'
 import { breadcrumbJsonLd, faqJsonLd, productJsonLd } from '@/lib/structured-data'
 import { truncate } from '@/lib/text'
 
@@ -80,7 +80,7 @@ export default async function ProductPage({ params }: Props) {
     Boolean(product.care) ||
     entries.length > 0 ||
     product.faqs.length > 0
-  const photos = photoUrls(product.gallery)
+  const photos = galleryPhotos(product.gallery, product.name)
   const siteUrl = publicEnv.NEXT_PUBLIC_SITE_URL
   const trail: BreadcrumbLink[] = [
     { name: 'Home', href: '/' },
@@ -99,11 +99,11 @@ export default async function ProductPage({ params }: Props) {
       <Breadcrumb trail={trail} current={product.name} />
       <JsonLd data={breadcrumbJsonLd(crumbs, siteUrl)} />
       {/* In the prerendered part of the page, so it is the same for everyone. */}
-      <JsonLd data={productJsonLd({ product, images: photos, categoryName, siteUrl })} />
+      <JsonLd data={productJsonLd({ product, images: photos.map(({ src }) => src), categoryName, siteUrl })} />
       {product.faqs.length > 0 ? <JsonLd data={faqJsonLd(product.faqs)} /> : null}
       <article className="grid gap-8 md:grid-cols-2 md:gap-12">
         <div>
-          <ProductGallery images={photos} name={product.name} />
+          <ProductGallery photos={photos} name={product.name} />
         </div>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
