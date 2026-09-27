@@ -132,6 +132,51 @@ describe('failed adds', () => {
     ])
   })
 
+  it('records no failure when the answer says the cart still holds the product', () => {
+    store.startAdd('bottle_001', 1, bottle)
+    store.settleAdd('bottle_001', 1, { ok: false, error: 'Earlier.' })
+    store.startAdd('bottle_001', 1, bottle)
+    // The line went above the draw and was set back to it.
+    store.settleAdd('bottle_001', 1, {
+      ok: false,
+      error: 'Only 9 available.',
+      lines: [line('bottle_001', 9)],
+      line: { productId: 'bottle_001', quantity: 9 },
+    })
+
+    expect(store.readAddsInFlight().failures).toEqual([])
+  })
+
+  it('keeps a failure whose answer says the product left the cart', () => {
+    store.startAdd('bottle_001', 1, bottle)
+    store.settleAdd('bottle_001', 1, {
+      ok: false,
+      error: 'Gone.',
+      lines: [],
+      line: { productId: 'bottle_001', quantity: 0 },
+    })
+
+    expect(store.readAddsInFlight().failures).toEqual([
+      { productId: 'bottle_001', name: 'Bottle', error: 'Gone.' },
+    ])
+  })
+
+  it('forgets one product\'s failure when its line is acted on', () => {
+    store.startAdd('bottle_001', 1, bottle)
+    store.startAdd('pin_001', 1, pin)
+    store.settleAdd('bottle_001', 1, { ok: false, error: 'Try again.' })
+    store.settleAdd('pin_001', 1, { ok: false, error: 'Try again.' })
+
+    store.dismissFailure('bottle_001')
+    const after = store.readAddsInFlight()
+    expect(after.failures).toEqual([
+      { productId: 'pin_001', name: 'Pin', error: 'Try again.' },
+    ])
+    // Nothing left to forget for it, so subscribers are not told.
+    store.dismissFailure('bottle_001')
+    expect(store.readAddsInFlight()).toBe(after)
+  })
+
   it('records no failure for an add that had nothing in flight', () => {
     store.settleAdd('bottle_001', 1, { ok: false, error: 'Gone.' })
     store.startAdd('pin_001', 0, pin)

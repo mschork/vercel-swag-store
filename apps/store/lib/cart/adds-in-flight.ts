@@ -15,14 +15,23 @@ export type LineDisplay = Pick<Line, 'slug' | 'name' | 'image' | 'price'>
 /** One product's adds in flight: their total quantity and what its row shows. */
 export type PendingLine = LineDisplay & { productId: string; quantity: number }
 
-/** An add that failed, kept so the cart page can say why its row went. */
+/**
+ * An add that failed and left no line of its product, kept so the cart page
+ * can say why its row went.
+ */
 export type FailedAdd = { productId: string; name: string; error: string }
 
 /** An answer's lines, numbered in the order the answers arrived. */
 export type SavedAnswer = { version: number; lines: Line[] }
 
 /** What a cart action answered, as far as this store reads it. */
-export type CartAnswer = { ok: boolean; error?: string; lines?: Line[] }
+export type CartAnswer = {
+  ok: boolean
+  error?: string
+  lines?: Line[]
+  /** The product's quantity in the cart, when the action learnt it. */
+  line?: { productId: string; quantity: number }
+}
 
 export type AddsInFlight = {
   /** In the order their products were first clicked. */
@@ -96,7 +105,9 @@ export function startAdd(productId: string, quantity: number, display: LineDispl
 /**
  * Applies an add's answer as one change: its quantity is released, its lines
  * become the newest saved lines, and a failure is kept under the product's
- * name. A subscriber never sees the add both saved and in flight.
+ * name unless the answer says the cart still holds the product, as it does
+ * when a line is set back to the draw. A subscriber never sees the add both
+ * saved and in flight.
  */
 export function settleAdd(productId: string, quantity: number, answer: CartAnswer): void {
   const line = state.pending.find((entry) => entry.productId === productId)
@@ -106,13 +117,13 @@ export function settleAdd(productId: string, quantity: number, answer: CartAnswe
     : left > 0
       ? state.pending.map((entry) => (entry === line ? { ...entry, quantity: left } : entry))
       : state.pending.filter((entry) => entry !== line)
+  const others = state.failures.filter((failure) => failure.productId !== productId)
   const failures =
     answer.ok || !line || quantity <= 0
       ? state.failures
-      : [
-          ...state.failures.filter((failure) => failure.productId !== productId),
-          { productId, name: line.name, error: answer.error ?? '' },
-        ]
+      : (answer.line?.quantity ?? 0) > 0
+        ? others
+        : [...others, { productId, name: line.name, error: answer.error ?? '' }]
   commit({ ...state, pending, failures, saved: answer.lines ? next(answer.lines) : state.saved })
 }
 
@@ -133,6 +144,12 @@ export function noteNavigation(fetchesPage: boolean): void {
 
 export function dismissFailures(): void {
   if (state.failures.length > 0) commit({ ...state, failures: [] })
+}
+
+/** Forgets one product's failure, once the visitor acts on its line. */
+export function dismissFailure(productId: string): void {
+  const failures = state.failures.filter((failure) => failure.productId !== productId)
+  if (failures.length !== state.failures.length) commit({ ...state, failures })
 }
 
 function next(lines: Line[]): SavedAnswer {

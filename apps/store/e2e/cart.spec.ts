@@ -253,6 +253,28 @@ test('the cart refuses more than the visit holds, and blocks checkout', async ({
   await expect(page.getByRole('button', { name: 'Checkout' })).toBeEnabled(SAVED)
 })
 
+test('an add set back to the draw leaves its row and lists no failure', async ({
+  page,
+  context,
+}) => {
+  const product = await openInStockProduct(page, context, 2)
+  await page.waitForLoadState('networkidle')
+  const href = new URL(page.url()).pathname
+  await addToCart(page)
+
+  // The visit now holds one, while the page still offers a second.
+  await seedVisit(context, { [product.productId]: 1 })
+  const actions = watchActions(page)
+  await page.getByRole('button', { name: 'Add to Cart', exact: true }).click()
+  await page.getByRole('banner').locator('a[href="/cart"]').click()
+  await expect(page).toHaveURL(/\/cart$/)
+
+  const row = rowFor(page, href)
+  await expect.poll(actions.addsAnswered, SAVED).toBe(1)
+  await expect(row.getByLabel('Quantity', { exact: true })).toHaveValue('1', SAVED)
+  await expect(page.getByRole('main').getByText(`${product.name}: `)).toHaveCount(0)
+})
+
 test('a cart rendered while the visit is drawn hydrates cleanly', async ({
   page,
   context,
