@@ -18,8 +18,8 @@ const DRAW_CONCURRENCY = 8
 
 /**
  * How many of a product the visit says there are, drawing and claiming it
- * when the visit has no draw for it. `null` when the API failed: there is
- * nothing to enforce, and the caller enforces nothing.
+ * when the visit has no draw for it. `null` when the API failed: `addToCart`
+ * then refuses the add, and a quantity change is held to no draw.
  */
 export async function drawFor(productId: string): Promise<number | null> {
   const session = await getSession()
