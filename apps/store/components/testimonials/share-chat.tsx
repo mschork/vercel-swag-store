@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { buttonVariants } from '@/components/ui/button'
 import { SHARE_HASH } from '@/lib/testimonials/share'
+import type { ChatProduct } from './chat/types'
 
 /** The panel's code loads only when the chat opens, so the page's first load never carries it. */
 const SharePanel = dynamic(() => import('./share-panel').then((module) => module.SharePanel))
@@ -20,7 +21,7 @@ function subscribe(onChange: () => void) {
  * server renders the closed state, so the page is the same with or without
  * the fragment until the browser hydrates.
  */
-export function ShareChat({ label }: { label: string }) {
+export function ShareChat({ label, products }: { label: string; products: ChatProduct[] }) {
   const open = useSyncExternalStore(
     subscribe,
     () => window.location.hash === SHARE_HASH,
@@ -42,7 +43,7 @@ export function ShareChat({ label }: { label: string }) {
     window.dispatchEvent(new HashChangeEvent('hashchange'))
   }
 
-  if (open) return <SharePanel onClose={close} />
+  if (open) return <SharePanel products={products} onClose={close} />
   return (
     <a ref={link} href={SHARE_HASH} className={buttonVariants({ size: 'lg', className: 'self-start px-4' })}>
       {label}
