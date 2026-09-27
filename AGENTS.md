@@ -117,3 +117,7 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 ### Domain docs
 
 Single-context: `CONTEXT.md` and `docs/adr/` at the repo root, created lazily by `/domain-modeling`. `specs/decisions.md` remains the source of settled product and architecture choices; ADRs record engineering decisions made during implementation and link back to it. See `docs/agents/domain.md`.
+
+### Vercel skills
+
+`.agents/skills/` holds Vercel's Next.js and React skills, committed and pinned in `skills-lock.json`; `npx skills experimental_install` restores them and links them into `.claude/skills/`. Use `vercel-react-best-practices` and `web-design-guidelines` as a review pass, and the `next-*` skills for static shells, Suspense boundaries and prefetching. This file wins where a skill disagrees: a skill's advice to add a dependency (SWR, an LRU cache, `better-all`, `@next/playwright`) goes into the PR description as a proposal.
