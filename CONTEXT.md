@@ -65,12 +65,20 @@ The one short sentence or two an editor writes about a category, shown under the
 _Avoid_: Category description, category enrichment, blurb
 
 **Testimonial**:
-What one person says about the products they are photographed with: a quote, their name and role, and the photo. Shown on the page of each product it names, under "What people say about it".
+What one person says about a product, with a photo of it: a quote, their name and the photo. Written by an editor, or submitted by a visitor and accepted by an editor. Shown on the page of each product it names, under "What people say about it", and on the wall at `/testimonials`.
 _Avoid_: Lookbook entry (the term until 19 Sep 2026), editorial photo, story, review (nobody rates anything)
 
 **Testimonial mention**:
-One published testimonial naming one product. It records that an editor photographed the product with someone, not that anyone bought, rated or clicked it. The count of mentions is what orders the favourites on the home page.
+One published testimonial naming one product, whoever wrote it. It records that someone was photographed with the product, not that anyone bought, rated or clicked it. The count of mentions is what orders the favourites on the home page.
 _Avoid_: Popularity, rating, vote, like
+
+**Submission**:
+What a visitor sends through the testimonial agent: a photo, the product they confirmed, their name, their words and a verified email address. Private until an editor accepts it, when it becomes a testimonial, or rejects it.
+_Avoid_: Review, pending testimonial, entry
+
+**Draft**:
+The submission while the conversation is still going: the facts the visitor has confirmed so far, shown in the draft card. Only the agent's tools change it, never the model's own words.
+_Avoid_: Form state, session
 
 **FAQ**:
 One question and its answer, written once and shown on many products. It reaches a product through the categories it names, or because that product attaches it directly.
