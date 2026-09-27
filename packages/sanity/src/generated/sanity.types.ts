@@ -81,6 +81,13 @@ export type ProductReference = {
   [internalGroqTypeReferenceTo]?: 'product'
 }
 
+export type TestimonialSubmissionReference = {
+  _ref: string
+  _type: 'reference'
+  _weak?: boolean
+  [internalGroqTypeReferenceTo]?: 'testimonialSubmission'
+}
+
 export type Testimonial = {
   _id: string
   _type: 'testimonial'
@@ -105,6 +112,50 @@ export type Testimonial = {
   >
   consent?: boolean
   publishedAt?: string
+  submission?: TestimonialSubmissionReference
+}
+
+export type TestimonialSubmission = {
+  _id: string
+  _type: 'testimonialSubmission'
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  status: 'pending' | 'accepted' | 'rejected'
+  rejectionReason?: 'photo' | 'product' | 'content' | 'other'
+  photoUrl?: string
+  photoAlt?: string
+  person: string
+  quote: string
+  products?: Array<
+    {
+      _key: string
+    } & ProductReference
+  >
+  productSource?: 'agent' | 'visitor'
+  email?: string
+  findings?: {
+    qualityScore?: number
+    qualityIssues?: Array<string>
+    markVisible?: boolean
+    candidates?: Array<{
+      id?: string
+      confidence?: number
+      _type: 'candidate'
+      _key: string
+    }>
+    productSource?: string
+    textCheck?: {
+      nameOk?: boolean
+      quoteOk?: boolean
+      altTextOk?: boolean
+    }
+    model?: string
+  }
+  consentGiven?: boolean
+  submittedAt?: string
+  decidedAt?: string
+  runId?: string
 }
 
 export type SanityImageCrop = {
@@ -426,7 +477,9 @@ export type AllSanitySchemaTypes =
   | SearchGap
   | SanityImageAssetReference
   | ProductReference
+  | TestimonialSubmissionReference
   | Testimonial
+  | TestimonialSubmission
   | SanityImageCrop
   | SanityImageHotspot
   | Faq

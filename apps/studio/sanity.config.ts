@@ -5,8 +5,10 @@ import { presentationTool } from 'sanity/presentation'
 import { structureTool } from 'sanity/structure'
 import { CREATABLE_TYPES, schemaTypes } from '@repo/sanity'
 import { requireSanityEnv } from '@repo/sanity/env'
+import { SUBMISSION_TYPE } from '@repo/testimonials/constants'
 import { guardActions } from './actions/guard-rails'
 import { AcceptIdea, RejectIdea } from './actions/idea-decision'
+import { AcceptSubmission, RejectSubmission } from './actions/submission-decision'
 import { resolve } from './presentation/resolve'
 import { structure } from './structure'
 
@@ -53,11 +55,15 @@ export default defineConfig({
       previous.filter((item) =>
         CREATABLE_TYPES.includes(item.templateId as (typeof CREATABLE_TYPES)[number]),
       ),
-    // A product idea is decided, not edited: Accept and Reject replace publish
-    // and the rest. Delete stays, for an idea nobody wants to keep.
-    actions: (previous, context) =>
-      context.schemaType === 'productIdea'
-        ? [AcceptIdea, RejectIdea, ...previous.filter((action) => action.action === 'delete')]
-        : guardActions(previous, context),
+    // A product idea and a testimonial submission are decided, not edited:
+    // Accept and Reject replace publish and the rest. Delete stays for an idea
+    // nobody wants to keep; a submission keeps its record of the decision.
+    actions: (previous, context) => {
+      if (context.schemaType === 'productIdea') {
+        return [AcceptIdea, RejectIdea, ...previous.filter((action) => action.action === 'delete')]
+      }
+      if (context.schemaType === SUBMISSION_TYPE) return [AcceptSubmission, RejectSubmission]
+      return guardActions(previous, context)
+    },
   },
 })

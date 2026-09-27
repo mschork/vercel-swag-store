@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@repo/demand": "workspace:*",
+    "@repo/testimonials": "workspace:*",
     "@sanity/client": "^8.6.1",
     "@sanity/icons": "^5.2.2"
   },

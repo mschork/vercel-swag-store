@@ -3,6 +3,7 @@ import { category } from './category'
 import { productIdea, searchGap } from './demand'
 import { faq } from './faq'
 import { testimonial } from './testimonial'
+import { testimonialSubmission } from './testimonial-submission'
 import { product } from './product'
 import { portableText } from './shared'
 import { checkoutPage, homePage, siteSettings } from './singletons'
@@ -10,7 +11,8 @@ import { checkoutPage, homePage, siteSettings } from './singletons'
 /**
  * Every type the Studio registers. Products and categories mirror the API and
  * are written by `scripts/sync.ts`; search gaps and product ideas are written
- * by the search-gap loop; the rest is an editor's.
+ * by the search-gap loop; testimonial submissions by the testimonial agent;
+ * the rest is an editor's.
  */
 export const schemaTypes: SchemaTypeDefinition[] = [
   portableText,
@@ -21,6 +23,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   category,
   faq,
   testimonial,
+  testimonialSubmission,
   searchGap,
   productIdea,
 ]
