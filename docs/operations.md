@@ -42,21 +42,18 @@ that schedule says.
 
 ## Refreshing the catalogue
 
-Products, categories and the store config are cached and refresh on their own within
-the hour. The Swag Store API sends no webhooks, so one call expires all three
-catalogue tags at once:
+Products, categories, the store config and the promotion are cached and refresh on
+their own within the hour. The Swag Store API sends no webhooks, so one call expires
+all four tags at once:
 
 ```sh
 curl -X POST https://vercel-swag-store-ms.vercel.app/api/revalidate/catalog \
   -H "Authorization: Bearer $CATALOG_REVALIDATE_SECRET"
-# {"revalidated":["products","categories","store"],"at":"…"}
+# {"revalidated":["products","categories","store","promotion"],"at":"…"}
 ```
 
-The next request for any page reads the catalogue from the API again. Stock, promotions
-and the cart are never cached and need no refresh.
-
-The next request for any page reads the catalogue from the API again. Stock,
-promotions and the cart are never cached and need no refresh.
+The next request for any page reads the catalogue and the promotion from the API again.
+Stock and the cart are never cached and need no refresh.
 
 ## Live editing
 

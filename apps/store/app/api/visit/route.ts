@@ -13,6 +13,6 @@ export async function DELETE(): Promise<Response> {
   if (session === 'unavailable' || !(await sessionStore.clearVisit(session.sid))) {
     return Response.json({ ok: false }, { status: 503 })
   }
-  const visit: OpenedVisit = await completeVisit(session.sid, null)
+  const visit: OpenedVisit = { stock: await completeVisit(session.sid, null) }
   return Response.json(visit)
 }

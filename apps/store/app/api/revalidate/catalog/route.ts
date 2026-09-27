@@ -11,11 +11,11 @@ import { serverEnv } from '@/lib/env'
  *   curl -X POST https://<host>/api/revalidate/catalog \
  *     -H "Authorization: Bearer $CATALOG_REVALIDATE_SECRET"
  *
- * The tags expire at once, so the next request for a product, category or
- * the store config reads the API again. Stock, promotions and the cart are
+ * The tags expire at once, so the next request for a product, category, the
+ * store config or the promotion reads the API again. Stock and the cart are
  * never cached and need nothing here.
  */
-const CATALOG_TAGS = [TAGS.products, TAGS.categories, TAGS.store] as const
+const CATALOG_TAGS = [TAGS.products, TAGS.categories, TAGS.store, TAGS.promotion] as const
 
 export async function POST(request: Request): Promise<Response> {
   if (!authorised(request.headers.get('authorization'), serverEnv.CATALOG_REVALIDATE_SECRET)) {

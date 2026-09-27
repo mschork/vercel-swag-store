@@ -9,14 +9,12 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import type { Promotion } from '@/lib/api/types'
 import { useHydrated } from '@/lib/use-hydrated'
 import { resetVisit } from '@/lib/visit/open'
 
 /** What the server read from the session: the visit and the cart's quantities by product id. */
 export interface SeededVisit {
   stock: Record<string, number>
-  promotion: Promotion | null
   lines: Record<string, number>
 }
 
@@ -25,7 +23,6 @@ interface VisitApi {
   draw: (productId: string) => number | null | undefined
   /** How many of a product the cart holds, counting an add in flight. */
   inCart: (productId: string) => number
-  promotion: Promotion | null | undefined
   /**
    * Records what the server read. `null` is a session the store could not
    * read, and leaves what the client holds.
@@ -42,8 +39,8 @@ interface VisitApi {
 const VisitContext = createContext<VisitApi | null>(null)
 
 /**
- * Holds the visitor's stock draws and pinned promotion on the client, so every
- * grid badge and stock line reads one number without a request of its own.
+ * Holds the visitor's stock draws on the client, so every grid badge and
+ * stock line reads one number without a request of its own.
  *
  * It wraps the layout and is the client's source of truth, because the seed
  * that fills it runs only on a full load and on `router.refresh()`: a
@@ -52,14 +49,12 @@ const VisitContext = createContext<VisitApi | null>(null)
  */
 export function VisitProvider({ children }: { children: ReactNode }) {
   const [stock, setStock] = useState<Record<string, number> | undefined>(undefined)
-  const [promotion, setPromotion] = useState<Promotion | null | undefined>(undefined)
   const [lines, setLines] = useState<Record<string, number>>({})
   const [adding, setAddingState] = useState<Record<string, number>>({})
 
   const seed = useCallback((value: SeededVisit | null) => {
     if (!value) return
     setStock(value.stock)
-    setPromotion(value.promotion)
     setLines(value.lines)
   }, [])
 
@@ -67,7 +62,6 @@ export function VisitProvider({ children }: { children: ReactNode }) {
     const drawn = await resetVisit()
     if (!drawn) return
     setStock(drawn.stock)
-    setPromotion(drawn.promotion)
   }, [])
 
   // Both keep their identity across renders and ignore a write that changes
@@ -89,13 +83,12 @@ export function VisitProvider({ children }: { children: ReactNode }) {
     () => ({
       draw: (productId) => (stock ? (stock[productId] ?? null) : undefined),
       inCart: (productId) => (lines[productId] ?? 0) + (adding[productId] ?? 0),
-      promotion,
       seed,
       confirmLine,
       setAdding,
       reset,
     }),
-    [stock, lines, adding, promotion, seed, confirmLine, setAdding, reset],
+    [stock, lines, adding, seed, confirmLine, setAdding, reset],
   )
   return <VisitContext value={value}>{children}</VisitContext>
 }

@@ -4,9 +4,9 @@ import { catalogueIds, seedSession, seedVisit } from './visit'
 /**
  * Visual regression: four pages in light and dark at 375 and 1280. A diff
  * fails the test and writes the comparison into `test-results/`. The cart
- * badge is masked and the cart page is captured with one seeded line; the
- * promo strip and the stock line come from a seeded visit, so they are the
- * same every run and are shot rather than masked.
+ * badge and the promotion, which the API picks, are masked, and the cart page
+ * is captured with one seeded line; the stock line comes from a seeded visit,
+ * so it is the same every run and is shot rather than masked.
  *
  * Snapshots are named per platform; the committed set is macOS, so this file
  * runs there and is skipped elsewhere, CI included: a run without a baseline
@@ -36,6 +36,7 @@ function masks(page: Page) {
   return [
     page.locator('body > div[aria-hidden="true"]').first(),
     page.getByRole('banner').getByRole('img', { name: /^Cart/ }),
+    page.getByRole('complementary', { name: 'Current promotion' }),
   ]
 }
 

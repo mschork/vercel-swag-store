@@ -27,17 +27,18 @@ afterEach(() => {
 })
 
 describe('POST /api/revalidate/catalog', () => {
-  it('expires the products, categories and store tags with the right secret', async () => {
+  it('expires the products, categories, store and promotion tags with the right secret', async () => {
     const route = await load(SECRET)
     const response = await call(route, `Bearer ${SECRET}`)
     expect(response.status).toBe(200)
     await expect(response.json()).resolves.toMatchObject({
-      revalidated: ['products', 'categories', 'store'],
+      revalidated: ['products', 'categories', 'store', 'promotion'],
     })
     expect(vi.mocked(revalidateTag).mock.calls).toEqual([
       ['products', { expire: 0 }],
       ['categories', { expire: 0 }],
       ['store', { expire: 0 }],
+      ['promotion', { expire: 0 }],
     ])
   })
 

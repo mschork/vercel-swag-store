@@ -1,9 +1,6 @@
 import 'server-only'
-import { cache } from 'react'
 import { getAllProducts } from '@/lib/api/products'
-import { getPromotion } from '@/lib/api/promotions'
 import { getStock } from '@/lib/api/stock'
-import type { Promotion } from '@/lib/api/types'
 import { loadOptional } from '@/lib/load-optional'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
 import { getSession, sessionStore, type VisitRecord } from '@/lib/session/store'
@@ -37,22 +34,8 @@ export async function drawFor(productId: string): Promise<number | null> {
 }
 
 /**
- * The visit's promotion, reading and claiming one when the visit has none
- * yet. Memoized per request, so the banner and every other caller in a
- * render share one answer. `null` is the API saying there is none, or a
- * failed read, which is not kept so the next render asks again.
- */
-export const pinnedPromotion = cache(async (): Promise<Promotion | null> => {
-  const session = await getSession()
-  const sid = session === 'unavailable' ? null : session.sid
-  const pinned = session === 'unavailable' ? undefined : session.visit?.promotion
-  return pinned !== undefined ? pinned : claimPromotion(sid)
-})
-
-/**
  * The visit drawn for the whole catalogue: every product `visit` has no draw
- * for is drawn and claimed, and the promotion is pinned when `visit` has none.
- * With no `sid` nothing is kept and the fresh draws are the answer. A draw
+ * for is drawn and claimed. With no `sid` nothing is kept and the fresh draws are the answer. A draw
  * that fails is left out, and the product reads as having no count.
  *
  * `productIds` is the catalogue when the caller read it outside a Suspense
@@ -63,16 +46,14 @@ export async function completeVisit(
   sid: string | null,
   visit: VisitRecord | null,
   productIds?: readonly string[],
-): Promise<{ stock: Record<string, number>; promotion: Promotion | null }> {
+): Promise<Record<string, number>> {
   const kept = visit?.stock ?? {}
   const missing = (productIds ?? (await catalogueIds()) ?? []).filter(
     (id) => !Object.hasOwn(kept, id),
   )
-  const [won, promotion] = await Promise.all([
-    drawAll(missing).then((drawn) => (sid ? sessionStore.claimStock(sid, drawn) : drawn)),
-    visit?.promotion !== undefined ? visit.promotion : claimPromotion(sid),
-  ])
-  return { stock: { ...kept, ...won }, promotion }
+  const drawn = await drawAll(missing)
+  const won = sid ? await sessionStore.claimStock(sid, drawn) : drawn
+  return { ...kept, ...won }
 }
 
 /**
@@ -85,14 +66,6 @@ export async function completeVisit(
 export async function catalogueIds(): Promise<string[] | null> {
   const products = await loadOptional('Visit: catalogue', getAllProducts)
   return products?.map((product) => product.id) ?? null
-}
-
-async function claimPromotion(sid: string | null): Promise<Promotion | null> {
-  const read = await loadOptional('Visit: promotion', async () => ({
-    promotion: await getPromotion(),
-  }))
-  if (!read) return null
-  return sid ? sessionStore.claimPromotion(sid, read.promotion) : read.promotion
 }
 
 /** Clamped to the cart's maximum, which is also the most the store keeps. */

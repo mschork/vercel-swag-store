@@ -1,6 +1,5 @@
 import 'server-only'
 import { cache } from 'react'
-import type { Promotion } from '@/lib/api/types'
 import { serverEnv } from '@/lib/env'
 import { getSessionId } from './cookie'
 import { createMemory } from './memory'
@@ -9,9 +8,7 @@ import {
   parseCart,
   parseChat,
   parseDraw,
-  parsePromotion,
   parseVisit,
-  PROMOTION_FIELD,
   STOCK_FIELD,
   type CartRecord,
   type ChatRecord,
@@ -118,18 +115,6 @@ export function createSessionStore(redis: Redis, now: () => number = Date.now) {
           (Array.isArray(kept) ? parseDraw(kept[index]) : null) ?? (draws[id] as number),
         ]),
       )
-    },
-
-    /** Pins the promotion unless the visit holds one, and answers the one that won. */
-    async claimPromotion(sid: string, promotion: Promotion | null): Promise<Promotion | null> {
-      const replies = await run('claim promotion', [
-        ...opening(sid),
-        ['HSETNX', visitKey(sid), PROMOTION_FIELD, JSON.stringify(promotion)],
-        expiring(sid),
-        ['HGET', visitKey(sid), PROMOTION_FIELD],
-      ])
-      const kept = parsePromotion(replies?.at(-1))
-      return kept === undefined ? promotion : kept
     },
 
     /** Overwrites draws, which only an order does. */

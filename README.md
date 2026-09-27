@@ -1,8 +1,8 @@
 # Vercel Swag Store
 
 A storefront for Vercel swag, built on Next.js 16 with Cache Components. Every page is a
-prerendered shell served from the CDN, and the parts that differ per visitor — stock, the
-promotion, the cart — stream into it through Suspense boundaries. The Vercel Swag Store
+prerendered shell served from the CDN, and the parts that differ per visitor — stock and
+the cart — stream into it through Suspense boundaries. The Vercel Swag Store
 API owns every commerce fact; Sanity holds the marketing copy layered on top.
 
 | | |

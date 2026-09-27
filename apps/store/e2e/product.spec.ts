@@ -1,6 +1,6 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 import { watchActions } from './actions'
-import { expectOnlySessionCookie, openWithStock, readVisit, SEEDED_PROMOTION } from './visit'
+import { expectOnlySessionCookie, openWithStock, readVisit } from './visit'
 
 /**
  * Smoke for the product page against a production build. The product comes
@@ -195,19 +195,16 @@ test('the footer reset draws a whole new visit', async ({ page, context }) => {
   await openWithStock(page, context, href, 3)
   await expect(stockLine(page)).toHaveText('Only 3 left')
 
+  const reset = page.waitForResponse(
+    (response) => response.url().endsWith('/api/visit') && response.request().method() === 'DELETE',
+    SAVED,
+  )
   await page.getByRole('button', { name: 'Reset the demo' }).click()
 
-  // The seeded promotion is one the API never answers, so another one means a
-  // new visit, and its draws cover the catalogue again.
-  await expect
-    .poll(
-      async () => {
-        const visit = await readVisit(context)
-        return (
-          visit?.promotion?.id !== SEEDED_PROMOTION.id && Object.keys(visit?.stock ?? {}).length > 1
-        )
-      },
-      SAVED,
-    )
-    .toBe(true)
+  // The store keeps the draws the reset answered, and they cover the catalogue.
+  const response = await reset
+  expect(response.status()).toBe(200)
+  const { stock } = (await response.json()) as { stock: Record<string, number> }
+  expect(Object.keys(stock).length).toBeGreaterThan(1)
+  expect((await readVisit(context))?.stock).toEqual(stock)
 })
