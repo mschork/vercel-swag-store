@@ -82,7 +82,7 @@ Pages cannot set cookies, so the visit is opened by `POST /api/visit`, called on
 - `lib/visit/cookie.ts`, server-only: `getVisit()`, `setVisit()`, `clearVisit()`. Same split as `lib/cart/cookie.ts`.
 - `lib/stock-status.ts` keeps everything a stock line, Offer and button derive from a count: `stockStatus(draw, inCart)` replaces the version that took the API's `StockInfo`, and `LOW_STOCK_THRESHOLD` is 5, which is where the API's own `lowStock` flag turns over. It stays one module rather than gaining a second beside it.
 - `lib/visit/limits.ts`, pure, with no zod and nothing server-only, so the cart page can say what the actions enforce: `exceedsDraw(quantity, draw)` and `tooMany(draw)`.
-- `lib/visit/draw.ts`, server-only: `drawFor(productId)`, the count the actions check against. It draws and stores a product the visit does not cover yet, opens a visit holding that one product when the visitor has none (`E21-first-visit.md`), and answers `null` when the draw failed and there is nothing to enforce.
+- `lib/visit/draw.ts`, server-only: `drawFor(productId)`, the count the actions check against. It draws and stores a product the visit does not cover yet, opens a visit holding that one product when the visitor has none (`E21-first-visit.md`), and answers `null` when the draw failed. `addToCart` refuses an add without a draw; a quantity change is held only to the cart's maximum.
 - `lib/visit/open.ts`, client-safe: the typed `openVisit()` and `resetVisit()` that call the handler. No `fetch` in a component.
 - `lib/api/stock.ts` and `lib/api/promotions.ts` are unchanged: never cached, one call each. Only their callers change.
 

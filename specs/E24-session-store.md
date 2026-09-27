@@ -64,7 +64,7 @@ clearCart(sid): Promise<void>
 ## Pending lines
 
 - `lib/cart/adds-in-flight.ts` holds, per product, the quantity in flight and what a row shows: `name`, `slug`, `image`, `price`. The Add to Cart form records them at the click, from props the product page passes down. Redis never holds a pending line.
-- `CartView` merges the in-flight products over the lines it holds: a product already in the lines gets its quantity raised; a new one gets a row at the end. Such a row shows "Saving…" in its status line, its stepper and Remove are disabled, and `CartSummary` keeps Checkout disabled while any line is pending. When the add's answer arrives its `lines` replace the held lines and the in-flight entry is released, so the row settles in one paint. When the add fails the row disappears and the page says why, keyed by product as today's errors are.
+- `CartView` merges the in-flight products over the lines it holds: a product already in the lines gets its quantity raised; a new one gets a row at the end. Such a row shows "Saving…" in its status line, its stepper and Remove are disabled, and `CartSummary` keeps Checkout disabled while any line is pending. When the add's answer arrives its `lines` replace the held lines and the in-flight entry is released, so the row settles in one paint. When a failed add leaves its product without a row, the page says why, keyed by product as today's errors are, until the visitor changes that product's line, adds again or leaves the page. A failed add whose product keeps its row, such as a line set back to its draw, lists nothing.
 - A full reload while a save is in flight shows the cart without that line until the save lands. This is accepted.
 
 ## Tests
