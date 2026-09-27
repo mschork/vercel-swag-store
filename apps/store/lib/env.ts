@@ -30,6 +30,9 @@ const ServerEnvSchema = PublicEnvSchema.extend({
   // Optional: signs the Studio's link to a submission's photo. Without it the
   // store offers no testimonial chat.
   TESTIMONIAL_PHOTO_SECRET: z.string().min(MIN_SECRET_LENGTH).optional(),
+  // Optional: the bearer secret of the testimonial decision route. Without it
+  // the route refuses every call, and a submission waits for an editor forever.
+  TESTIMONIAL_DECISION_SECRET: z.string().min(MIN_SECRET_LENGTH).optional(),
   // Optional: the verified sending domain and the Resend key. Without the
   // key, emails are logged instead of sent, without their address.
   EMAIL_DOMAIN: z.string().min(1).optional(),
@@ -74,6 +77,7 @@ function parseServerEnv(): ServerEnv {
     SANITY_API_READ_TOKEN: process.env.SANITY_API_READ_TOKEN || undefined,
     BLOB_STORE_ID: process.env.BLOB_STORE_ID || undefined,
     TESTIMONIAL_PHOTO_SECRET: process.env.TESTIMONIAL_PHOTO_SECRET || undefined,
+    TESTIMONIAL_DECISION_SECRET: process.env.TESTIMONIAL_DECISION_SECRET || undefined,
     EMAIL_DOMAIN: process.env.EMAIL_DOMAIN || undefined,
     RESEND_API_KEY: process.env.RESEND_API_KEY || undefined,
     VERCEL_ENV: process.env.VERCEL_ENV || undefined,

@@ -34,7 +34,7 @@ export const config = {
   matcher: [
     {
       source:
-        '/((?!_next/static|_next/image|_vercel|favicon.ico|robots.txt|sitemap.xml|llms.txt|api/revalidate|api/demand).*)',
+        '/((?!_next/static|_next/image|_vercel|favicon.ico|robots.txt|sitemap.xml|llms.txt|api/revalidate|api/demand|api/testimonials/decision).*)',
       missing: [
         {
           type: 'cookie',

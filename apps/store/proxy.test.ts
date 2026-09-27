@@ -47,4 +47,15 @@ describe('proxy', () => {
       expect(pattern.test(value)).toBe(isSessionId(value))
     }
   })
+
+  it('leaves out the routes that Sanity and its Functions call, never the chat', () => {
+    const [matcher] = config.matcher
+    const source = new RegExp(`^${matcher?.source}$`)
+    for (const path of ['/api/revalidate/sanity', '/api/demand/analyse', '/api/testimonials/decision']) {
+      expect(source.test(path)).toBe(false)
+    }
+    for (const path of ['/', '/testimonials', '/api/testimonials/chat', '/api/testimonials/upload']) {
+      expect(source.test(path)).toBe(true)
+    }
+  })
 })
