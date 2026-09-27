@@ -141,7 +141,7 @@ Store, search-gap loop only, both optional and server only:
 
 | Variable | Purpose |
 |---|---|
-| `SANITY_API_WRITE_TOKEN` | Sanity token with the Editor role, used only to write search gaps and product ideas. Unset, nothing is recorded |
+| `SANITY_API_WRITE_TOKEN` | Sanity token with the Editor role. Writes search gaps and product ideas, and the testimonial agent's submissions, testimonials and photo assets. Unset, nothing is recorded |
 | `DEMAND_ANALYSE_SECRET` | At least 32 characters. Bearer secret for `POST /api/demand/analyse`; unset, the route refuses every call |
 
 Store, live editing only, both optional and server only:

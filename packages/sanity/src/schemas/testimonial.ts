@@ -1,5 +1,6 @@
 import { CommentIcon } from '@sanity/icons/Comment'
 import { defineArrayMember, defineField, defineType } from 'sanity'
+import { QUOTE_MAX_LENGTH, SUBMISSION_TYPE } from '@repo/testimonials/constants'
 import { imageField } from './shared'
 
 /**
@@ -27,7 +28,7 @@ export const testimonial = defineType({
       title: 'Quote',
       type: 'text',
       rows: 3,
-      validation: (rule) => rule.required().max(240),
+      validation: (rule) => rule.required().max(QUOTE_MAX_LENGTH),
     }),
     defineField({
       name: 'products',
@@ -52,6 +53,16 @@ export const testimonial = defineType({
       title: 'Published at',
       type: 'datetime',
       initialValue: () => new Date().toISOString(),
+    }),
+    defineField({
+      name: 'submission',
+      title: 'Submitted by a visitor',
+      type: 'reference',
+      to: [{ type: SUBMISSION_TYPE }],
+      // Weak, so the testimonial never blocks deleting its submission.
+      weak: true,
+      readOnly: true,
+      hidden: ({ value }) => !value,
     }),
   ],
   orderings: [

@@ -8,12 +8,14 @@ import type { ComponentType } from 'react'
 import type { StructureBuilder, StructureResolver } from 'sanity/structure'
 import { ANALYSE_THRESHOLD, type IdeaStatus } from '@repo/demand/constants'
 import { SINGLETON_IDS, type SingletonType } from '@repo/sanity'
+import { SUBMISSION_TYPE, type SubmissionStatus } from '@repo/testimonials/constants'
 
 const API_VERSION = '2026-09-01'
 
 /**
  * The desk, in the order an editor works: what they write every day, with the
- * products that have no extended description yet as their own list, then the
+ * products that have no extended description yet as their own list and the
+ * visitors' testimonial submissions beside the testimonials, then the
  * three pages that exist once, then the categories that mirror the API and
  * nobody edits, then the search-gap loop's proposals and the gaps behind them.
  */
@@ -36,6 +38,19 @@ export const structure: StructureResolver = (S) =>
         ),
       S.documentTypeListItem('faq').title('FAQs'),
       S.documentTypeListItem('testimonial').title('Testimonials'),
+      S.listItem()
+        .title('Submissions')
+        .id('submissions')
+        .icon(typeIcon(S, SUBMISSION_TYPE))
+        .child(
+          S.list()
+            .title('Submissions')
+            .items([
+              submissions(S, 'pending', 'Pending', ClockIcon),
+              submissions(S, 'accepted', 'Accepted', CheckmarkCircleIcon),
+              submissions(S, 'rejected', 'Rejected', CloseCircleIcon),
+            ]),
+        ),
 
       S.divider().title('Website'),
       singleton(S, 'homePage', 'Home page'),
@@ -117,5 +132,28 @@ function ideas(
         .filter('_type == "productIdea" && status == $status')
         .params({ status })
         .defaultOrdering([{ field: orderBy, direction: 'desc' }]),
+    )
+}
+
+/**
+ * One list per status. Pending is oldest first, so no visitor waits behind
+ * newer ones; decided lists show the latest decision first.
+ */
+function submissions(S: StructureBuilder, status: SubmissionStatus, title: string, icon: ComponentType) {
+  return S.listItem()
+    .title(title)
+    .id(`submissions-${status}`)
+    .icon(icon)
+    .child(
+      S.documentList()
+        .title(`${title} submissions`)
+        .apiVersion(API_VERSION)
+        .filter('_type == $type && status == $status')
+        .params({ type: SUBMISSION_TYPE, status })
+        .defaultOrdering(
+          status === 'pending'
+            ? [{ field: 'submittedAt', direction: 'asc' }]
+            : [{ field: 'decidedAt', direction: 'desc' }],
+        ),
     )
 }
