@@ -12,7 +12,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "verify": "turbo run lint typecheck build test && node scripts/check-build.mjs && node scripts/check-metadata.mjs",
-    "e2e": "pnpm --filter store build && pnpm --filter store exec playwright test",
+    "e2e": "EXPOSE_TESTING_API=1 pnpm --filter store build && pnpm --filter store exec playwright test",
     "prepare": "husky"
   },
   "devDependencies": {
