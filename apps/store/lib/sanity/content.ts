@@ -4,18 +4,22 @@ import type {
   CheckoutPageQueryResult,
   FavouriteProductsQueryResult,
   HomePageQueryResult,
+  TestimonialCountQueryResult,
   TestimonialsForProductQueryResult,
+  TestimonialWallQueryResult,
   ProductQueryResult,
   SiteSettingsQueryResult,
 } from '@repo/sanity/generated'
 import { loadOptional } from '@/lib/load-optional'
-import { sanityFetch } from './fetch'
+import { publishedFetch, sanityFetch } from './fetch'
 import {
   categoryQuery,
   checkoutPageQuery,
   favouriteProductsQuery,
   homePageQuery,
+  testimonialCountQuery,
   testimonialsForProductQuery,
+  testimonialWallQuery,
   productQuery,
   siteSettingsQuery,
 } from './queries'
@@ -102,6 +106,31 @@ export function getTestimonialsForProduct(apiId: string, { stega }: ReadOptions 
       params: { productDocId: `product-${apiId}` },
       tags: ['sanity:testimonial'],
       stega,
+    }),
+  )
+}
+
+/** The first `end` entries of the wall, newest first. */
+export function getTestimonialWall(end: number, { stega }: ReadOptions = {}) {
+  return loadOptional('Testimonial wall', () =>
+    sanityFetch<TestimonialWallQueryResult>({
+      query: testimonialWallQuery,
+      params: { end },
+      tags: ['sanity:testimonial'],
+      stega,
+    }),
+  )
+}
+
+/**
+ * How many entries the wall holds, published only: `generateStaticParams`
+ * reads it, and a draft does not change the number of pages.
+ */
+export function getTestimonialCount() {
+  return loadOptional('Testimonial count', () =>
+    publishedFetch<TestimonialCountQueryResult>({
+      query: testimonialCountQuery,
+      tags: ['sanity:testimonial'],
     }),
   )
 }

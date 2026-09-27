@@ -15,6 +15,7 @@ export const siteSettingsQuery = defineQuery(`
     productListing{ intro },
     cartPage{ favouritesHeading },
     searchPage{ featuredHeading },
+    testimonialsPage{ heading, intro, submitLabel },
     "ogImage": ogImage${IMAGE},
     socialLinks[]{ label, url }
   }
@@ -59,6 +60,25 @@ export const testimonialsForProductQuery = defineQuery(`
       _id, person, role, quote,
       "photo": photo${IMAGE}
     }
+`)
+
+/**
+ * The wall at `/testimonials`: the first `$end` testimonials with consent,
+ * newest first, each with the API ids of the products it names. The id
+ * breaks a tie so the pages never overlap or skip an entry.
+ */
+export const testimonialWallQuery = defineQuery(`
+  *[_type == "testimonial" && consent == true]
+    | order(publishedAt desc, _id asc)[0...$end]{
+      _id, person, role, quote,
+      "photo": photo${IMAGE},
+      "productIds": products[]->apiId
+    }
+`)
+
+/** How many testimonials the wall holds, which sets how many pages it has. */
+export const testimonialCountQuery = defineQuery(`
+  count(*[_type == "testimonial" && consent == true])
 `)
 
 /**

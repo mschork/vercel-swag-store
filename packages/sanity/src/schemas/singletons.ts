@@ -22,6 +22,7 @@ export const siteSettings = defineType({
     { name: 'productListing', title: 'Product listing' },
     { name: 'cartPage', title: 'Cart page' },
     { name: 'searchPage', title: 'Search page' },
+    { name: 'testimonialsPage', title: 'Testimonials page' },
   ],
   fields: [
     defineField({
@@ -173,6 +174,38 @@ export const siteSettings = defineType({
           type: 'string',
           description:
             'Shown above the featured products before anything is searched, so they do not read as results. Default: “Explore our featured products”.',
+        }),
+      ],
+    }),
+    defineField({
+      name: 'testimonialsPage',
+      title: 'Testimonials page',
+      type: 'object',
+      group: 'testimonialsPage',
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({
+          name: 'heading',
+          title: 'Heading',
+          type: 'string',
+          description: 'Default: “What people say”.',
+        }),
+        defineField({
+          name: 'intro',
+          title: 'Intro',
+          type: 'text',
+          rows: 2,
+          validation: (rule) =>
+            rule.max(SEO_DESCRIPTION_LENGTH).warning('Also the page’s description; keep it short.'),
+          description:
+            'The line under the heading, and the page’s description. Default: “Photos and words from people who wear and use what the store sells.”',
+        }),
+        defineField({
+          name: 'submitLabel',
+          title: 'Label of the submit link',
+          type: 'string',
+          description:
+            'The button on the page and the link in the footer, both of which open the chat. Default: “Submit a testimonial”.',
         }),
       ],
     }),

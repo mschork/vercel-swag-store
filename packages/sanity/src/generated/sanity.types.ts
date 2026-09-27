@@ -339,6 +339,11 @@ export type SiteSettings = {
   searchPage?: {
     featuredHeading?: string
   }
+  testimonialsPage?: {
+    heading?: string
+    intro?: string
+    submitLabel?: string
+  }
 }
 
 export type MediaFolderReference = {
@@ -505,7 +510,7 @@ export type AllSanitySchemaTypes =
 
 // Source: ../store/lib/sanity/queries.ts
 // Variable: siteSettingsQuery
-// Query: *[_type == "siteSettings"][0]{    storeName, seoTitle, seoDescription, footerText,    productPage{ aboutHeading, careHeading, testimonialsHeading, faqHeading },    productListing{ intro },    cartPage{ favouritesHeading },    searchPage{ featuredHeading },    "ogImage": ogImage{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio },    socialLinks[]{ label, url }  }
+// Query: *[_type == "siteSettings"][0]{    storeName, seoTitle, seoDescription, footerText,    productPage{ aboutHeading, careHeading, testimonialsHeading, faqHeading },    productListing{ intro },    cartPage{ favouritesHeading },    searchPage{ featuredHeading },    testimonialsPage{ heading, intro, submitLabel },    "ogImage": ogImage{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio },    socialLinks[]{ label, url }  }
 export type SiteSettingsQueryResult = {
   storeName: string
   seoTitle: string | null
@@ -525,6 +530,11 @@ export type SiteSettingsQueryResult = {
   } | null
   searchPage: {
     featuredHeading: string | null
+  } | null
+  testimonialsPage: {
+    heading: string | null
+    intro: string | null
+    submitLabel: string | null
   } | null
   ogImage: {
     asset?: SanityImageAssetReference
@@ -636,6 +646,32 @@ export type TestimonialsForProductQueryResult = Array<{
     aspectRatio: number | null
   } | null
 }>
+
+// Source: ../store/lib/sanity/queries.ts
+// Variable: testimonialWallQuery
+// Query: *[_type == "testimonial" && consent == true]    | order(publishedAt desc, _id asc)[0...$end]{      _id, person, role, quote,      "photo": photo{ ..., "lqip": asset->metadata.lqip, "aspectRatio": asset->metadata.dimensions.aspectRatio },      "productIds": products[]->apiId    }
+export type TestimonialWallQueryResult = Array<{
+  _id: string
+  person: string
+  role: string | null
+  quote: string
+  photo: {
+    asset?: SanityImageAssetReference
+    media?: unknown
+    hotspot?: SanityImageHotspot
+    crop?: SanityImageCrop
+    alt: string
+    _type: 'image'
+    lqip: string | null
+    aspectRatio: number | null
+  } | null
+  productIds: Array<string>
+}>
+
+// Source: ../store/lib/sanity/queries.ts
+// Variable: testimonialCountQuery
+// Query: count(*[_type == "testimonial" && consent == true])
+export type TestimonialCountQueryResult = number
 
 // Source: ../store/lib/sanity/queries.ts
 // Variable: favouriteProductsQuery
