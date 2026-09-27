@@ -21,6 +21,11 @@ How the `instant()` tests in `e2e/instant.spec.ts` run. Read by the
 - CONTRACTS: `/products/[slug]`, first load and a click from the home page's
   featured grid; shell marker the `h1` and the Quantity field; deferred marker
   the stock line.
+- CONTRACTS: `/`, first load and a click on the header's Home link from
+  `/products`; shell marker the `h1` and the first featured card; deferred
+  marker the cards' "Out of stock" badges on a first load, with every product
+  seeded at 0. A click reuses the visit the layout already holds, so the
+  badges show at once and are not a deferred marker there.
 - LOOP: local build, then run; stop anything on port 3000 first
   (`kill $(lsof -tiTCP:3000 -sTCP:LISTEN)`): `next start` forks a
   `next-server` child, and Playwright reuses a server it finds there.
