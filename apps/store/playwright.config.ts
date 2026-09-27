@@ -22,7 +22,9 @@ export default defineConfig({
   ],
   webServer: {
     command: 'pnpm start',
-    env: { E2E_SEED: '1' },
+    // `next start` reads next.config.ts again, so the testing API needs the
+    // variable at both build and start.
+    env: { E2E_SEED: '1', EXPOSE_TESTING_API: '1' },
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
   },

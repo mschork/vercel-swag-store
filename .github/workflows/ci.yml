@@ -84,6 +84,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # No Upstash variables, so the session store runs in memory.
       - run: pnpm --filter store build
+        env:
+          EXPOSE_TESTING_API: '1'
       - run: pnpm --filter store exec playwright install --with-deps chromium firefox
       - run: pnpm --filter store exec playwright test
       - if: failure()
