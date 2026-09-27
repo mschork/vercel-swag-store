@@ -1,7 +1,7 @@
 'use client'
 
 import { Container } from '@/components/container'
-import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button-variants'
 
 export default function ErrorPage({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   return (
@@ -12,9 +12,13 @@ export default function ErrorPage({ error, retry }: { error: Error & { digest?: 
         {error.digest ? <span className="font-mono"> Reference {error.digest}.</span> : null}
       </p>
       <p>
-        <Button type="button" size="lg" variant="outline" onClick={retry}>
+        <button
+          type="button"
+          className={buttonVariants({ size: 'lg', variant: 'outline' })}
+          onClick={retry}
+        >
           Try again
-        </Button>
+        </button>
       </p>
     </Container>
   )
