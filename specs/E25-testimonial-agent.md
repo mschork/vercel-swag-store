@@ -72,8 +72,8 @@ first photo or message ──▶ POST /api/testimonials/chat ──▶ start(tes
 
 ### Layout
 
-- Desktop: the chat on the left; the draft card on the right, sticky, filling in as each fact is confirmed: photo, product, quote, name, and a checklist of what is still missing.
-- Mobile: the draft card is a one-line bar above the chat ("Your testimonial · 3 of 5") that expands on tap.
+- Desktop: the chat on the left; the draft card on the right, sticky, filling in as each fact is confirmed, with a checklist of the six facts a submission needs: photo, product, name, quote, consent and a verified email (`DRAFT_FACTS`).
+- Mobile: the draft card is a one-line bar above the chat ("Your testimonial · 3 of 6") that expands on tap.
 - The draft card is rendered from transient `data-draft` parts. The run writes one to its main stream, as a step, after every tool that changes the draft; the model never writes it. `toUIMessageChunk` drops parts it does not know, so the chat, message and stream routes map `data-draft` parts into the UI stream themselves, and `useChat`'s `onData` keeps the latest. One stream keeps the chunk indices the transport resumes from the same on every read. The photo in the card is a local `blob:` URL, which the CSP already allows.
 
 ### The conversation
