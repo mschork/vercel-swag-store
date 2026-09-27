@@ -14,7 +14,8 @@
         "CATALOG_REVALIDATE_SECRET",
         "PRESENTATION_STUDIO_ORIGINS",
         "NEXT_PUBLIC_SITE_URL",
-        "ALLOW_INDEXING"
+        "ALLOW_INDEXING",
+        "EXPOSE_TESTING_API"
       ]
     },
     "dev": {

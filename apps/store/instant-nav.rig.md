@@ -26,8 +26,14 @@ How the `instant()` tests in `e2e/instant.spec.ts` run. Read by the
   marker the cards' "Out of stock" badges on a first load, with every product
   seeded at 0. A click reuses the visit the layout already holds, so the
   badges show at once and are not a deferred marker there.
+- CONTRACTS: `/products` and `/products/category/[slug]`, first load and a
+  click on a category chip; shell marker the `h1`, the Categories nav and the
+  first grid item; deferred marker the "Out of stock" badges on a first load,
+  as on the home page.
 - LOOP: local build, then run; stop anything on port 3000 first
   (`kill $(lsof -tiTCP:3000 -sTCP:LISTEN)`): `next start` forks a
   `next-server` child, and Playwright reuses a server it finds there.
 - LIVENESS: n/a; local build and start.
 - WALLS: a build can fail on an API timeout while prerendering; rerun it.
+  `git push` runs the pre-push hook's `turbo typecheck`, which builds the
+  store without the variable over the test build; rebuild after a push.
