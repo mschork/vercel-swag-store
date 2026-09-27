@@ -5,10 +5,10 @@ import { categoryPath } from '@/lib/listing'
 import { publicEnv } from '@/lib/env.public'
 
 /**
- * Home, search, the product listing with its category pages, and every
- * product page. Built from the cached catalogue, so it refreshes with the
- * `products` tag. A product's `lastModified` is its `createdAt`, the only
- * date the API has.
+ * Home, search, the product listing with its category pages, every product
+ * page and the testimonials page. Built from the cached catalogue, so it
+ * refreshes with the `products` tag. A product's `lastModified` is its
+ * `createdAt`, the only date the API has.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [products, categories] = await Promise.all([getAllProducts(), getCategories()])
@@ -18,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: url('/') },
     { url: url('/search') },
     { url: url('/products') },
+    { url: url('/testimonials') },
     ...categories.map((category) => ({
       url: url(categoryPath(category.slug)),
     })),

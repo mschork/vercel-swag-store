@@ -33,6 +33,18 @@ export async function sanityFetch<T>({
   return cachedFetch<T>(query, params, tags)
 }
 
+/**
+ * Published documents only, cached as `sanityFetch` caches them, for a caller
+ * with no request and so no draft mode, such as `generateStaticParams`.
+ */
+export function publishedFetch<T>({
+  query,
+  params = {},
+  tags,
+}: Omit<SanityFetchOptions, 'stega'>): Promise<T> {
+  return cachedFetch<T>(query, params, tags)
+}
+
 /** The call a visitor gets; `stega` is not part of its key. */
 async function cachedFetch<T>(query: string, params: QueryParams, tags: string[]): Promise<T> {
   'use cache'

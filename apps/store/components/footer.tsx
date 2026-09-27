@@ -4,6 +4,9 @@ import { FOOTER_FALLBACK } from '@/lib/content/fallbacks'
 import { loadOptional } from '@/lib/load-optional'
 import { getSiteSettings } from '@/lib/sanity/content'
 import { socialLinks } from '@/lib/social-links'
+import { chatOffered } from '@/lib/testimonials/chat'
+import { testimonialsCopy } from '@/lib/testimonials/copy'
+import { SHARE_PATH } from '@/lib/testimonials/share'
 import { ResetVisit } from './visit/reset-visit'
 import { Container } from './container'
 
@@ -54,6 +57,20 @@ async function SocialLinks() {
   )
 }
 
+/**
+ * The link that opens the testimonial chat. A plain anchor: on
+ * `/testimonials` itself only a native fragment change fires the
+ * `hashchange` event the chat opens on.
+ */
+async function ShareLink() {
+  const copy = testimonialsCopy(await getSiteSettings())
+  return (
+    <a href={SHARE_PATH} className="underline underline-offset-4 hover:text-fg">
+      {copy.submitLabel}
+    </a>
+  )
+}
+
 /** Full width with a hairline above, mirroring the header. */
 export function Footer() {
   return (
@@ -65,6 +82,11 @@ export function Footer() {
           </p>
           <SocialLinks />
         </div>
+        {chatOffered ? (
+          <p>
+            <ShareLink />
+          </p>
+        ) : null}
         <ResetVisit />
       </Container>
     </footer>

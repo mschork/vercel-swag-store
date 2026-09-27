@@ -12,7 +12,7 @@ vi.mock('@/lib/api/categories', () => ({ getCategories: vi.fn() }))
 const site = (path: string) => new URL(path, publicEnv.NEXT_PUBLIC_SITE_URL).href
 
 describe('sitemap', () => {
-  it('lists home, search, the listing pages and every product with its creation date', async () => {
+  it('lists home, search, the listing pages, the testimonials and every product with its creation date', async () => {
     vi.mocked(getAllProducts).mockResolvedValueOnce([
       product({ slug: 'one', createdAt: '2026-02-10T16:00:00Z' }),
       product({ slug: 'two', createdAt: '2026-03-01T09:00:00Z' }),
@@ -24,6 +24,7 @@ describe('sitemap', () => {
       { url: site('/') },
       { url: site('/search') },
       { url: site('/products') },
+      { url: site('/testimonials') },
       { url: site('/products/category/hats') },
       { url: site('/products/one'), lastModified: '2026-02-10T16:00:00Z' },
       { url: site('/products/two'), lastModified: '2026-03-01T09:00:00Z' },

@@ -35,6 +35,7 @@ const nextConfig: NextConfig = {
         { source: '/products.md', destination: '/md/products' },
         { source: '/products/category/:slug([^/]+)\\.md', destination: '/md/category/:slug' },
         { source: '/products/:slug([^/]+)\\.md', destination: '/md/product/:slug' },
+        { source: '/testimonials.md', destination: '/md/testimonials' },
         // A category search with no query is one of a closed set, so it is
         // served from a prerendered page (app/search/category/[slug]).
         {
@@ -42,6 +43,13 @@ const nextConfig: NextConfig = {
           has: [{ type: 'query', key: 'category', value: '(?<category>[a-z0-9-]+)' }],
           missing: [{ type: 'query', key: 'q' }],
           destination: '/search/category/:category',
+        },
+        // Each page of the testimonial wall is prerendered
+        // (app/testimonials/page/[n]).
+        {
+          source: '/testimonials',
+          has: [{ type: 'query', key: 'page', value: '(?<page>[0-9]+)' }],
+          destination: '/testimonials/page/:page',
         },
       ],
       afterFiles: [],

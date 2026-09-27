@@ -174,6 +174,39 @@ export function homeMarkdown({
 }
 
 /**
+ * `/testimonials`: every entry on the wall, not only its first page, with the
+ * products each one names. The chat has no Markdown version.
+ */
+export function testimonialsMarkdown({
+  heading,
+  intro,
+  entries,
+  siteUrl,
+}: {
+  heading: string
+  intro: string
+  entries: readonly (MarkdownTestimonial & {
+    products: readonly Pick<Product, 'name' | 'slug'>[]
+  })[]
+  siteUrl: string
+}): string {
+  const entry = ({ products, ...testimonial }: (typeof entries)[number]) => {
+    const quote = quoteBlock(testimonial)
+    if (!quote) return null
+    const named = products.map((product) =>
+      link(product.name, markdownUrl(`/products/${product.slug}`, siteUrl)),
+    )
+    return named.length > 0 ? `${quote}\n\nIn the photo: ${named.join(', ')}` : quote
+  }
+  const quotes = entries.map(entry).filter(Boolean)
+  return document([
+    ...opening(heading, '/testimonials', 'View this page in the store', siteUrl),
+    escapeMarkdown(intro),
+    quotes.length > 0 ? quotes.join('\n\n') : 'No testimonials yet.',
+  ])
+}
+
+/**
  * `llms.txt`: the index of the Markdown versions. Its first paragraph says
  * what the site is, because a reader may see nothing else.
  */
@@ -198,6 +231,7 @@ export function llmsTxt({
     [
       `- ${link('Home', markdownUrl('/', siteUrl))}`,
       `- ${link('All products', markdownUrl('/products', siteUrl))}`,
+      `- ${link('Testimonials', markdownUrl('/testimonials', siteUrl))}`,
     ].join('\n'),
     '## Categories',
     categories

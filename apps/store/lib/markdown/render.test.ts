@@ -3,7 +3,13 @@ import { product as apiProduct } from '@/test/helpers'
 import type { Category, Product } from '@/lib/api/types'
 import { PRODUCT_HEADINGS_FALLBACK } from '@/lib/content/fallbacks'
 import type { MergedProduct } from '@/lib/sanity/merge'
-import { homeMarkdown, listingMarkdown, llmsTxt, productMarkdown } from './render'
+import {
+  homeMarkdown,
+  listingMarkdown,
+  llmsTxt,
+  productMarkdown,
+  testimonialsMarkdown,
+} from './render'
 
 const SITE = 'https://store.test'
 const tee = apiProduct({ price: 3050 }) as Product
@@ -175,10 +181,40 @@ describe('llmsTxt', () => {
     expect(links).toEqual([
       'https://store.test/index.md',
       'https://store.test/products.md',
+      'https://store.test/testimonials.md',
       'https://store.test/products/category/t-shirts.md',
       'https://store.test/products/category/bags.md',
       'https://store.test/products/black-crewneck-t-shirt.md',
       'https://store.test/products/tote.md',
     ])
+  })
+})
+
+describe('testimonialsMarkdown', () => {
+  it('quotes every entry with the products it names', () => {
+    const markdown = testimonialsMarkdown({
+      heading: 'What people say',
+      intro: 'Photos and words.',
+      entries: [
+        { quote: 'I live in it.', person: 'Ada', role: 'Engineer', products: [tee] },
+        { quote: 'Holds everything.', person: 'Grace', role: null, products: [] },
+      ],
+      siteUrl: SITE,
+    })
+    expect(markdown).toBe(
+      [
+        '# What people say',
+        '[View this page in the store](https://store.test/testimonials)',
+        'Photos and words.',
+        '> I live in it.\n>\n> — Ada, Engineer',
+        'In the photo: [Black Crewneck T-Shirt](https://store.test/products/black-crewneck-t-shirt.md)',
+        '> Holds everything.\n>\n> — Grace',
+      ].join('\n\n') + '\n',
+    )
+  })
+
+  it('says so when the wall is empty', () => {
+    const markdown = testimonialsMarkdown({ heading: 'H', intro: 'I', entries: [], siteUrl: SITE })
+    expect(markdown.endsWith('No testimonials yet.\n')).toBe(true)
   })
 })

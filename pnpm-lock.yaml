@@ -245,6 +245,9 @@ importers:
       '@repo/sanity':
         specifier: workspace:*
         version: link:../../packages/sanity
+      '@repo/testimonials':
+        specifier: workspace:*
+        version: link:../../packages/testimonials
       '@sanity/image-url':
         specifier: ^2.1.1
         version: 2.1.1

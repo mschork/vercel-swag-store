@@ -21,6 +21,7 @@ const MUST_BE_PRERENDERED = [
   '/robots.txt',
   '/search',
   '/sitemap.xml',
+  '/testimonials',
 ]
 
 /**

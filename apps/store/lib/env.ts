@@ -22,6 +22,12 @@ const ServerEnvSchema = PublicEnvSchema.extend({
   SANITY_API_WRITE_TOKEN: z.string().min(1).optional(),
   // Optional: without it the demand-analysis route refuses every call.
   DEMAND_ANALYSE_SECRET: z.string().min(32).optional(),
+  // Optional: the private Blob store that holds testimonial photos until an
+  // editor decides. Not a secret, but server only. Without it, or without the
+  // write token, the store offers no testimonial chat.
+  BLOB_STORE_ID: z.string().min(1).optional(),
+  // Set by Vercel on every deployment; unset locally.
+  VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
   // Optional: a Viewer token, used only in draft mode. Without it the enable
   // route answers 404 and the store never reads a draft.
   SANITY_API_READ_TOKEN: z.string().min(1).optional(),
@@ -58,6 +64,8 @@ function parseServerEnv(): ServerEnv {
     SANITY_API_WRITE_TOKEN: process.env.SANITY_API_WRITE_TOKEN || undefined,
     DEMAND_ANALYSE_SECRET: process.env.DEMAND_ANALYSE_SECRET || undefined,
     SANITY_API_READ_TOKEN: process.env.SANITY_API_READ_TOKEN || undefined,
+    BLOB_STORE_ID: process.env.BLOB_STORE_ID || undefined,
+    VERCEL_ENV: process.env.VERCEL_ENV || undefined,
     PRESENTATION_STUDIO_ORIGINS: process.env.PRESENTATION_STUDIO_ORIGINS || undefined,
     KV_REST_API_URL: process.env.KV_REST_API_URL || undefined,
     KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN || undefined,

@@ -81,3 +81,13 @@ export const SEARCH_FALLBACK = {
 
 /** The words after the year in the footer, until `siteSettings.footerText` says otherwise. */
 export const FOOTER_FALLBACK = { text: 'Vercel Swag Store' }
+
+/**
+ * The testimonials page's heading and intro, and the label of every link that
+ * opens the chat, matching `siteSettings.testimonialsPage`.
+ */
+export const TESTIMONIALS_FALLBACK = {
+  heading: 'What people say',
+  intro: 'Photos and words from people who wear and use what the store sells.',
+  submitLabel: 'Submit a testimonial',
+} as const
