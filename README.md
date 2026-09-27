@@ -61,3 +61,9 @@ packages/config  shared tsconfig and ESLint config
 prerendering or if the API bypass token reaches a file under `.next/static`, and
 `scripts/check-metadata.mjs`, which reads the prerendered HTML and fails on metadata the
 store did not choose.
+
+`apps/store/e2e/instant.spec.ts` checks what a shell contains: Next's `instant()` helper
+holds back everything that streams, and the test asserts the page's static part is there
+without it. That needs Next's testing hooks in the build, so `next.config.ts` turns on
+`exposeTestingApiInProductionBuild` when `EXPOSE_TESTING_API=1`. `pnpm e2e`, CI and the
+Playwright server set it; a Vercel deployment never does.
