@@ -20,12 +20,12 @@ Decisions that are not in this spec are in `docs/adr/0008-testimonial-submission
 |---|---|---|
 | AI SDK 7, `useChat` from `@ai-sdk/react` | the chat UI, client-side tools that render the widgets | `components/testimonials/` |
 | `WorkflowAgent` from `@ai-sdk/workflow` | the agent loop as durable steps; a dropped connection resumes the stream | `apps/store/workflows/testimonial.ts` |
-| Vercel Workflow (`workflow` 5) | one run per submission: conversation, submit, wait for the editor, notify, clean up | `apps/store/workflows/testimonial.ts` |
-| AI Gateway | a vision model on the free tier, one constant | `MODEL` in `@repo/testimonials` |
-| Vercel Blob, private store | the photo from upload until the editor decides | `app/api/testimonials/upload/route.ts` |
+| Vercel Workflow (`workflow` 5 beta, exact pins) | one run per submission: conversation, submit, wait for the editor, notify, clean up | `apps/store/workflows/testimonial.ts` |
+| AI Gateway | a vision model on the free tier (`google/gemini-2.5-flash`), one constant | `MODEL` in `@repo/testimonials` |
+| Vercel Blob, private store, over OIDC | the photo from upload until the editor decides | `app/api/testimonials/upload/route.ts` |
 | Vercel BotID (Basic) | refuses bots on every testimonial route | `instrumentation-client.ts`, the routes |
-| Vercel Firewall rate limit | one rule, keyed on the session id | `checkRateLimit` in the routes |
-| Resend (Vercel Marketplace), over `fetch` | the verification code and the outcome emails | `lib/email/send.ts` |
+| Vercel Firewall rate limit | one rule, keyed on the IP address | `checkRateLimit` in the routes |
+| Resend (its own Vercel integration), over `fetch` | the verification code and the outcome emails | `lib/email/send.ts` |
 | Sanity: `testimonialSubmission` schema, Studio actions, photo preview input | the editor's decision | `packages/sanity`, `apps/studio` |
 | Sanity Function `submission-decided` | wakes the waiting run when the editor decides | `apps/functions/submission-decided` |
 | Sanity assets | the photo, once accepted | written by the workflow |
@@ -74,31 +74,33 @@ first photo or message ──▶ POST /api/testimonials/chat ──▶ start(tes
 
 - Desktop: the chat on the left; the draft card on the right, sticky, filling in as each fact is confirmed: photo, product, quote, name, and a checklist of what is still missing.
 - Mobile: the draft card is a one-line bar above the chat ("Your testimonial · 3 of 5") that expands on tap.
-- The draft card is rendered from `data-draft` parts. The run writes them to a separate namespaced stream, `getWritable({ namespace: 'draft' })`, after every tool that changes the draft, and the chat and stream routes merge that stream into the UI stream: `createModelCallToUIChunkTransform` drops `data-*` parts from the agent's own stream. The model never writes to it. The photo in the card is a local `blob:` URL, which the CSP already allows.
+- The draft card is rendered from transient `data-draft` parts. The run writes one to its main stream, as a step, after every tool that changes the draft; the model never writes it. `toUIMessageChunk` drops parts it does not know, so the chat, message and stream routes map `data-draft` parts into the UI stream themselves, and `useChat`'s `onData` keeps the latest. One stream keeps the chunk indices the transport resumes from the same on every read. The photo in the card is a local `blob:` URL, which the CSP already allows.
 
 ### The conversation
 
 The agent leads. Every fact arrives through a widget, a client-side tool with no `execute`. The visitor can always type instead; the agent then answers with the widget again.
 
-How a turn works under `WorkflowAgent`, which the spike confirms:
+How a turn works under `WorkflowAgent`:
 
 - `agent.stream({ messages, writable, preventClose: true, sendFinish: false })` runs until the model answers or calls a client-side tool. A tool with no `execute` ends the call with the tool call unresolved (in `toolCalls`, not in `toolResults`); nothing waits inside the agent.
-- The run then waits on its turn hook, created once with `defineHook` and the run id as token, raced against `sleep(IDLE_TIMEOUT)`.
-- The browser answers a widget with `addToolOutput` and sends a message with `sendMessage`. Both reach `POST /api/testimonials/chat/<runId>/message`, which resumes the hook. The run appends the payload as a `tool` result or a user message and calls `agent.stream()` again.
-- The chat route writes its own `finish` chunk at the end of each turn, so `useChat` returns to ready between turns. `useChat`'s `id` is the run id, so `WorkflowChatTransport` reconnects after a reload through `/api/testimonials/chat/<runId>/stream`.
-- The `UIMessage[]` is kept in the session store under the run id, because messages delivered through the hook are not in the run's stream and a reload needs them.
-- If the spike shows this does not hold, the fallback is one run per turn with the draft in the session store, and a separate run from `submit` on.
+- The run keeps `result.messages` without the system message, which the next call refuses, and reads server tool results from `result.steps`, since `result.toolResults` holds only the last step's.
+- After each turn the run writes a `turn-end` part to its stream, then waits on its turn hook, created once with `defineHook` and the run id as token, read through its async iterator and raced against `sleep(IDLE_TIMEOUT)`.
+- The browser answers a widget with `addToolOutput` and sends a message with `sendMessage`. Both reach `POST /api/testimonials/chat/<runId>/message`, which resumes the hook. The run appends the payload as a `tool` result or a user message and calls `agent.stream()` again. A message typed while a widget is open first answers every unresolved call with `{ visitorTypedInstead: true }`, because the model needs a result for each call.
+- Before resuming the hook, the route saves the stream's next index as the turn's start in the session store. The chat, message and stream routes read the run's stream from that index and stop at `turn-end`; `createModelCallToUIChunkTransform` then writes `finish`, so `useChat` returns to ready between turns. `useChat`'s `id` is the run id, so `WorkflowChatTransport` reconnects after a reload through `/api/testimonials/chat/<runId>/stream`, which replays the current turn.
+- The `UIMessage[]` is kept in the session store under the run id, because messages delivered through the hook are not in the run's stream and a reload needs them. Only the last assistant message renders widgets; earlier ones show what was answered.
+- The message route answers 410 when the run has ended (`HookNotFoundError`). A failed run does not close its stream, so every route that streams ends its response when the run fails.
+- A turn costs about 13 run events, and 3 more per server tool; `MAX_TURNS` stays far below the 25,000 events a run may hold.
 
 | Tool | Kind | What happens |
 |---|---|---|
-| `askPhoto` | client | an upload button; the browser downsizes to `MAX_PHOTO_EDGE` px and re-encodes as JPEG through a canvas, which drops EXIF including location, then uploads to private Blob and answers the pathname |
-| `analysePhoto` | server | reads the blob with `get(pathname, { access: 'private' })`; one vision call with structured output: quality (score, issues), safety (ok, reason), `markVisible` (the store's mark, see below), candidate products (slug, confidence), a suggested alt text. Runs against the catalogue from `getAllProducts` |
-| `confirmProduct` | client | the top candidate's card with its API image: Yes, or "Pick another" showing the next two and a catalogue picker |
+| `askPhoto` | client | an upload button; the browser downsizes to `MAX_PHOTO_EDGE` px and re-encodes as JPEG through a canvas, which drops EXIF including location, then uploads to private Blob with `uploadPresigned` and answers the pathname. The upload is aborted after `UPLOAD_TIMEOUT_SECONDS`, because a refused request is retried silently |
+| `analysePhoto` | server | reads the blob with `get(pathname, { access: 'private' })`; one vision call with structured output: quality (score, issues), safety (ok, reason), `markVisible` (the store's mark, see below), up to three candidate products (id, confidence), a suggested alt text. Runs against the catalogue from `getAllProducts` |
+| `confirmProduct` | client | the top candidate's card with its API image: Yes, or "Pick another" showing the next two and a catalogue picker. The next two matter: the vision model confuses near-identical products (the notebooks, the book; the tumbler and the travel mug), and the right one is then almost always second |
 | `askName` | client | a text input; the name is published exactly as typed |
 | `reviewQuote` | client | an editable text area holding the visitor's words, or the agent's shorter suggestion when they run over 240 characters; the visitor approves the exact text |
 | `checkText` | server | one small structured call: is the name, the quote or the suggested alt text abusive, obscene or a slur. A hit sends the agent back to `askName` or `reviewQuote`, or drops the alt text |
 | `askConsent` | client | a checkbox: "I took this photo and allow the store to publish it with my name and words" |
-| `askEmail` | client | an email input, zod-validated. The address goes to the message route in a separate field, which a step saves in the draft; the tool answers the model with `{ provided: true }` only |
+| `askEmail` | client | an email input, zod-validated. The browser answers the tool with `{ provided: true }` and sends the address to the message route in a separate field, which a step saves in the draft. `toModelOutput` does not apply to a result the run appends, so keeping the address out of the tool output is the only guard |
 | `sendCode` | server | a 6-digit code, emailed; only its hash is kept in the run |
 | `askCode` | client | six inputs; "send again" after `CODE_RESEND_SECONDS` |
 | `verifyCode` | server | compares hashes; `CODE_MAX_ATTEMPTS` tries, `CODE_TTL_MINUTES`. The model sees `email: verified`, never the address |
@@ -109,7 +111,7 @@ Rules the agent follows, enforced by code, not by the prompt:
 - **The draft lives in the run.** Only tool results change it. `submit` reads the draft, never the model's arguments, so the model cannot invent a product, a verified email or consent.
 - **Photo.** A run accepts at most `MAX_PHOTO_ATTEMPTS` uploads, whatever the reason for the retry: unsafe, unusable, no mark or no confident match. Each retry states the reason. When the attempts are used up, the agent offers the picker, or ends the conversation if the last photo was unsafe. Each superseded blob is deleted when the next upload arrives.
 - **The mark.** Every product the store sells carries its mark: a white, upward-pointing equilateral triangle on a black item, sometimes large (a book cover), sometimes small (a pen clip, a sock cuff). `MARK_DESCRIPTION` in `@repo/testimonials` states it once for the prompt. The model first answers whether the mark is visible, then which product it is from the item's type and shape, since colour does not tell the products apart. No visible mark caps every candidate below `PRODUCT_CONFIDENCE`: the agent asks for a photo that shows the triangle while attempts remain, then offers the picker. A lookalike (another brand's black mug, a triangle pointing down) is never matched on shape alone.
-- **Product.** When no candidate reaches `PRODUCT_CONFIDENCE`, the agent asks for another photo while attempts remain, then offers the picker. Several products in one photo: the visitor picks one; the agent may record the others as `products[]` after the visitor confirms them. The submission records `productSource: 'agent' | 'visitor'`.
+- **Product.** `MODEL` is `google/gemini-2.5-flash` and `PRODUCT_CONFIDENCE` is 0.8. A candidate counts only when `markVisible` is true and its confidence reaches `PRODUCT_CONFIDENCE`; the model answers 0.85 or more whenever it sees the mark, so the mark decides. When no candidate reaches `PRODUCT_CONFIDENCE`, the agent asks for another photo while attempts remain, then offers the picker. Several products in one photo: the visitor picks one; the agent may record the others as `products[]` after the visitor confirms them. The submission records `productSource: 'agent' | 'visitor'`.
 - **Caps.** `MAX_TURNS = 20` per run. After that the agent says goodbye and the run ends.
 - **Off topic.** The agent declines and steers back. It never recommends, compares or prices products.
 - **Untrusted input.** The visitor's text, the photo and any text in the photo are data, never instructions (`AGENTS.md`, rule 2 applies to visitor input as it does to API data). The system prompt says so; the tool rules above are what make it hold.
@@ -158,30 +160,31 @@ Rules the agent follows, enforced by code, not by the prompt:
 - The photo is private until an editor accepts it. Sanity serves every asset of a public dataset to anyone with its URL, so nothing unmoderated is uploaded to Sanity.
 - No EXIF reaches the store: the browser re-encodes before upload.
 - The run's event log holds the conversation. Its retention is Vercel's (1 day on Hobby, 7 on Pro after the run completes).
-- `SANITY_API_WRITE_TOKEN`, `BLOB_READ_WRITE_TOKEN`, `RESEND_API_KEY` and the two secrets are server only.
+- `SANITY_API_WRITE_TOKEN`, `RESEND_API_KEY` and the two secrets are server only. Blob needs no token: the store signs uploads and reads blobs over OIDC.
 
 ## Abuse
 
-- BotID Basic: `initBotId` from `botid/client/core` protects the chat, message and upload routes (POST) and the stream route (GET); each calls `checkBotId()` from `botid/server` and answers 403 to a bot. `withBotId` wraps the Next config together with `withWorkflow`.
+- BotID Basic: `initBotId` from `botid/client/core` protects the chat, message and upload routes (POST) and the stream route (GET); each calls `checkBotId()` from `botid/server` and answers 403 to a bot. `withWorkflow(withBotId(config))`, in that order, because `withWorkflow` returns a function `withBotId` does not accept. `checkBotId()` throws outside Vercel under `next start`, so the routes call it only when `VERCEL` is set. BotID loads its script and posts its challenge through same-origin rewrites, so the CSP needs nothing for it.
 - One Firewall rate-limit rule with a `@vercel/firewall` condition named `testimonials`, called with `checkRateLimit('testimonials', { request })` in the chat, message and upload routes. It keys on the IP address: a session id is free to mint, so it cannot be the limit's key. `checkRateLimit` is marked experimental.
 - The chat, message, stream and upload routes require the `sid` cookie and answer only for the run bound to that session. The photo route is authorised by its HMAC signature and the decision route by its bearer, because the Studio and the Function send no cookie.
-- The upload route authorises the token in `onBeforeGenerateToken`: same session, a live run (choosing a photo starts the run first when there is none), JPEG only, `MAX_UPLOAD_BYTES`, at most `MAX_PHOTO_ATTEMPTS` per run.
+- The upload route uses `handleUploadPresigned` and signs in `getSignedToken` with `issueSignedToken` over OIDC: same session, a live run (choosing a photo starts the run first when there is none), JPEG only, `MAX_UPLOAD_BYTES`, at most `MAX_PHOTO_ATTEMPTS` per run. The route chooses the pathname, `testimonials/<runId>/<attempt>.jpg`, and scopes the token to it and to `put`. It passes a placeholder `webhookPublicKey`, which the SDK demands but uses only for upload-completed callbacks, and this flow registers none.
+- The CSP's `connect-src` gains `https://vercel.com/api/blob/`, the path the browser uploads to, not the whole origin.
 - The run's caps above bound model spend per visitor.
 
 ## Configuration
 
 The agent runs in Production only, where `SANITY_API_WRITE_TOKEN` is set: the Function posts to one `STORE_URL`, and previews write to the same dataset. Previews show the page without the CTA.
 
-Store, server only: `BLOB_READ_WRITE_TOKEN` (provisioned by the Blob store), `RESEND_API_KEY` (provisioned by the Marketplace integration), `EMAIL_DOMAIN` (the verified sending subdomain, `mail.<domain>`), `TESTIMONIAL_PHOTO_SECRET` and `TESTIMONIAL_DECISION_SECRET` (min 32 each). `SANITY_API_WRITE_TOKEN` already exists. All optional in `lib/env.ts`: without Blob or a write token the CTA is hidden; without `RESEND_API_KEY` the email adapter logs the code and the message instead of sending, so the flow runs end to end locally.
+Store, server only: `BLOB_STORE_ID` (the private store's id; not a secret, but server only), `RESEND_API_KEY` (provisioned by Resend's Vercel integration), `EMAIL_DOMAIN` (the verified sending subdomain, `mail.<domain>`), `TESTIMONIAL_PHOTO_SECRET` and `TESTIMONIAL_DECISION_SECRET` (min 32 each). `SANITY_API_WRITE_TOKEN` already exists. All optional in `lib/env.ts`: without `BLOB_STORE_ID` or a write token the CTA is hidden; without `RESEND_API_KEY` the email adapter logs the code and the message instead of sending, so the flow runs end to end locally.
 
 Sanity Function `submission-decided`: `STORE_URL`, `TESTIMONIAL_DECISION_SECRET`, set with `sanity functions env add`.
 
 Manual setup, done once by a person:
 
-1. Resend: install the Marketplace integration on the store project, add the subdomain `mail.<domain>`, add the SPF and DKIM records it lists (DMARC optional), wait for verification.
-2. Blob: create a private store and connect it to the store project.
+1. Resend: install Resend's own Vercel integration (resend.com, Settings → Integrations → Vercel) on the store project; the Vercel Marketplace listing offers only Pro to an email that already has a free Resend team. Add the subdomain `mail.<domain>`, add the SPF and DKIM records it lists (DMARC optional), wait for verification.
+2. Blob: create a private store and connect it to the store project for Development, Preview and Production.
 3. Firewall: add the rate-limit rule `testimonials` (fixed window, `RATE_LIMIT_WINDOW`, `RATE_LIMIT_REQUESTS`).
-4. Vercel: set the two secrets and `EMAIL_DOMAIN` for Production.
+4. Vercel: set the two secrets, `EMAIL_DOMAIN` and `BLOB_STORE_ID` for Production.
 5. Sanity Manage: check the revalidation webhook's filter admits `testimonial`.
 6. Sanity: deploy the blueprint, then `sanity functions env add submission-decided …`.
 
@@ -189,21 +192,11 @@ Manual setup, done once by a person:
 
 ### Slice 0: spikes
 
-Answer on a throwaway branch and record the answers in the PR description.
-
-1. **Workflow 5.** `@ai-sdk/workflow` 2.x requires `workflow@^5.0.0-beta.42`; the store runs `4.8.9`. Upgrade to exact pins, no range: `workflow@5.0.0-beta.57`, `@ai-sdk/workflow@2.0.47`, `@ai-sdk/react` at the matching `ai` version. Build with `cacheComponents: true`, compare the route table, run the E13 unit and integration tests, and start one demand analysis on a preview. E13 needs no code change: `getConflict()` now resolves to a `Run` whose `runId` still works. Watch the v5 changes that touch a chat run: the per-run event limit (`MAX_EVENTS_EXCEEDED`) at `MAX_TURNS`, and a build that fails on duplicate step or workflow ids. If the build or the E13 workflow breaks, the chat runs as a plain `streamText` route with the draft in the session store, and the workflow starts at `submit`; everything after submit is unchanged. Upgrades after that are deliberate and one at a time.
-2. **Multi-turn.** The turn mechanics under "The conversation": one run, a turn hook raced against `sleep` per turn, the route's own `finish` chunk, a reload that reconnects and restores the messages from the session store, and the draft stream merged in.
-3. **Client-side tools under `WorkflowAgent`.** A widget's answer, delivered through the hook and appended as a `tool` result, continues the loop. Whether `toModelOutput` applies to a tool with no `execute`, which would be a second guard on the email. `WorkflowAgent` approves tools with `needsApproval`; this spec uses no approval.
-4. **Vision model.** `scripts/eval-identify.ts` in `apps/store`, run by hand, never in CI. The set:
-   - the published testimonials with a photo, labelled by their `products[]` (22 on 26 Sep 2026, three with several products); the main measure
-   - every product's API image, cropped, rotated, shrunk and recompressed with macOS `sips`, for products no testimonial shows
-   - under `working/testimonial-eval/`, never committed, sources in its `SOURCES.md`: `unrelated/` (photos with no product in them), `near-miss/` (generic or other brands' mugs, bottles, hoodies, t-shirts, caps, totes, and catalogue images flipped so the triangle points down: the model must not claim them as ours) and `unusable/` (blurred, tiny, too dark)
-   Run the set through `analysePhoto` with the two or three best vision models the Gateway free tier serves. Pick the model, set `PRODUCT_CONFIDENCE` from the results and record top-1 and top-3 accuracy per group in the PR. If top-1 on the testimonial photos is under 80 %, add a second pass that compares the photo with the images of the top five candidates. The testimonial photos are generated images and cleaner than a phone photo; the real hit rate comes from live submissions, which record the confidence and whether the visitor corrected the product.
-5. **Blob client upload and CSP.** The browser uploads to `https://vercel.com/api/blob`; add that to `connect-src` and confirm. Try `handleUploadPresigned` with `issueSignedToken` over OIDC, which would remove `BLOB_READ_WRITE_TOKEN`.
-6. **BotID and CSP.** `withBotId` proxies through same-origin rewrites, so `'self'` should be enough; confirm.
+Done on a throwaway branch (PR 17): Workflow 5 with Cache Components and the E13 workflow, the turn mechanics in one run, client-side tools, the vision model, Blob uploads under the CSP, and BotID with Workflow. Their answers are written into this spec.
 
 ### Slice 1: package, schemas, Studio
 
+- Upgrade, exact pins written by hand (pnpm keeps an existing caret): `workflow@5.0.0-beta.57`, `@workflow/vitest@5.0.0-beta.57`, `@ai-sdk/workflow@2.0.47`, `ai@7.0.116` (which `@ai-sdk/workflow` requires), `@ai-sdk/react@4.0.119`. `engines` requires Node 24, as `.nvmrc` does. The workflow integration tests register a resolve hook that maps `next/cache` to a stub and `next/<name>` to its `.js` file, because `@workflow/vitest` 5 hands its bundles to Node's own loader. Upgrades after that are deliberate and one at a time.
 - `packages/testimonials` (`@repo/testimonials`): `constants.ts` (every number named in this spec, `MODEL`), `schemas.ts` (zod for tool inputs, the photo analysis, the text check, the decision body), `prompt.ts` (the system prompt), `draft.ts` (the draft type and `applyToolResult`, pure), `reason.ts` (`suggestReason`), `store.ts` (GROQ and writes over a client passed in). No Next imports.
 - `testimonialSubmission` schema; `testimonial` gains `submission` (weak reference, read only, hidden when empty). Typegen re-run.
 - Studio: the Submissions folder, the photo preview input, the two actions.
@@ -222,6 +215,7 @@ Answer on a throwaway branch and record the answers in the PR description.
 - The chat island, the widgets and the draft card.
 - BotID and the rate limit.
 - `lib/email/send.ts` with the logging adapter; `sendCode` and `verifyCode` work locally without Resend.
+- `scripts/eval-identify.ts`, run by hand against the labelled set, never in CI; it calls the same analysis as `analysePhoto`.
 
 ### Slice 4: the decision
 
