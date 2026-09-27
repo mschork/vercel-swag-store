@@ -1,6 +1,6 @@
 import { instant } from '@next/playwright'
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
-import { catalogueIds, seedVisit } from './visit'
+import { catalogueIds, seedSession, seedVisit } from './visit'
 
 /**
  * Instant navigation: under `instant()` the request-time data is held back,
@@ -172,5 +172,106 @@ test.describe('product listing', () => {
       await expect(page).toHaveURL(/\/products\/category\/[^/]+$/)
       await expectListingShell(page, name)
     })
+  })
+})
+
+const searchBox = (page: Page) => page.getByRole('searchbox', { name: 'Search products' })
+
+/** The results' count heading, such as "2 results". */
+const resultsCount = (page: Page) =>
+  page.getByRole('region', { name: 'Search results' }).getByRole('heading', { name: /^\d+ results?$/ })
+
+test.describe('search', () => {
+  test("its shell is served on a first load, before the query's results", async ({
+    page,
+    baseURL,
+  }) => {
+    await instant(
+      page,
+      async () => {
+        await page.goto('/search?q=mug')
+        await expect(page.getByRole('heading', { level: 1, name: 'Search' })).toBeVisible()
+        await expect(searchBox(page)).toBeVisible()
+        await expect(resultsCount(page)).toHaveCount(0)
+      },
+      { baseURL },
+    )
+    await page.reload()
+    await expect(resultsCount(page)).toBeVisible()
+  })
+
+  // The browser searches the catalogue in the shell, so a typed query needs
+  // no request and answers under the lock.
+  test('a typed query answers at once', async ({ page }) => {
+    await page.goto('/search?q=hat')
+    await expect(searchBox(page)).toHaveValue('hat')
+
+    await instant(page, async () => {
+      await searchBox(page).fill('hoodie')
+      await page.keyboard.press('Enter')
+      await expect(page).toHaveURL(/[?&]q=hoodie/)
+      await expect(resultsCount(page)).toBeVisible()
+      await expect(
+        page.getByRole('region', { name: 'Search results' }).getByRole('listitem').first(),
+      ).toContainText(/hoodie/i)
+    })
+  })
+
+  test('its shell commits on a click on the header search link', async ({ page }) => {
+    await page.goto('/products')
+    const link = page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Search' })
+    await expect(link).toBeVisible()
+
+    await instant(page, async () => {
+      await link.click()
+      await expect(page).toHaveURL(/\/search$/)
+      await expect(page.getByRole('heading', { level: 1, name: 'Search' })).toBeVisible()
+      await expect(searchBox(page)).toBeVisible()
+    })
+  })
+})
+
+/** The cart's rows; the favourites row under them is a grid. */
+const cartRows = (page: Page) =>
+  page.getByRole('main').locator('ul:not([class*="grid"]) > li').filter({ visible: true })
+
+/** Puts one of the catalogue's products in the browser's cart. */
+async function seedCartLine(context: BrowserContext) {
+  const [productId] = await catalogueIds(context)
+  if (!productId) throw new Error('The catalogue is empty')
+  await seedSession(context, { cart: [{ productId, quantity: 1 }] })
+}
+
+test.describe('cart', () => {
+  test.beforeEach(async ({ context }) => seedCartLine(context))
+
+  test('its shell is served on a first load, before the cart', async ({ page, baseURL }) => {
+    await instant(
+      page,
+      async () => {
+        await page.goto('/cart')
+        await expect(page.getByRole('heading', { level: 1, name: 'Cart' })).toBeVisible()
+        await expect(cartRows(page)).toHaveCount(0)
+      },
+      { baseURL },
+    )
+    await page.reload()
+    await expect(cartRows(page).first()).toBeVisible()
+  })
+
+  test('its shell commits on a click on the header cart link, and the cart streams in', async ({
+    page,
+  }) => {
+    await page.goto('/products')
+    const link = page.getByRole('banner').locator('a[href="/cart"]')
+    await expect(link).toBeVisible()
+
+    await instant(page, async () => {
+      await link.click()
+      await expect(page).toHaveURL(/\/cart$/)
+      await expect(page.getByRole('heading', { level: 1, name: 'Cart' })).toBeVisible()
+      await expect(cartRows(page)).toHaveCount(0)
+    })
+    await expect(cartRows(page).first()).toBeVisible()
   })
 })

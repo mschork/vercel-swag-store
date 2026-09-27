@@ -30,6 +30,12 @@ How the `instant()` tests in `e2e/instant.spec.ts` run. Read by the
   click on a category chip; shell marker the `h1`, the Categories nav and the
   first grid item; deferred marker the "Out of stock" badges on a first load,
   as on the home page.
+- CONTRACTS: `/search`, a first load of `/search?q=mug` (shell marker the `h1`
+  and the search box; deferred marker the results' count heading), a query
+  typed under the lock (the browser searches the shell's catalogue, so the
+  results answer at once), and a click on the header's Search link.
+- CONTRACTS: `/cart`, first load and a click on the header's cart link, with
+  one line seeded; shell marker the `h1`; deferred marker the cart's rows.
 - LOOP: local build, then run; stop anything on port 3000 first
   (`kill $(lsof -tiTCP:3000 -sTCP:LISTEN)`): `next start` forks a
   `next-server` child, and Playwright reuses a server it finds there.
