@@ -1,18 +1,21 @@
 import { expect, test } from '@playwright/test'
 import { expectOnlySessionCookie, productIdOf, readVisit } from './visit'
 
-/** A browser without JavaScript (specs/E21-first-visit.md): a notice, and no skeleton left on screen. */
+/**
+ * A browser without JavaScript (specs/E21-first-visit.md): a notice, no
+ * skeleton left on screen, and the promotion, which is in the static shell.
+ */
 const NOTICE = /not all functionality can be served to your browser/
 
 test.describe('without JavaScript', () => {
   test.use({ javaScriptEnabled: false })
 
   for (const path of ['/', '/products', '/search', '/cart']) {
-    test(`${path} shows the notice and no skeleton`, async ({ page }) => {
+    test(`${path} shows the notice, the promotion and no skeleton`, async ({ page }) => {
       await page.goto(path)
       await expect(page.getByText(NOTICE)).toBeVisible()
       await expect(page.locator('[data-slot="skeleton"]:visible')).toHaveCount(0)
-      await expect(page.locator('[data-needs-script]:visible')).toHaveCount(0)
+      await expect(page.getByRole('complementary', { name: 'Current promotion' })).toContainText(/\S/)
     })
   }
 

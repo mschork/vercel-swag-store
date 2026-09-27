@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Cart, Promotion } from '@/lib/api/types'
+import type { Cart } from '@/lib/api/types'
 import { isSessionId, SESSION_MAX_AGE_SECONDS } from '@/lib/session/id'
 import { product } from '@/test/helpers'
 
@@ -29,17 +29,6 @@ async function load(flag: string) {
     store: (await import('@/lib/session/store')).sessionStore,
     api: vi.mocked(await import('@/lib/api/cart')),
   }
-}
-
-const promotion: Promotion = {
-  id: 'promo_seed',
-  title: 'Free Stickers',
-  description: 'Every order ships with stickers.',
-  discountPercent: 0,
-  code: 'AUTO',
-  validFrom: '2026-01-01',
-  validUntil: '2026-12-31',
-  active: true,
 }
 
 function cart(quantity: number): Cart {
@@ -92,7 +81,7 @@ afterEach(() => {
 describe('/api/test/session without E2E_SEED', () => {
   it('answers 404 to every method and reads neither the cookie nor the store', async () => {
     const { route, store, api } = await load('')
-    const spies = (['read', 'clearVisit', 'setStock', 'claimPromotion', 'setCart'] as const).map(
+    const spies = (['read', 'clearVisit', 'setStock', 'setCart'] as const).map(
       (name) => vi.spyOn(store, name),
     )
     const responses = [
@@ -115,19 +104,12 @@ describe('/api/test/session with E2E_SEED=1', () => {
   it('replaces the visit with the seed, and GET reads back exactly that', async () => {
     const { route, store } = await load('1')
     await store.claimStock(sid, { tshirt_001: 7, cap_001: 2 })
-    await store.claimPromotion(sid, null)
 
-    const seeded = await post(route, { stock: { tshirt_001: 3 }, promotion })
+    const seeded = await post(route, { stock: { tshirt_001: 3 } })
     expect(seeded.status).toBe(200)
-    const kept = { stock: { tshirt_001: 3 }, promotion }
+    const kept = { stock: { tshirt_001: 3 } }
     await expect(seeded.json()).resolves.toEqual(kept)
     await expect((await route.GET()).json()).resolves.toEqual(kept)
-  })
-
-  it('pins no promotion when the body says null', async () => {
-    const { route } = await load('1')
-    await post(route, { stock: {}, promotion: null })
-    await expect((await route.GET()).json()).resolves.toEqual({ stock: {}, promotion: null })
   })
 
   it('answers null for a session without a visit, and for a caller without a session', async () => {
@@ -144,7 +126,7 @@ describe('/api/test/session with E2E_SEED=1', () => {
       'not json',
       { stock: { tshirt_001: -1 } },
       { stock: { tshirt_001: 1.5 } },
-      { promotion: { id: 'half' } },
+      { promotion: null },
       { cart: [] },
       { stok: { tshirt_001: 3 } },
     ]) {

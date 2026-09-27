@@ -10,6 +10,7 @@ export const TAGS = {
   products: 'products',
   categories: 'categories',
   store: 'store',
+  promotion: 'promotion',
   sanity: 'sanity',
 } as const
 

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Promotion } from '@/lib/api/types'
 import { createMemory } from './memory'
 import { RedisError, type Redis } from './redis'
 import { CART_TTL_SECONDS, CHAT_TTL_SECONDS, createSessionStore, VISIT_TTL_SECONDS } from './store'
@@ -15,17 +14,6 @@ let clock = 1_800_000_000_000
 const store = createSessionStore(createMemory(() => clock), () => clock)
 let sid = ''
 let counter = 0
-
-const promotion = (id: string): Promotion => ({
-  id,
-  title: 'Summer',
-  description: 'Save 10% automatically',
-  discountPercent: 10,
-  code: 'SUMMER',
-  validFrom: '2026-01-01',
-  validUntil: '2026-12-31',
-  active: true,
-})
 
 const line = {
   productId: 'mug_001',
@@ -64,14 +52,6 @@ describe('the visit', () => {
     expect(state).not.toBe('unavailable')
     if (state === 'unavailable') return
     expect(state.visit).toEqual({ stock: { a: 3, b: 0, c: 5 }, drawnAt: Math.floor(clock / 1000) })
-  })
-
-  it('pins the first promotion, null included', async () => {
-    expect(await store.claimPromotion(sid, promotion('one'))).toEqual(promotion('one'))
-    expect(await store.claimPromotion(sid, promotion('two'))).toEqual(promotion('one'))
-    const other = `${sid.slice(0, -1)}f`
-    expect(await store.claimPromotion(other, null)).toBeNull()
-    expect(await store.claimPromotion(other, promotion('two'))).toBeNull()
   })
 
   it('lasts one day from the first draw, however often it is written', async () => {
@@ -166,7 +146,6 @@ describe('when Redis fails', () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => {})
     expect(await broken.read(sid)).toBe('unavailable')
     expect(await broken.claimStock(sid, { a: 3 })).toEqual({ a: 3 })
-    expect(await broken.claimPromotion(sid, promotion('one'))).toEqual(promotion('one'))
     expect(await broken.setCart(sid, { token: 'secret-token', currency: 'USD', lines: [], totalItems: 0 })).toBe(false)
     expect(await broken.setStock(sid, { a: 1 })).toBe(false)
     expect(await broken.clearVisit(sid)).toBe(false)

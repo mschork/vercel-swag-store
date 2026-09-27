@@ -28,8 +28,8 @@ async function VisitSeed({ productIds }: { productIds?: readonly string[] }) {
   const session = await getSession()
   if (session === 'unavailable') return <VisitSeedClient value={null} />
 
-  const { stock, promotion } = await completeVisit(session.sid, session.visit, productIds)
-  return <VisitSeedClient value={{ stock, promotion, lines: lineQuantities(session.cart) }} />
+  const stock = await completeVisit(session.sid, session.visit, productIds)
+  return <VisitSeedClient value={{ stock, lines: lineQuantities(session.cart) }} />
 }
 
 function lineQuantities(cart: CartRecord | null): Record<string, number> {

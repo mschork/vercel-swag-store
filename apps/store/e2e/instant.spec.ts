@@ -275,3 +275,22 @@ test.describe('cart', () => {
     await expect(cartRows(page).first()).toBeVisible()
   })
 })
+
+test.describe('promotion banner', () => {
+  test.beforeEach(async ({ context }) => seedAllOutOfStock(context))
+
+  test('it is served in the shell on a first load', async ({ page, baseURL }) => {
+    const banner = page.getByRole('complementary', { name: 'Current promotion' })
+    await instant(
+      page,
+      async () => {
+        await page.goto('/')
+        await expect(banner).toContainText(/\S/)
+        await expect(outOfStock(page)).toHaveCount(0)
+      },
+      { baseURL },
+    )
+    await page.reload()
+    await expect(outOfStock(page).first()).toBeVisible()
+  })
+})

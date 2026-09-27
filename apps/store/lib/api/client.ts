@@ -35,7 +35,7 @@ type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE'
 /**
  * The caller's cache policy, recorded on the call's trace span. `cached`: the
  * caller is a `"use cache"` function, so this call runs only on a cache miss.
- * `live`: the caller is never cached (stock, promotions, cart, health).
+ * `live`: the caller is never cached (stock, cart, health).
  */
 export type CachePolicy = 'cached' | 'live'
 

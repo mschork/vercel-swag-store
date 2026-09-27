@@ -1,9 +1,6 @@
-import type { Promotion } from '@/lib/api/types'
-
-/** What `DELETE /api/visit` answers with: the visitor's new draws and promotion. */
+/** What `DELETE /api/visit` answers with: the visitor's new draws. */
 export interface OpenedVisit {
   stock: Record<string, number>
-  promotion: Promotion | null
 }
 
 /**

@@ -1,8 +1,6 @@
 import { connection, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { addCartItem, createCart } from '@/lib/api/cart'
-import { PromotionSchema } from '@/lib/api/schemas'
-import type { Promotion } from '@/lib/api/types'
 import { toLines } from '@/lib/cart/lines'
 import { serverEnv } from '@/lib/env'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
@@ -22,8 +20,6 @@ const SeedInput = z
   .object({
     /** The visit's draws: the visit holds these and no others. */
     stock: z.record(z.string().min(1), z.int().min(0).max(CART_MAX_QUANTITY)).optional(),
-    /** The visit's promotion; `null` pins none. */
-    promotion: PromotionSchema.nullable().optional(),
     /** Items for a new API cart, which becomes the mirror. */
     cart: z
       .array(z.object({ productId: z.string().min(1), quantity: z.int().positive() }))
@@ -32,8 +28,8 @@ const SeedInput = z
   })
   .strict()
 
-/** What a spec reads back: the visit's draws and promotion. */
-type SeededVisit = { stock: Record<string, number>; promotion: Promotion | null } | null
+/** What a spec reads back: the visit's draws. */
+type SeededVisit = { stock: Record<string, number> } | null
 
 const enabled = () => serverEnv.E2E_SEED === '1'
 const notFound = () => new Response('Not found', { status: 404 })
@@ -52,9 +48,9 @@ export async function GET(): Promise<Response> {
 }
 
 /**
- * Seeds the caller's session and answers the visit it now holds. `stock` or
- * `promotion` replaces the visit: it is cleared, then holds what the body
- * names, and a render draws the rest. A caller without a session id gets
+ * Seeds the caller's session and answers the visit it now holds. `stock`
+ * replaces the visit: it is cleared, then holds what the body names, and a
+ * render draws the rest. A caller without a session id gets
  * one, minted as the proxy mints it.
  */
 export async function POST(request: Request): Promise<Response> {
@@ -69,14 +65,13 @@ export async function POST(request: Request): Promise<Response> {
   if (!input.success) {
     return Response.json({ error: z.prettifyError(input.error) }, { status: 400 })
   }
-  const { stock, promotion, cart } = input.data
+  const { stock, cart } = input.data
 
   const existing = await getSessionId()
   const sid = existing ?? crypto.randomUUID()
-  if (stock !== undefined || promotion !== undefined) {
+  if (stock !== undefined) {
     if (!(await sessionStore.clearVisit(sid))) return unavailable()
-    if (stock && !(await sessionStore.setStock(sid, stock))) return unavailable()
-    if (promotion !== undefined) await sessionStore.claimPromotion(sid, promotion)
+    if (!(await sessionStore.setStock(sid, stock))) return unavailable()
   }
   if (cart) {
     const opened = await createCart()
@@ -125,5 +120,5 @@ export const DELETE = unsupported
 export const OPTIONS = unsupported
 
 function shown(visit: VisitRecord | null): SeededVisit {
-  return visit ? { stock: visit.stock, promotion: visit.promotion ?? null } : null
+  return visit ? { stock: visit.stock } : null
 }

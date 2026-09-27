@@ -64,15 +64,15 @@ The proxy is listed because one exists, not because it runs often. It mints the 
 
 | Route | In the prerendered shell | Streams per request | Why |
 |---|---|---|---|
-| `/` | Header, hero with its copy and photo, the featured grid and the favourites row with every product name, price and image, footer | Promo strip, cart badge | The catalogue is cached; the promotion and the cart are not |
-| `/products` | Heading, every product card, the category chips | Promo strip, cart badge | Same |
-| `/products/category/[slug]` | Heading, the category's intro from Sanity, its cards | Promo strip, cart badge | Categories are a closed set the API lists, so each page is built |
-| `/products/[slug]` | Breadcrumb, gallery, name, price, descriptions, testimonials, questions, structured data | Stock line with Add to Cart, promo strip, cart badge | Stock is drawn per visitor |
-| `/search` | Heading, the search form with its category list, the results region | Search form's live state, results grid, promo strip, cart badge | Results depend on `searchParams`, which the page passes on unawaited |
-| `/cart` | Heading and the skeleton's box | Cart contents, the favourites row, promo strip, cart badge | The cart is read from the session store |
-| `/checkout` | The whole thank-you page | Promo strip, cart badge | Nothing on the page depends on the visitor |
+| `/` | Header, promotion, hero with its copy and photo, the featured grid and the favourites row with every product name, price and image, footer | Cart badge | The catalogue and the promotion are cached; the cart is not |
+| `/products` | Heading, every product card, the category chips | Cart badge | Same |
+| `/products/category/[slug]` | Heading, the category's intro from Sanity, its cards | Cart badge | Categories are a closed set the API lists, so each page is built |
+| `/products/[slug]` | Breadcrumb, gallery, name, price, descriptions, testimonials, questions, structured data | Stock line with Add to Cart, cart badge | Stock is drawn per visitor |
+| `/search` | Heading, the search form with its category list, the results region | Search form's live state, results grid, cart badge | Results depend on `searchParams`, which the page passes on unawaited |
+| `/cart` | Heading and the skeleton's box | Cart contents, the favourites row, cart badge | The cart is read from the session store |
+| `/checkout` | The whole thank-you page | Cart badge | Nothing on the page depends on the visitor |
 | `/md/**`, `/llms.txt` | The whole file | nothing | Built from the same merged product as the page, and never live data |
-| `/_not-found` | The whole page | Promo strip, cart badge | Same as `/checkout` |
+| `/_not-found` | The whole page | Cart badge | Same as `/checkout` |
 
 Every product slug is prerendered at build. `/products/[slug]` and `/products/category/[slug]` also keep a fallback shell, so a slug that did not exist at build still serves the static chrome and fills in the rest.
 
@@ -82,15 +82,15 @@ Each pending boundary appears in the built HTML as `<!--$?-->` with its fallback
 
 | File | Pending boundaries |
 |---|---|
-| `index.html` | 6 |
-| `products.html` | 6 |
-| `products/category/bottles.html` | 6 |
-| `products/<slug>.html` | 7 |
+| `index.html` | 5 |
+| `products.html` | 5 |
+| `products/category/bottles.html` | 5 |
+| `products/<slug>.html` | 5 |
 | `cart.html` | 6 |
-| `checkout.html` | 5 |
-| `search.html` | 9 |
+| `checkout.html` | 4 |
+| `search.html` | 8 |
 
-The shared five are the cart badge, the promo strip and its marquee, and two for Vercel Analytics, which reads search params. A product page adds the stock line with Add to Cart; `/search` adds the form's live state and the results grid.
+Every page shares four, among them the cart badge, the visit seed and Vercel Analytics, which reads search params. The promotion is not among them: it is in the shell. A product page adds the stock line with Add to Cart; `/search` adds the form's live state and the results grid.
 
 ## The route handlers
 

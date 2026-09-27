@@ -1,6 +1,4 @@
 import { z } from 'zod'
-import { PromotionSchema } from '@/lib/api/schemas'
-import type { Promotion } from '@/lib/api/types'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
 
 /**
@@ -12,14 +10,9 @@ import { CART_MAX_QUANTITY } from '@/lib/quantity'
 const StockDrawSchema = z.coerce.number().int().min(0).max(CART_MAX_QUANTITY)
 const DrawnAtSchema = z.coerce.number().int().positive()
 
-/**
- * The visit: a stock draw per product and the pinned promotion, kept for a
- * day from its first draw (CONTEXT.md). `promotion` is absent until a render
- * has claimed one; `null` is the API saying there is none.
- */
+/** The visit: a stock draw per product, kept for a day from its first draw (CONTEXT.md). */
 export interface VisitRecord {
   stock: Record<string, number>
-  promotion?: Promotion | null
   /** Epoch seconds of the first draw. */
   drawnAt: number
 }
@@ -50,7 +43,6 @@ export const CartRecordSchema = z.object({
 export type CartRecord = z.infer<typeof CartRecordSchema>
 
 export const STOCK_FIELD = 'stock:'
-export const PROMOTION_FIELD = 'promotion'
 export const DRAWN_AT_FIELD = 'drawnAt'
 
 /** A visit hash as `HGETALL` answers it, or `null` when there is none. */
@@ -67,28 +59,12 @@ export function parseVisit(reply: unknown): VisitRecord | null {
     const draw = parseDraw(value)
     if (draw !== null) stock[field.slice(STOCK_FIELD.length)] = draw
   }
-  const promotion = parsePromotion(fields.get(PROMOTION_FIELD))
-  return {
-    stock,
-    drawnAt: drawnAt.data,
-    ...(promotion === undefined ? {} : { promotion }),
-  }
+  return { stock, drawnAt: drawnAt.data }
 }
 
 export function parseDraw(value: unknown): number | null {
   const draw = StockDrawSchema.safeParse(value)
   return draw.success ? draw.data : null
-}
-
-/** A stored promotion; `undefined` when the field is absent or unreadable. */
-export function parsePromotion(value: unknown): Promotion | null | undefined {
-  if (typeof value !== 'string') return undefined
-  try {
-    const promotion = PromotionSchema.nullable().safeParse(JSON.parse(value))
-    return promotion.success ? promotion.data : undefined
-  } catch {
-    return undefined
-  }
 }
 
 /** A cart mirror as `GET` answers it, or `null` when there is none. */

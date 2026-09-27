@@ -134,20 +134,6 @@ test('the number in the HTML is the number the visit keeps', async ({ page, cont
   expectOneNumber(await panelStates(page), panelFor(kept))
 })
 
-test('the promotion in the HTML is the promotion the visit keeps', async ({ page, context }) => {
-  const strip = page.getByRole('complementary', { name: 'Current promotion' })
-  await page.goto('/')
-  const kept = (await readVisit(context))?.promotion
-  if (!kept) {
-    await expect(strip).toHaveCount(0)
-    return
-  }
-  const shown = await strip.textContent()
-  expect(shown).toContain(kept.title)
-  await page.reload()
-  await expect(strip).toHaveText(shown ?? '')
-})
-
 test('a product opened while the home page draws the visit never shows two numbers', async ({
   page,
   context,

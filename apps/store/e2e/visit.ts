@@ -2,36 +2,20 @@ import { expect, type APIResponse, type BrowserContext, type Page } from '@playw
 
 /**
  * Helpers for the session (specs/E24-session-store.md). Seeding the visit is
- * what makes stock and the promotion known in a test: the API redraws both on
- * every request, so without this a suite can only follow whatever it was
- * handed. Every call goes to `/api/test/session`, which exists because
+ * what makes stock known in a test: the API redraws it on every request, so
+ * without this a suite can only follow whatever it was handed. Every call goes to `/api/test/session`, which exists because
  * `playwright.config.ts` sets `E2E_SEED`, through the context's own request,
  * so it acts on the browser's session and a new `sid` lands in the browser.
  */
 
 const SESSION = '/api/test/session'
 
-/** A promotion no API call can change, so the strip reads the same every run. */
-export const SEEDED_PROMOTION = {
-  id: 'promo_seed',
-  title: 'Free Stickers with Every Order',
-  description: 'Every order over $50 ships with a free Vercel sticker pack. No code needed.',
-  discountPercent: 0,
-  code: 'AUTO',
-  validFrom: '2025-01-01T00:00:00Z',
-  validUntil: '2025-12-31T00:00:00Z',
-  active: true,
-}
-
-type Promotion = typeof SEEDED_PROMOTION
-
 /** The visit as the store keeps it, or `null` before anything was drawn. */
-export type Visit = { stock: Record<string, number>; promotion: Promotion | null } | null
+export type Visit = { stock: Record<string, number> } | null
 
 /** What the seed route takes; each key replaces its part of the session. */
 type Seed = {
   stock?: Record<string, number>
-  promotion?: Promotion | null
   cart?: { productId: string; quantity: number }[]
 }
 
@@ -56,15 +40,14 @@ export async function seedSession(context: BrowserContext, seed: Seed): Promise<
 }
 
 /**
- * Gives the browser a visit holding exactly `stock` and `promotion`. A render
- * draws every product `stock` leaves out.
+ * Gives the browser a visit holding exactly `stock`. A render draws every
+ * product `stock` leaves out.
  */
 export async function seedVisit(
   context: BrowserContext,
   stock: Record<string, number>,
-  promotion: Promotion | null = SEEDED_PROMOTION,
 ): Promise<void> {
-  await seedSession(context, { stock, promotion })
+  await seedSession(context, { stock })
 }
 
 /** The visit the store keeps for the browser's session. */

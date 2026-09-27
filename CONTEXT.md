@@ -5,11 +5,11 @@ A storefront over the Vercel Swag Store API, with editorial content from Sanity 
 ## Language
 
 **Catalogue data**:
-Products, categories and store configuration as the API reports them. Cached and revalidated by tag; shared by every visitor.
+Products, categories, store configuration and the promotion as the API reports them. Cached and revalidated by tag; shared by every visitor.
 _Avoid_: Static data, master data
 
 **Live data**:
-Stock, promotion and cart. Never cached, because the API changes them per request or per visitor. Stock and the promotion are read once per visit and held in the visit; the cart is read from the cart mirror.
+Stock and cart. Never cached, because the API changes them per request or per visitor. Stock is read once per visit and held in the visit; the cart is read from the cart mirror.
 _Avoid_: Dynamic data, realtime data
 
 **Session**:
@@ -17,7 +17,7 @@ The random id in the one cookie the store sets. It identifies a browser and noth
 _Avoid_: User, login, visitor id, session cart
 
 **Visit**:
-What the store remembers about one visitor for 24 hours, kept under their session: their stock draws and their pinned promotion. It exists because the API redraws both on every request, so without it no number could be shown twice (`docs/adr/0006-the-stable-visit.md`).
+What the store remembers about one visitor for 24 hours, kept under their session: their stock draws. It exists because the API redraws stock on every request, so without it no number could be shown twice (`docs/adr/0006-the-stable-visit.md`).
 _Avoid_: Session, user state, inventory cookie
 
 **Stock draw**:
@@ -31,10 +31,6 @@ _Avoid_: Stock map, warehouse
 **Remaining**:
 A product's draw minus the quantity of it in the visitor's cart. This is the number every surface shows and enforces, so emptying the cart puts the stock back.
 _Avoid_: Available, free stock, left
-
-**Pinned promotion**:
-The one promotion a visit holds, chosen the first time the store asks the promotions endpoint in that visit. The API rotates four of them per request; the banner shows this one all visit.
-_Avoid_: Current promotion, active offer
 
 **Shell**:
 The part of a route that is prerendered at build and identical for every visitor: header, footer, page frame and cached catalogue content.
@@ -141,8 +137,8 @@ The featured product whose photo, name and page the home hero uses when no edito
 _Avoid_: Hero image, featured item
 
 **Promotion**:
-The one offer the API returns for a request. It changes between requests and is shown as returned, never filtered by date or amount.
-_Avoid_: Sale, banner, deal
+The one offer every visitor sees in the banner: the answer to one promotions call, cached as catalogue data. The API picks one of several on each call; the store shows the one it cached, as returned, never filtered by date or amount.
+_Avoid_: Sale, banner, deal, pinned promotion
 
 **Top-up**:
 Catalogue products appended after the featured products so a grid reaches its minimum size. Never labelled as featured.
