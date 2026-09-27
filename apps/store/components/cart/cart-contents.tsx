@@ -51,9 +51,11 @@ function CartUnavailable() {
 }
 
 /**
- * Mirrors `CartView`: rows beside the summary from md, stacked below. A row's
- * name takes two lines below lg and the row reserves them, so the rows match
- * the skeleton whatever the name.
+ * Mirrors `CartView` with one row, beside the summary from md. It is about
+ * the height of the empty cart, so the favourites below move little either
+ * way. Below md the summary would stack under the row and double the height,
+ * so it is left out. A row's name takes two lines below lg and the row
+ * reserves them, so a real row matches the skeleton whatever the name.
  */
 export function CartSkeleton() {
   return (
@@ -62,7 +64,7 @@ export function CartSkeleton() {
       aria-hidden="true"
     >
       <div className="flex flex-col divide-y divide-border border-y border-border">
-        {[0, 1].map((row) => (
+        {[0].map((row) => (
           <div key={row} className="flex gap-4 py-4">
             <Skeleton className="size-24 shrink-0 rounded-lg" />
             <div className="flex flex-1 flex-col gap-3">
@@ -84,7 +86,7 @@ export function CartSkeleton() {
           </div>
         ))}
       </div>
-      <Skeleton className="h-52 rounded-lg" />
+      <Skeleton className="hidden h-52 rounded-lg md:block" />
     </div>
   )
 }
