@@ -59,7 +59,7 @@ export function CartSummary({
         <CheckoutButton blocked={blocked} saving={saving} />
         {saving ? (
           <p role="status" className="sr-only">
-            Your cart is saving. Checkout opens when it is saved.
+            Your cart is updating. Checkout opens when it is up to date.
           </p>
         ) : blocked ? (
           <p role="status" className="text-sm leading-6 text-danger">
@@ -83,7 +83,7 @@ function CheckoutButton({ blocked, saving }: { blocked: boolean; saving: boolean
       {saving || pending ? (
         <>
           <Spinner />
-          {pending ? 'Placing order…' : 'Saving…'}
+          {pending ? 'Placing order…' : 'Updating…'}
         </>
       ) : (
         'Checkout'

@@ -337,7 +337,7 @@ test('the cart opened at once after Add to Cart shows the add as a saving row, n
   await expect(statusOf(row)).toHaveText('Saving…', AT_ONCE)
   expect(actions.addsAnswered()).toBe(0)
   await expect(row.getByRole('button', { name: `Remove ${product.name}` })).toBeDisabled()
-  await expect(page.getByRole('button', { name: 'Saving…' })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Updating…' })).toBeDisabled()
 
   // The save lands and the row settles in place.
   await expect.poll(actions.addsAnswered, SAVED).toBe(1)

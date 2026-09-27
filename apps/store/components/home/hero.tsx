@@ -23,7 +23,7 @@ export async function Hero() {
   return (
     <section aria-labelledby="hero-heading" className="relative">
       {photo ? (
-        <div className="relative aspect-4/3 w-full md:aspect-2/1 lg:aspect-auto lg:h-[min(60svh,640px)]">
+        <div className="relative aspect-2/1 w-full lg:aspect-auto lg:h-[min(60svh,640px)]">
           <Image
             {...photo}
             alt={photo.alt}
@@ -38,7 +38,7 @@ export async function Hero() {
       <Container
         className={cn(
           'flex flex-col gap-4 py-8',
-          photo && 'lg:absolute lg:inset-0 lg:justify-start lg:pt-[6%]',
+          photo && 'max-md:pt-5 max-md:pb-2 lg:absolute lg:inset-0 lg:justify-start lg:pt-[6%]',
         )}
       >
         <div
