@@ -26,6 +26,7 @@
     "@portabletext/react": "^8.0.1",
     "@repo/demand": "workspace:*",
     "@repo/sanity": "workspace:*",
+    "@repo/testimonials": "workspace:*",
     "@sanity/image-url": "^2.1.1",
     "@vercel/analytics": "^2.0.1",
     "@vercel/otel": "^2.1.3",

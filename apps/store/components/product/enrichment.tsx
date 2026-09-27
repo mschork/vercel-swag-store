@@ -1,7 +1,6 @@
-import Image from 'next/image'
 import { PortableText } from '@/components/portable-text'
+import { Attribution, EntryPhoto, Quote } from '@/components/testimonials/entry'
 import type { ProductFaq } from '@/lib/sanity/faqs'
-import { sanityImageProps } from '@/lib/sanity/image'
 import type { MergedProduct } from '@/lib/sanity/merge'
 import type { TestimonialsForProductQueryResult } from '@repo/sanity/generated'
 
@@ -43,43 +42,6 @@ export function Care(props: { text: RichText | null | undefined; heading: string
 }
 
 type Testimonial = TestimonialsForProductQueryResult[number]
-
-/**
- * What the person said, in guillemets rather than straight quotes, with a
- * no-break space inside each mark as French typography sets them.
- */
-function Quote({ children, className }: { children: string; className?: string }) {
-  return (
-    <blockquote className={`italic text-pretty ${className ?? ''}`}>
-      &laquo;&#8239;{children}&#8239;&raquo;
-    </blockquote>
-  )
-}
-
-/** Who is in the photo and what they do, under the quote in both layouts. */
-function Attribution({ entry }: { entry: Testimonial }) {
-  return (
-    <p className="text-sm text-fg-secondary">
-      {entry.person}
-      {entry.role ? `, ${entry.role}` : ''}
-    </p>
-  )
-}
-
-function EntryPhoto({ entry, sizes }: { entry: Testimonial; sizes: string }) {
-  if (!entry.photo) return null
-  return (
-    <div className="relative aspect-[4/5] overflow-hidden rounded-lg border border-border bg-bg-secondary">
-      <Image
-        {...sanityImageProps(entry.photo, { width: 800 })}
-        alt={entry.photo.alt ?? entry.person}
-        fill
-        sizes={sizes}
-        className="object-cover"
-      />
-    </div>
-  )
-}
 
 /** How many entries follow the feature. Five on the page at most, newest first. */
 const MAX_TESTIMONIAL_ROW = 4
