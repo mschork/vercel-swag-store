@@ -53,6 +53,13 @@ export function createMemory(now: () => number = Date.now): Redis {
         })
         return 'OK'
       }
+      case 'INCR': {
+        const entry = live(key)
+        if (entry !== undefined && typeof entry.value !== 'string') throw new RedisError('WRONGTYPE')
+        const next = Number(entry?.value ?? 0) + 1
+        store.set(key, { value: String(next), ...(entry?.expiresAt !== undefined ? { expiresAt: entry.expiresAt } : {}) })
+        return next
+      }
       case 'DEL':
         return [key, ...args].filter((name) => live(name) && store.delete(name)).length
       case 'EXPIRE': {

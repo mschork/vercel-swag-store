@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Promotion } from '@/lib/api/types'
 import { createMemory } from './memory'
 import { RedisError, type Redis } from './redis'
-import { CART_TTL_SECONDS, createSessionStore, VISIT_TTL_SECONDS } from './store'
+import { CART_TTL_SECONDS, CHAT_TTL_SECONDS, createSessionStore, VISIT_TTL_SECONDS } from './store'
 
 const { jar } = vi.hoisted(() => ({ jar: new Map<string, string>() }))
 vi.mock('next/headers', () => ({
@@ -118,6 +118,39 @@ describe('claimCart', () => {
   })
 })
 
+describe('testimonial chats', () => {
+  it('binds a new chat to the session and makes it current', async () => {
+    const runId = `wrun_${counter}`
+    expect(await store.currentChat(sid)).toBeNull()
+    expect(await store.openChat(sid, runId)).toBe(true)
+    expect(await store.currentChat(sid)).toBe(runId)
+    expect(await store.readChat(runId)).toEqual({ sid, messages: [], turnStart: 0 })
+  })
+
+  it('saves the messages and the turn start', async () => {
+    const runId = `wrun_${counter}`
+    await store.openChat(sid, runId)
+    const record = { sid, messages: [{ id: 'm1', role: 'user', parts: [] }], turnStart: 12 }
+    expect(await store.saveChat(runId, record)).toBe(true)
+    expect(await store.readChat(runId)).toEqual(record)
+  })
+
+  it('forgets a chat a day after its last turn', async () => {
+    const runId = `wrun_${counter}`
+    await store.openChat(sid, runId)
+    clock += CHAT_TTL_SECONDS * 1000
+    expect(await store.readChat(runId)).toBeNull()
+    expect(await store.currentChat(sid)).toBeNull()
+  })
+
+  it('counts uploads per run', async () => {
+    const runId = `wrun_${counter}`
+    expect(await store.countUpload(runId)).toBe(1)
+    expect(await store.countUpload(runId)).toBe(2)
+    expect(await store.countUpload(`${runId}_other`)).toBe(1)
+  })
+})
+
 describe('when Redis fails', () => {
   const broken = createSessionStore(failing, () => clock)
 
@@ -131,6 +164,11 @@ describe('when Redis fails', () => {
     expect(await broken.clearVisit(sid)).toBe(false)
     expect(await broken.clearCart(sid)).toBe(false)
     expect(await broken.claimCart(sid, { token: 't', currency: 'USD', lines: [], totalItems: 0 })).toBeNull()
+    expect(await broken.openChat(sid, 'wrun_1')).toBe(false)
+    expect(await broken.readChat('wrun_1')).toBe('unavailable')
+    expect(await broken.saveChat('wrun_1', { sid, messages: [], turnStart: 0 })).toBe(false)
+    expect(await broken.currentChat(sid)).toBe('unavailable')
+    expect(await broken.countUpload('wrun_1')).toBeNull()
     expect(log).toHaveBeenCalledWith('[session] read failed: Upstash did not answer: TimeoutError')
     expect(JSON.stringify(log.mock.calls)).not.toContain('secret-token')
   })

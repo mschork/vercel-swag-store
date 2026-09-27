@@ -16,6 +16,8 @@ describe('serverEnv', () => {
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://store.example.com')
     vi.stubEnv('NEXT_PUBLIC_SANITY_PROJECT_ID', 'project')
     vi.stubEnv('NEXT_PUBLIC_SANITY_DATASET', 'production')
+    // A developer's .env.local may set the email key; the test reads none.
+    vi.stubEnv('RESEND_API_KEY', '')
     const { serverEnv } = await loadEnv()
     expect(serverEnv).toEqual({
       API_BASE_URL: 'https://api.example.com/api',

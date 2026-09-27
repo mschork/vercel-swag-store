@@ -7,18 +7,20 @@ import { createMemory } from './memory'
 import {
   DRAWN_AT_FIELD,
   parseCart,
+  parseChat,
   parseDraw,
   parsePromotion,
   parseVisit,
   PROMOTION_FIELD,
   STOCK_FIELD,
   type CartRecord,
+  type ChatRecord,
   type VisitRecord,
 } from './records'
 import type { Command, Redis } from './redis'
 import { createUpstash } from './upstash'
 
-export type { CartRecord, VisitRecord } from './records'
+export type { CartRecord, ChatRecord, VisitRecord } from './records'
 
 /**
  * The session store: what the store keeps about one browser, under its
@@ -30,6 +32,9 @@ export type { CartRecord, VisitRecord } from './records'
  * caller shows the API's answer without keeping it; a write that fails
  * answers `false`. Each failure is logged without the values involved.
  */
+
+/** A testimonial conversation is kept a day from its last turn. */
+export const CHAT_TTL_SECONDS = 60 * 60 * 24
 
 /** A visit lasts one day from its first draw, whatever happens inside it. */
 export const VISIT_TTL_SECONDS = 60 * 60 * 24
@@ -46,6 +51,9 @@ export type CartToSave = Omit<CartRecord, 'savedAt'>
 
 const visitKey = (sid: string) => `swag:sess:${sid}:visit`
 const cartKey = (sid: string) => `swag:sess:${sid}:cart`
+const currentChatKey = (sid: string) => `swag:sess:${sid}:chat`
+const chatKey = (runId: string) => `swag:chat:${runId}`
+const uploadsKey = (runId: string) => `swag:chat:${runId}:uploads`
 
 export function createSessionStore(redis: Redis, now: () => number = Date.now) {
   const run = async (label: string, commands: Command[]): Promise<unknown[] | null> => {
@@ -164,6 +172,48 @@ export function createSessionStore(redis: Redis, now: () => number = Date.now) {
 
     async clearCart(sid: string): Promise<boolean> {
       return (await run('clear cart', [['DEL', cartKey(sid)]])) !== null
+    },
+
+    /** Binds a new conversation to the session and makes it the session's current one. */
+    async openChat(sid: string, runId: string): Promise<boolean> {
+      const record: ChatRecord = { sid, messages: [], turnStart: 0 }
+      const ttl = String(CHAT_TTL_SECONDS)
+      const replies = await run('open chat', [
+        ['SET', chatKey(runId), JSON.stringify(record), 'EX', ttl],
+        ['SET', currentChatKey(sid), runId, 'EX', ttl],
+      ])
+      return replies !== null
+    },
+
+    async readChat(runId: string): Promise<ChatRecord | null | Unavailable> {
+      const replies = await run('read chat', [['GET', chatKey(runId)]])
+      return replies ? parseChat(replies[0]) : 'unavailable'
+    },
+
+    async saveChat(runId: string, record: ChatRecord): Promise<boolean> {
+      const ttl = String(CHAT_TTL_SECONDS)
+      const replies = await run('save chat', [
+        ['SET', chatKey(runId), JSON.stringify(record), 'EX', ttl],
+        ['EXPIRE', currentChatKey(record.sid), ttl],
+      ])
+      return replies !== null
+    },
+
+    /** The run id of the session's latest conversation, whether or not it has ended. */
+    async currentChat(sid: string): Promise<string | null | Unavailable> {
+      const replies = await run('current chat', [['GET', currentChatKey(sid)]])
+      if (!replies) return 'unavailable'
+      return typeof replies[0] === 'string' ? replies[0] : null
+    },
+
+    /** Counts one more photo upload for the run and answers the count, or `null` when Redis failed. */
+    async countUpload(runId: string): Promise<number | null> {
+      const replies = await run('count upload', [
+        ['INCR', uploadsKey(runId)],
+        ['EXPIRE', uploadsKey(runId), String(CHAT_TTL_SECONDS)],
+      ])
+      const count = Number(replies?.[0])
+      return Number.isInteger(count) ? count : null
     },
   }
 }

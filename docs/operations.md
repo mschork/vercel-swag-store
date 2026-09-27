@@ -145,6 +145,15 @@ Store, search-gap loop only, both optional and server only:
 | `SANITY_API_WRITE_TOKEN` | Sanity token with the Editor role. Writes search gaps and product ideas, and the testimonial agent's submissions, testimonials and photo assets. Unset, nothing is recorded |
 | `DEMAND_ANALYSE_SECRET` | At least 32 characters. Bearer secret for `POST /api/demand/analyse`; unset, the route refuses every call |
 
+Store, testimonial agent only, all optional and server only. The chat is offered only with `BLOB_STORE_ID`, `SANITY_API_WRITE_TOKEN` and `TESTIMONIAL_PHOTO_SECRET` set, and never on a preview; without them its routes answer 404:
+
+| Variable | Purpose |
+|---|---|
+| `BLOB_STORE_ID` | The private Blob store that holds photos until an editor decides. Not a secret. The store signs uploads and reads photos over the deployment's OIDC token |
+| `TESTIMONIAL_PHOTO_SECRET` | At least 32 characters. Signs the Studio's link to a submission's photo |
+| `EMAIL_DOMAIN` | The verified sending subdomain; emails come from `testimonials@` it |
+| `RESEND_API_KEY` | Resend key for the verification code and the outcome emails. Never logged. Unset, each email's subject and text are logged instead, without the address |
+
 Store, live editing only, both optional and server only:
 
 | Variable | Purpose |
