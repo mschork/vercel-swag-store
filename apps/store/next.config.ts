@@ -19,6 +19,9 @@ const nextConfig: NextConfig = {
     // The Tailwind stylesheet is small enough to inline, which removes a
     // render-blocking request.
     inlineCss: true,
+    // The navigation lock the `instant()` e2e tests drive (e2e/instant.spec.ts).
+    // Set for the e2e build and its `next start`; a deployed build never is.
+    exposeTestingApiInProductionBuild: process.env.EXPOSE_TESTING_API === '1',
   },
   // The OG images read this font with a runtime path (lib/og-font.ts), which
   // the file trace cannot see; list it so each image function carries it.
