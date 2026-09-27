@@ -28,6 +28,9 @@ A demonstration storefront: a "Vercel Swag Store" in Next.js 16 with Cache Compo
 | Cart (all operations) | `lib/api/cart.ts`, `app/cart/actions.ts`, `lib/cart/get-cart.ts` | never cached; the API is written first and its answer replaces the cart mirror in the session store, and a new cart claims the mirror only if none exists; the browser sends its cart writes one at a time (`lib/cart/in-order.ts`); renders read the mirror; actions answer with the saved lines, and only `placeOrder` calls `refresh()`, so the layout drops the cart it ordered; the cart page re-reads the API in `after()` and corrects the mirror unless an action saved since; nothing carries a cart tag |
 | Sanity documents | `lib/sanity/fetch.ts` | `"use cache"`, `cacheTag('sanity', 'sanity:<type>', 'sanity:<id>')`; webhook revalidates; in draft mode, bypassed and read with the read token (E17) |
 | Search results | `app/search/page.tsx`, `app/search/category/[slug]/page.tsx`, `components/search/search-catalogue.tsx` | the whole catalogue is loaded into the prerendered shell with `"use cache"` reads, and the browser searches it with `searchCatalogue` from `lib/search.ts`; the server runs the same function for a first render; a category with no query is rewritten to a prerendered page per category; the API's `search` is not called |
+| Testimonial wall | `app/testimonials/page.tsx`, `app/testimonials/page/[n]/page.tsx` | `"use cache"` through `sanityFetch`, tagged `sanity:testimonial`; every page prerendered, `/testimonials?page=` rewritten to them; no `searchParams` read |
+| Testimonial chat | `workflows/testimonial.ts`, `app/api/testimonials/` | never cached; one Workflow run per conversation, bound to the session id; the draft lives in the run, and the `UIMessage[]` and each turn's stream index in the session store under the run id |
+| Testimonial submissions | `packages/testimonials/src/store.ts` | never cached; written by the run with the write token under the private id `testimonialSubmission.<runId>`, never read by a page; an accepted one becomes a `testimonial`, which the webhook revalidates as `sanity:testimonial` |
 | Search gaps | `lib/search/record-gap.ts` | never cached; written in `after()` with the store's only write credential; the analysis (`lib/demand/steps.ts`, `workflows/`) is never reachable from a page's request path |
 
 Rule of thumb: if a page reads `cookies()`, `headers()` or `searchParams`, the component doing so must be inside a Suspense boundary so the shell stays static. Build output must show the shell as prerendered.
@@ -40,6 +43,7 @@ apps/studio           Sanity Studio
 apps/functions        Sanity Functions, one folder each (E13)
 packages/sanity       schemas, client factory, GROQ queries, generated types
 packages/demand       the search-gap loop's shared logic: filters, ids, prompt, schema, validation, Sanity queries (E13)
+packages/testimonials the testimonial agent's shared logic: constants, schemas, prompts, the draft, Sanity writes (E25)
 sanity.blueprint.ts   everything Sanity runs for this repo, declared in code; at the root, beside the lockfile
 packages/config       shared tsconfig and eslint config
 specs/                one spec per epic (E01 to E14), decisions.md, api-reference.md, improvements.md, callout.md
