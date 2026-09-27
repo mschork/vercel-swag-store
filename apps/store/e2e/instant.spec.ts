@@ -1,11 +1,13 @@
 import { instant } from '@next/playwright'
 import { expect, test, type Page } from '@playwright/test'
+import { catalogueIds, seedVisit } from './visit'
 
 /**
  * Instant navigation: under `instant()` the request-time data is held back,
  * so what a page shows is its static shell. Each test asserts the shell is
- * there and the dynamic hole is not, which also fails if the build lacks the
- * testing API (`EXPOSE_TESTING_API=1` at build time, next.config.ts).
+ * there and, where the page has one, that a dynamic hole is not, which also
+ * fails if the build lacks the testing API (`EXPOSE_TESTING_API=1`,
+ * next.config.ts).
  */
 
 const STOCK_LINE = /^(In stock|Only \d+ left|This item is out of stock at the moment\. Check back soon\.|All \d+ are in your cart)$/
@@ -60,5 +62,49 @@ test.describe('product page', () => {
       await expectProductShell(page)
     })
     await expect(stockLine(page)).toBeVisible()
+  })
+})
+
+/** A card's stock badge: every product is seeded out of stock, so each card shows one. */
+const outOfStock = (page: Page) =>
+  page.getByRole('main').getByText('Out of stock', { exact: true }).filter({ visible: true })
+
+/** The home page's shell: its heading and the featured grid's cards. */
+async function expectHomeShell(page: Page) {
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await expect(firstFeatured(page)).toBeVisible()
+}
+
+test.describe('home page', () => {
+  test.beforeEach(async ({ context }) => {
+    const ids = await catalogueIds(context)
+    await seedVisit(context, Object.fromEntries(ids.map((id) => [id, 0])))
+  })
+
+  test('its shell is served on a first load, before the visit', async ({ page, baseURL }) => {
+    await instant(
+      page,
+      async () => {
+        await page.goto('/')
+        await expectHomeShell(page)
+        await expect(outOfStock(page)).toHaveCount(0)
+      },
+      { baseURL },
+    )
+    await page.reload()
+    await expect(outOfStock(page).first()).toBeVisible()
+  })
+
+  // The layout already holds the visit, so the cards' badges show at once.
+  test('its shell commits on a click from the product listing', async ({ page }) => {
+    await page.goto('/products')
+    const home = page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Home' })
+    await expect(home).toBeVisible()
+
+    await instant(page, async () => {
+      await home.click()
+      await expect(page).toHaveURL(/\/$/)
+      await expectHomeShell(page)
+    })
   })
 })
