@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import { withBotId } from 'botid/next/config'
 import { withWorkflow } from 'workflow/next'
 import { IMAGE_HOSTS, parseStudioOrigins, securityHeaders } from './lib/security-headers'
 
@@ -75,5 +76,7 @@ const nextConfig: NextConfig = {
 }
 
 // Vercel Workflow compiles `workflows/` and adds its own routes under
-// /.well-known/workflow. Every other route keeps its rendering mode.
-export default withWorkflow(nextConfig)
+// /.well-known/workflow. Every other route keeps its rendering mode. BotID
+// adds the rewrites its script and challenge go through; it goes inside,
+// because `withWorkflow` returns a function `withBotId` does not accept.
+export default withWorkflow(withBotId(nextConfig))
