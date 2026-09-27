@@ -58,6 +58,17 @@ describe('drawFor', () => {
     expect(mocked.getStock).not.toHaveBeenCalled()
   })
 
+  it('uses the session it is given without reading the store', async () => {
+    await sessionStore.claimStock(sid, { bottle_001: 3 })
+    const state = await sessionStore.read(sid)
+    if (state === 'unavailable') throw new Error('The memory store always answers')
+    const read = vi.spyOn(sessionStore, 'read')
+
+    expect(await drawFor('bottle_001', { sid, ...state })).toBe(3)
+    expect(read).not.toHaveBeenCalled()
+    expect(mocked.getStock).not.toHaveBeenCalled()
+  })
+
   it('draws a product the visit has no draw for and keeps it', async () => {
     expect(await drawFor('bottle_001')).toBe(14)
     expect((await kept())?.stock).toEqual({ bottle_001: 14 })

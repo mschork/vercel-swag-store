@@ -153,14 +153,14 @@ afterEach(() => {
 })
 
 describe('addToCart', () => {
-  it.each(['0', '-1', '1.5', 'abc', ''])(
+  it.each(['0', '-1', '1.5', 'abc', '', '100'])(
     'rejects quantity %j without calling the API',
     async (quantity) => {
       await expect(
         addToCart(null, form({ productId: 'tshirt_001', quantity })),
       ).resolves.toEqual({
         ok: false,
-        error: 'Choose a whole quantity of at least 1.',
+        error: 'Choose a whole quantity from 1 to 99.',
       })
       expectNoApiCall()
     },
@@ -645,8 +645,29 @@ describe('the visit caps every write', () => {
       addToCart(null, form({ productId: 'tshirt_001', quantity: '4' })),
     ).resolves.toEqual({ ok: false, error: 'Only 3 available.' })
 
-    expect(drawFor).toHaveBeenCalledExactlyOnceWith('tshirt_001')
+    expect(drawFor).toHaveBeenCalledExactlyOnceWith(
+      'tshirt_001',
+      expect.objectContaining({ sid: session.id }),
+    )
     expectNoApiCall()
+  })
+
+  it('reads the session store once per add and per quantity change', async () => {
+    await seedCart('live')
+    drawFor.mockResolvedValue(3)
+    mocked.addCartItem.mockResolvedValue(cart(2))
+    mocked.updateCartItem.mockResolvedValue(cart(3))
+    const read = vi.spyOn(sessionStore, 'read')
+
+    await addToCart(null, form({ productId: 'tshirt_001', quantity: '1' }))
+    expect(read).toHaveBeenCalledOnce()
+    read.mockClear()
+    await updateQuantity('tshirt_001', 3)
+    expect(read).toHaveBeenCalledOnce()
+    // The session each action read is the one its draw uses.
+    for (const [, current] of drawFor.mock.calls) {
+      expect(current).toMatchObject({ sid: session.id })
+    }
   })
 
   it('says out of stock rather than "only 0 available"', async () => {
