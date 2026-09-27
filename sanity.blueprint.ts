@@ -60,5 +60,18 @@ export default defineBlueprint({
         projection: '{_id, status}',
       },
     }),
+    // Read-only; the run it wakes stamps `decidedAt` and never touches `status`.
+    defineDocumentFunction({
+      name: 'submission-decided',
+      src: './apps/functions/submission-decided',
+      project,
+      timeout: 15,
+      event: {
+        on: ['update'],
+        resource: production,
+        filter: `_type == 'testimonialSubmission' && status in ['accepted', 'rejected'] && delta::changedAny(status)`,
+        projection: '{_id, runId, status, rejectionReason, photoAlt}',
+      },
+    }),
   ],
 })

@@ -103,6 +103,21 @@ pnpm exec sanity functions env add gap-threshold STORE_URL https://<production-h
 pnpm exec sanity functions env add gap-threshold DEMAND_ANALYSE_SECRET <the same value as on Vercel>
 ```
 
+`submission-decided` hands an editor's Accept or Reject on a testimonial submission to the store's run that waits for it, through `POST /api/testimonials/decision`. It writes nothing; the run publishes the testimonial, emails the visitor and clears the submission. It logs `no run waits` when the store answers 404. Its two variables:
+
+```sh
+pnpm exec sanity functions env add submission-decided STORE_URL https://<production-host>
+pnpm exec sanity functions env add submission-decided TESTIMONIAL_DECISION_SECRET <the same value as on Vercel>
+```
+
+A decision can be replayed by hand with the same call the Function makes. A run that is not waiting answers 404:
+
+```sh
+curl -X POST https://<host>/api/testimonials/decision -H "Authorization: Bearer $TESTIMONIAL_DECISION_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"_id":"testimonialSubmission.<runId>","runId":"<runId>","status":"rejected","rejectionReason":"other"}'
+```
+
 A manual run of the analysis is the same call the Function makes:
 
 ```sh
@@ -144,6 +159,16 @@ Store, search-gap loop only, both optional and server only:
 |---|---|
 | `SANITY_API_WRITE_TOKEN` | Sanity token with the Editor role. Writes search gaps and product ideas, and the testimonial agent's submissions, testimonials and photo assets. Unset, nothing is recorded |
 | `DEMAND_ANALYSE_SECRET` | At least 32 characters. Bearer secret for `POST /api/demand/analyse`; unset, the route refuses every call |
+
+Store, testimonial agent only, all optional and server only. The chat is offered only with `BLOB_STORE_ID`, `SANITY_API_WRITE_TOKEN` and `TESTIMONIAL_PHOTO_SECRET` set, and never on a preview; without them its routes answer 404:
+
+| Variable | Purpose |
+|---|---|
+| `BLOB_STORE_ID` | The private Blob store that holds photos until an editor decides. Not a secret. The store signs uploads and reads photos over the deployment's OIDC token |
+| `TESTIMONIAL_PHOTO_SECRET` | At least 32 characters. Signs the Studio's link to a submission's photo |
+| `TESTIMONIAL_DECISION_SECRET` | At least 32 characters. Bearer secret for `POST /api/testimonials/decision`, set to the same value on the `submission-decided` Function. Unset, the route refuses every call and a submission waits for its decision |
+| `EMAIL_DOMAIN` | The verified sending subdomain; emails come from `testimonials@` it |
+| `RESEND_API_KEY` | Resend sending key for the verification code and the outcome emails, which the store posts to Resend's API over `fetch`. Never logged. Unset, each email's subject and text are logged instead, without the address |
 
 Store, live editing only, both optional and server only:
 

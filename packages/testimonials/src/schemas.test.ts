@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
+  CLIENT_TOOL_OUTPUTS,
   CodeSchema,
   DecisionSchema,
   EmailAddressSchema,
   NameSchema,
   PhotoUploadedSchema,
   QuoteSchema,
+  photoPathname,
+  reviewDecisionOf,
+  runIdOfPathname,
 } from './schemas.ts'
 
 describe('DecisionSchema', () => {
@@ -37,6 +41,17 @@ describe('DecisionSchema', () => {
   })
 })
 
+describe('reviewDecisionOf', () => {
+  const base = { _id: 'testimonialSubmission.run1', runId: 'run1' }
+
+  it('keeps only what the run acts on', () => {
+    const accepted = DecisionSchema.parse({ ...base, status: 'accepted', photoAlt: 'A mug', rejectionReason: null })
+    expect(reviewDecisionOf(accepted)).toEqual({ status: 'accepted', photoAlt: 'A mug' })
+    const rejected = DecisionSchema.parse({ ...base, status: 'rejected', rejectionReason: 'photo', photoAlt: 'A mug' })
+    expect(reviewDecisionOf(rejected)).toEqual({ status: 'rejected', rejectionReason: 'photo' })
+  })
+})
+
 describe('widget answers', () => {
   it('accepts only pathnames the upload route chooses', () => {
     expect(PhotoUploadedSchema.safeParse({ pathname: 'testimonials/wrun_01AB/1.jpg' }).success).toBe(true)
@@ -60,5 +75,32 @@ describe('widget answers', () => {
     expect(CodeSchema.safeParse({ code: '12345' }).success).toBe(false)
     expect(EmailAddressSchema.safeParse('ada@example.com').success).toBe(true)
     expect(EmailAddressSchema.safeParse('ada').success).toBe(false)
+  })
+})
+
+describe('photo pathnames', () => {
+  it('round-trip the run id', () => {
+    const pathname = photoPathname('wrun_01ABC', 2)
+    expect(pathname).toBe('testimonials/wrun_01ABC/2.jpg')
+    expect(runIdOfPathname(pathname)).toBe('wrun_01ABC')
+    expect(PhotoUploadedSchema.safeParse({ pathname }).success).toBe(true)
+  })
+
+  it('refuse any other pathname', () => {
+    expect(runIdOfPathname('testimonials/../x/1.jpg')).toBeNull()
+    expect(runIdOfPathname('other/wrun/1.jpg')).toBeNull()
+  })
+})
+
+describe('CLIENT_TOOL_OUTPUTS', () => {
+  it('lets askCode carry no code, only that one was entered or a new one is wanted', () => {
+    expect(CLIENT_TOOL_OUTPUTS.askCode.safeParse({ entered: true }).success).toBe(true)
+    expect(CLIENT_TOOL_OUTPUTS.askCode.safeParse({ resend: true }).success).toBe(true)
+    expect(CLIENT_TOOL_OUTPUTS.askCode.safeParse({ code: '123456' }).success).toBe(false)
+  })
+
+  it('lets askEmail carry no address', () => {
+    expect(CLIENT_TOOL_OUTPUTS.askEmail.safeParse({ provided: true }).success).toBe(true)
+    expect(CLIENT_TOOL_OUTPUTS.askEmail.safeParse({ email: 'ada@example.com' }).success).toBe(false)
   })
 })

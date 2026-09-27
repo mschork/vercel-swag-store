@@ -19,6 +19,8 @@ export const IMAGE_HOSTS = [
 /** Vercel Analytics and Speed Insights: script host and beacon endpoints. */
 const VERCEL_SCRIPT_HOST = 'https://va.vercel-scripts.com'
 const VERCEL_VITALS_HOST = 'https://vitals.vercel-insights.com'
+/** Where the browser uploads a testimonial photo: the path, not the whole origin. */
+const BLOB_UPLOAD_PATH = 'https://vercel.com/api/blob/'
 
 export type SecurityHeaderOptions = {
   /**
@@ -70,7 +72,7 @@ export function contentSecurityPolicy({
     `img-src 'self' data: blob: ${IMAGE_HOSTS.join(' ')}`,
     `script-src 'self' 'unsafe-inline'${allowEval ? " 'unsafe-eval'" : ''} ${VERCEL_SCRIPT_HOST}`,
     "style-src 'self' 'unsafe-inline'",
-    `connect-src 'self' ${VERCEL_SCRIPT_HOST} ${VERCEL_VITALS_HOST}`,
+    `connect-src 'self' ${VERCEL_SCRIPT_HOST} ${VERCEL_VITALS_HOST} ${BLOB_UPLOAD_PATH}`,
     "font-src 'self'",
     studioOrigins.length > 0
       ? `frame-ancestors 'self' ${studioOrigins.join(' ')}`

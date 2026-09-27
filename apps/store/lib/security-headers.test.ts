@@ -29,7 +29,7 @@ describe('contentSecurityPolicy', () => {
 
   it('lets the analytics beacons connect', () => {
     expect(directive(csp, 'connect-src')).toBe(
-      "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+      "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com https://vercel.com/api/blob/",
     )
   })
 

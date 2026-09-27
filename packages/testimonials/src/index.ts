@@ -15,6 +15,7 @@ export {
   type EmailState,
   type PhotoVerdict,
 } from './draft.ts'
+export { analysePhoto, checkText, type PhotoInput } from './analyse.ts'
 export { suggestReason } from './reason.ts'
 export {
   AGENT_INSTRUCTIONS,

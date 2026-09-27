@@ -32,7 +32,10 @@ export async function TestimonialsView({ page, pageCount }: { page: number; page
         </div>
         {chatOffered ? (
           <div id={SHARE_HASH.slice(1)} className="flex flex-col scroll-mt-24">
-            <ShareChat label={copy.submitLabel} />
+            <ShareChat
+              label={copy.submitLabel}
+              products={products.map(({ id, name, images }) => ({ id, name, image: images[0] ?? null }))}
+            />
           </div>
         ) : null}
       </div>

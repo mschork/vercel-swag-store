@@ -173,6 +173,18 @@ describe('draftView', () => {
     expect(JSON.stringify(view)).not.toContain('ada@example.com')
     expect(view).toMatchObject({ product: 'mug', email: 'code-sent', missing: ['email'], submitted: false })
   })
+
+  it('lists the candidates in order and marks the ones that count', () => {
+    expect(draftView(almost())).toMatchObject({
+      photo: true,
+      candidates: [
+        { id: 'mug', counts: true },
+        { id: 'tumbler', counts: true },
+        { id: 'bottle', counts: false },
+      ],
+    })
+    expect(draftView(emptyDraft())).toMatchObject({ photo: false, candidates: [] })
+  })
 })
 
 describe('findingsOf', () => {

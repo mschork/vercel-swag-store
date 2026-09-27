@@ -101,3 +101,28 @@ export function parseCart(reply: unknown): CartRecord | null {
     return null
   }
 }
+
+/**
+ * A testimonial conversation as its routes keep it, under its run id
+ * (specs/E25-testimonial-agent.md): the session it is bound to, the browser's
+ * `UIMessage[]` for a reload, and the stream index where the current turn
+ * starts. The messages are the browser's own, handed back only to it.
+ */
+export const ChatRecordSchema = z.object({
+  sid: z.string().min(1),
+  messages: z.array(z.unknown()),
+  turnStart: z.int().nonnegative(),
+})
+
+export type ChatRecord = z.infer<typeof ChatRecordSchema>
+
+/** A chat record as `GET` answers it, or `null` when there is none. */
+export function parseChat(reply: unknown): ChatRecord | null {
+  if (typeof reply !== 'string') return null
+  try {
+    const chat = ChatRecordSchema.safeParse(JSON.parse(reply))
+    return chat.success ? chat.data : null
+  } catch {
+    return null
+  }
+}

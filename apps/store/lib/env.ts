@@ -1,4 +1,5 @@
 import 'server-only'
+import { MIN_SECRET_LENGTH } from '@repo/testimonials/constants'
 import { z } from 'zod'
 import { PublicEnvSchema, readPublicEnv } from './env.public'
 import { parseStudioOrigins } from './security-headers'
@@ -26,6 +27,16 @@ const ServerEnvSchema = PublicEnvSchema.extend({
   // editor decides. Not a secret, but server only. Without it, or without the
   // write token, the store offers no testimonial chat.
   BLOB_STORE_ID: z.string().min(1).optional(),
+  // Optional: signs the Studio's link to a submission's photo. Without it the
+  // store offers no testimonial chat.
+  TESTIMONIAL_PHOTO_SECRET: z.string().min(MIN_SECRET_LENGTH).optional(),
+  // Optional: the bearer secret of the testimonial decision route. Without it
+  // the route refuses every call, and a submission waits for an editor forever.
+  TESTIMONIAL_DECISION_SECRET: z.string().min(MIN_SECRET_LENGTH).optional(),
+  // Optional: the verified sending domain and the Resend key. Without the
+  // key, emails are logged instead of sent, without their address.
+  EMAIL_DOMAIN: z.string().min(1).optional(),
+  RESEND_API_KEY: z.string().min(1).optional(),
   // Set by Vercel on every deployment; unset locally.
   VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
   // Optional: a Viewer token, used only in draft mode. Without it the enable
@@ -65,6 +76,10 @@ function parseServerEnv(): ServerEnv {
     DEMAND_ANALYSE_SECRET: process.env.DEMAND_ANALYSE_SECRET || undefined,
     SANITY_API_READ_TOKEN: process.env.SANITY_API_READ_TOKEN || undefined,
     BLOB_STORE_ID: process.env.BLOB_STORE_ID || undefined,
+    TESTIMONIAL_PHOTO_SECRET: process.env.TESTIMONIAL_PHOTO_SECRET || undefined,
+    TESTIMONIAL_DECISION_SECRET: process.env.TESTIMONIAL_DECISION_SECRET || undefined,
+    EMAIL_DOMAIN: process.env.EMAIL_DOMAIN || undefined,
+    RESEND_API_KEY: process.env.RESEND_API_KEY || undefined,
     VERCEL_ENV: process.env.VERCEL_ENV || undefined,
     PRESENTATION_STUDIO_ORIGINS: process.env.PRESENTATION_STUDIO_ORIGINS || undefined,
     KV_REST_API_URL: process.env.KV_REST_API_URL || undefined,

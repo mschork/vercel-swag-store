@@ -197,6 +197,10 @@ export const missingFacts = (draft: Draft): DraftFact[] => DRAFT_FACTS.filter((f
 
 /** What the draft card shows. No address and no code hash: the model never writes it, but it is streamed. */
 export interface DraftView {
+  /** Whether a photo is in; the card shows the browser's own copy of it. */
+  photo: boolean
+  /** The analysis's candidates, most likely first, and whether each counts. */
+  candidates: { id: string; counts: boolean }[]
   product: string | null
   products: string[]
   name: string | null
@@ -208,17 +212,22 @@ export interface DraftView {
   submitted: boolean
 }
 
-export const draftView = (draft: Draft): DraftView => ({
-  product: draft.product?.id ?? null,
-  products: draft.products,
-  name: draft.name,
-  quote: draft.quote,
-  consent: draft.consent,
-  email: draft.email?.status ?? null,
-  missing: missingFacts(draft),
-  photoAttemptsLeft: photoAttemptsLeft(draft),
-  submitted: draft.submittedAt !== null,
-})
+export function draftView(draft: Draft): DraftView {
+  const counting = new Set(countingCandidates(draft.analysis).map((candidate) => candidate.id))
+  return {
+    photo: draft.photo !== null,
+    candidates: (draft.analysis?.candidates ?? []).map(({ id }) => ({ id, counts: counting.has(id) })),
+    product: draft.product?.id ?? null,
+    products: draft.products,
+    name: draft.name,
+    quote: draft.quote,
+    consent: draft.consent,
+    email: draft.email?.status ?? null,
+    missing: missingFacts(draft),
+    photoAttemptsLeft: photoAttemptsLeft(draft),
+    submitted: draft.submittedAt !== null,
+  }
+}
 
 /** The findings written onto the submission, or `null` while the draft is incomplete. */
 export function findingsOf(draft: Draft, model: string): Findings | null {
