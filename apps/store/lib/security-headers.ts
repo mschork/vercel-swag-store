@@ -70,7 +70,7 @@ export function contentSecurityPolicy({
     `img-src 'self' data: blob: ${IMAGE_HOSTS.join(' ')}`,
     `script-src 'self' 'unsafe-inline'${allowEval ? " 'unsafe-eval'" : ''} ${VERCEL_SCRIPT_HOST}`,
     "style-src 'self' 'unsafe-inline'",
-    `connect-src 'self' ${VERCEL_SCRIPT_HOST} ${VERCEL_VITALS_HOST}`,
+    `connect-src 'self' ${VERCEL_SCRIPT_HOST} ${VERCEL_VITALS_HOST} https://vercel.com/api/blob/`,
     "font-src 'self'",
     studioOrigins.length > 0
       ? `frame-ancestors 'self' ${studioOrigins.join(' ')}`
