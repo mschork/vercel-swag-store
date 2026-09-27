@@ -1,3 +1,4 @@
+import type { GalleryPhoto } from '@/lib/sanity/image'
 import { GalleryImage } from './gallery-image'
 import { GalleryThumbnails } from './gallery-thumbnails'
 
@@ -7,14 +8,14 @@ import { GalleryThumbnails } from './gallery-thumbnails'
  * selection render only when there is more than one.
  */
 export function ProductGallery({
-  images,
+  photos,
   name,
 }: {
-  images: readonly string[]
+  photos: readonly GalleryPhoto[]
   name: string
 }) {
-  if (images.length > 1) {
-    return <GalleryThumbnails images={images} name={name} />
+  if (photos.length > 1) {
+    return <GalleryThumbnails photos={photos} name={name} />
   }
-  return <GalleryImage src={images[0]} alt={name} preload />
+  return <GalleryImage src={photos[0]?.src} alt={photos[0]?.alt ?? name} preload />
 }

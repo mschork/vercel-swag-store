@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { useState } from 'react'
+import type { GalleryPhoto } from '@/lib/sanity/image'
 import { GalleryImage } from './gallery-image'
 
 /**
@@ -9,27 +10,27 @@ import { GalleryImage } from './gallery-image'
  * local state; the first one is the preloaded LCP candidate.
  */
 export function GalleryThumbnails({
-  images,
+  photos,
   name,
 }: {
-  images: readonly string[]
+  photos: readonly GalleryPhoto[]
   name: string
 }) {
   const [selected, setSelected] = useState(0)
   return (
     <div className="flex flex-col gap-3">
       <GalleryImage
-        src={images[selected]}
-        alt={name}
+        src={photos[selected]?.src}
+        alt={photos[selected]?.alt ?? name}
         preload={selected === 0}
       />
       <ul className="grid grid-cols-5 gap-3" aria-label={`${name}, images`}>
-        {images.map((src, index) => (
+        {photos.map(({ src }, index) => (
           <li key={index}>
             <button
               type="button"
               onClick={() => setSelected(index)}
-              aria-label={`Show image ${index + 1} of ${images.length}`}
+              aria-label={`Show image ${index + 1} of ${photos.length}`}
               aria-pressed={index === selected}
               className={`relative block aspect-square w-full overflow-hidden rounded-lg border bg-bg-secondary ${
                 index === selected

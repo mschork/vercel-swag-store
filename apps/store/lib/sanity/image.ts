@@ -53,15 +53,26 @@ export function hasImage(
   return Boolean(image && typeof image === 'object' && 'asset' in image && image.asset)
 }
 
+/** A gallery photo as the gallery components render it. */
+export interface GalleryPhoto {
+  src: string
+  alt: string
+}
+
 /**
- * A merged gallery as plain URLs for the existing gallery components: the
- * API's photos pass through, Sanity's are asked for at a sensible width.
+ * A merged gallery for the gallery components: the API's photos pass through
+ * with the product's name as their alt, as the API sends no text; Sanity's
+ * are asked for at a sensible width and keep the editor's alt, which in draft
+ * mode is what the click-to-edit overlay reads.
  */
-export function photoUrls(
+export function galleryPhotos(
   gallery: readonly (string | (SanityImageSource & SanityPhoto))[],
+  name: string,
   width = 1024,
-): string[] {
-  return gallery.map((photo) =>
-    typeof photo === 'string' ? photo : sanityImageProps(photo, { width }).src,
-  )
+): GalleryPhoto[] {
+  return gallery.map((photo) => {
+    if (typeof photo === 'string') return { src: photo, alt: name }
+    const { src, alt } = sanityImageProps(photo, { width })
+    return { src, alt: alt || name }
+  })
 }
