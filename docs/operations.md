@@ -6,8 +6,9 @@ README; what is cached and what streams is in `static-vs-dynamic.md`.
 ## Deployment
 
 Two Vercel projects are connected to this repository, one rooted at `apps/store` and one at
-`apps/studio`. Both run `turbo-ignore`, so a push only rebuilds the app whose files
-changed. Preview deployments are protected; production is public.
+`apps/studio`. Both use Vercel's skipping of unaffected projects, so a push only
+rebuilds an app whose files or workspace dependencies changed. Preview deployments
+are protected; production is public.
 
 `.github/workflows/ci.yml` runs on every pull request and on every push to `main`:
 
