@@ -1,5 +1,5 @@
 import { instant } from '@next/playwright'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 import { catalogueIds, seedVisit } from './visit'
 
 /**
@@ -75,11 +75,14 @@ async function expectHomeShell(page: Page) {
   await expect(firstFeatured(page)).toBeVisible()
 }
 
+/** Seeds every product out of stock, so each card's badge is known. */
+async function seedAllOutOfStock(context: BrowserContext) {
+  const ids = await catalogueIds(context)
+  await seedVisit(context, Object.fromEntries(ids.map((id) => [id, 0])))
+}
+
 test.describe('home page', () => {
-  test.beforeEach(async ({ context }) => {
-    const ids = await catalogueIds(context)
-    await seedVisit(context, Object.fromEntries(ids.map((id) => [id, 0])))
-  })
+  test.beforeEach(async ({ context }) => seedAllOutOfStock(context))
 
   test('its shell is served on a first load, before the visit', async ({ page, baseURL }) => {
     await instant(
@@ -105,6 +108,69 @@ test.describe('home page', () => {
       await home.click()
       await expect(page).toHaveURL(/\/$/)
       await expectHomeShell(page)
+    })
+  })
+})
+
+/** The product listing's shell: its heading, the category chips and the grid. */
+async function expectListingShell(page: Page, heading: string) {
+  await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Categories' })).toBeVisible()
+  await expect(page.getByRole('list', { name: 'Products' }).getByRole('listitem').first()).toBeVisible()
+}
+
+/** The first category chip after "All products". */
+const firstCategoryChip = (page: Page) =>
+  page.getByRole('navigation', { name: 'Categories' }).getByRole('link').nth(1)
+
+test.describe('product listing', () => {
+  test.beforeEach(async ({ context }) => seedAllOutOfStock(context))
+
+  test('its shell is served on a first load, before the visit', async ({ page, baseURL }) => {
+    await instant(
+      page,
+      async () => {
+        await page.goto('/products')
+        await expectListingShell(page, 'All products')
+        await expect(outOfStock(page)).toHaveCount(0)
+      },
+      { baseURL },
+    )
+    await page.reload()
+    await expect(outOfStock(page).first()).toBeVisible()
+  })
+
+  test("a category's shell is served on a first load", async ({ page, baseURL }) => {
+    await page.goto('/products')
+    const chip = firstCategoryChip(page)
+    const name = (await chip.textContent())?.trim()
+    const href = await chip.getAttribute('href')
+    if (!name || !href) throw new Error('No category chip on the listing')
+    const url = new URL(href, baseURL).toString()
+    await page.goto('about:blank')
+
+    await instant(
+      page,
+      async () => {
+        await page.goto(url)
+        await expectListingShell(page, name)
+        await expect(outOfStock(page)).toHaveCount(0)
+      },
+      { baseURL },
+    )
+  })
+
+  // The layout already holds the visit, so the cards' badges show at once.
+  test("a category's shell commits on a click on its chip", async ({ page }) => {
+    await page.goto('/products')
+    const chip = firstCategoryChip(page)
+    const name = (await chip.textContent())?.trim()
+    if (!name) throw new Error('No category chip on the listing')
+
+    await instant(page, async () => {
+      await chip.click()
+      await expect(page).toHaveURL(/\/products\/category\/[^/]+$/)
+      await expectListingShell(page, name)
     })
   })
 })
