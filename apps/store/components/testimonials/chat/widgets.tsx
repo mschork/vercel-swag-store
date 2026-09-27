@@ -27,13 +27,13 @@ const UPLOAD_ERRORS: Record<UploadError['reason'], string> = {
   failed: 'The upload did not work. Try again.',
 }
 
-/** The upload button, in the greeting and for `askPhoto`. */
+/** The upload button for `askPhoto`. */
 export function PhotoWidget({
   runId,
   attemptsLeft,
   onUploaded,
 }: {
-  /** The run to upload into, read when the photo is chosen; `null` before the first action. */
+  /** The run to upload into, read when the photo is chosen. */
   runId: () => string | null
   attemptsLeft: number
   onUploaded: (pathname: string, photo: Blob) => void
@@ -46,8 +46,10 @@ export function PhotoWidget({
     if (!file) return
     setState('working')
     try {
+      const run = runId()
+      if (!run) throw new UploadError('failed')
       const jpeg = await reencode(file)
-      onUploaded(await uploadPhoto(jpeg, runId()), jpeg)
+      onUploaded(await uploadPhoto(jpeg, run), jpeg)
     } catch (error) {
       const reason = error instanceof UploadError ? error.reason : 'failed'
       setState({ error: UPLOAD_ERRORS[reason] })

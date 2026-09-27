@@ -32,8 +32,8 @@ export type ClientAnswer = {
 /** What the message route delivers to the run's turn hook. */
 export type TurnInput =
   | { kind: 'message'; text: string }
-  /** A photo chosen in the greeting, before the agent asked for one. */
-  | { kind: 'photo'; pathname: string }
+  /** The name entered in the greeting, which starts the run. */
+  | { kind: 'name'; name: string }
   | { kind: 'tools'; answers: ClientAnswer[]; email?: string; code?: string }
 
 export interface ToolCallRef {
@@ -115,7 +115,7 @@ export function receiveAnswer(
   }
 }
 
-/** A new photo, from the greeting or from `askPhoto`. Only this run's pathnames count. */
+/** A new photo from `askPhoto`. Only this run's pathnames count. */
 export function receivePhoto({ draft, code }: Conversation, pathname: string, context: TurnContext): Received {
   if (runIdOfPathname(pathname) !== context.runId || photoAttemptsLeft(draft) === 0) {
     return { conversation: { draft, code }, output: { uploaded: false, attemptsLeft: photoAttemptsLeft(draft) } }
@@ -126,6 +126,15 @@ export function receivePhoto({ draft, code }: Conversation, pathname: string, co
     output: { uploaded: true, attemptsLeft: photoAttemptsLeft(next) },
     ...(draft.photo && draft.photo.pathname !== pathname ? { superseded: draft.photo.pathname } : {}),
   }
+}
+
+/**
+ * Whether a model call answered nothing: no text and no tool call. The model
+ * sometimes does this after a tool result, and the turn would end with
+ * nothing for the visitor to answer.
+ */
+export function emptyAnswer(result: { toolCalls: readonly unknown[]; steps: readonly { text: string }[] }): boolean {
+  return result.toolCalls.length === 0 && result.steps.every((step) => step.text.trim() === '')
 }
 
 /** The I/O a server tool needs; in the run each is a step. */
@@ -211,6 +220,21 @@ export function toolMessage(results: readonly { call: ToolCallRef; output: unkno
   }
 }
 
+/** The model's side of calls the run makes on its behalf, for `toolMessage` to answer. */
+export function toolCallMessage(calls: readonly ToolCallRef[]): ModelMessage {
+  return {
+    role: 'assistant',
+    content: calls.map((call) => ({ type: 'tool-call' as const, toolCallId: call.toolCallId, toolName: call.toolName, input: {} })),
+  }
+}
+
+/**
+ * Whether the draft holds a photo nobody has analysed. The run analyses it
+ * before the model speaks, because the model does not reliably call
+ * `analysePhoto` after an upload.
+ */
+export const needsAnalysis = (draft: Draft) => draft.photo !== null && draft.analysis === null
+
 /** What a widget the visitor typed past answers. */
 export const TYPED_INSTEAD = { visitorTypedInstead: true } as const
 
@@ -227,8 +251,8 @@ export interface TurnReceived {
   superseded: string[]
 }
 
-/** What the model reads for a photo chosen in the greeting. */
-export const PHOTO_MESSAGE = 'I have uploaded a photo.'
+/** What the model reads for the name entered in the greeting. */
+export const nameMessage = (name: string) => `My name is ${name}.`
 
 /**
  * Applies what the visitor sent to the calls the last turn left open. Every
@@ -251,13 +275,12 @@ export function receiveTurn(
   switch (input.kind) {
     case 'message':
       return { conversation, messages: messages(typedInstead(), input.text), superseded: [] }
-    case 'photo': {
-      const received = receivePhoto(conversation, input.pathname, context)
-      if (received.conversation.draft === conversation.draft) return null
+    case 'name': {
+      const draft = applyToolResult(conversation.draft, { tool: 'askName', output: { name: input.name } })
       return {
-        conversation: received.conversation,
-        messages: messages(typedInstead(), PHOTO_MESSAGE),
-        superseded: received.superseded ? [received.superseded] : [],
+        conversation: { ...conversation, draft },
+        messages: messages(typedInstead(), nameMessage(input.name)),
+        superseded: [],
       }
     }
     case 'tools': {

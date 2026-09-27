@@ -20,10 +20,13 @@ import { carryOut } from '@/lib/testimonials/decide'
 import * as steps from '@/lib/testimonials/steps'
 import {
   conversationOver,
+  emptyAnswer,
   isClientTool,
   isServerTool,
+  needsAnalysis,
   receiveTurn,
   runServerTool,
+  toolCallMessage,
   toolMessage,
   type Conversation,
   type ServerSteps,
@@ -40,8 +43,8 @@ import {
  * visitor. No tool has an `execute`: the run executes the server tools
  * itself, against the draft as it stands, so the model's arguments never
  * reach them and it sees only what `lib/testimonials/turn.ts` returns.
- * Started by the chat route with the first message, or by the upload route
- * with none when the first photo comes before any message.
+ * Started by the chat route with the name entered in the greeting or a typed
+ * first message.
  *
  * After submit it waits on the review hook, with no time limit, until the
  * decision route resumes it; then it publishes or not, emails the visitor
@@ -186,6 +189,29 @@ export async function testimonial(first: TurnInput | null): Promise<TestimonialR
   }
 
   let conversation: Conversation = { draft: emptyDraft(), code: null }
+
+  /** Runs one server tool against the conversation and answers what the model is told. */
+  const serve = async (call: ToolCallRef): Promise<unknown> => {
+    if (!isServerTool(call.toolName)) return { error: `There is no tool called ${call.toolName}.` }
+    try {
+      const outcome = await runServerTool(call.toolName, conversation, serverSteps, context)
+      conversation = outcome.conversation
+      return outcome.output
+    } catch {
+      // A step that failed all its retries; the model may try again.
+      return { error: 'That did not work this time. Try again.' }
+    }
+  }
+  const resultParts = (results: { call: ToolCallRef; output: unknown }[]): RunPart[] => [
+    ...results.map(({ call, output }): RunPart => ({
+      type: 'tool-result',
+      toolCallId: call.toolCallId,
+      toolName: call.toolName,
+      input: {},
+      output,
+    })),
+    draftPart(conversation.draft),
+  ]
   let messages: ModelMessage[] = []
   let pending: ToolCallRef[] = []
   let input: TurnInput | null = first
@@ -216,13 +242,26 @@ export async function testimonial(first: TurnInput | null): Promise<TestimonialR
       break
     }
 
+    if (needsAnalysis(conversation.draft)) {
+      const call = { toolCallId: `analyse-${turns}`, toolName: 'analysePhoto' }
+      const results = [{ call, output: await serve(call) }]
+      messages.push(toolCallMessage([call]), toolMessage(results))
+      // Only the draft: the browser has no call this result could belong to.
+      await write([draftPart(conversation.draft)])
+    }
+
     for (let call = 0; call < MAX_MODEL_CALLS_PER_TURN; call++) {
-      let result: Awaited<ReturnType<typeof agent.stream>>
+      let result: Awaited<ReturnType<typeof agent.stream>> | null = null
       try {
         result = await agent.stream({ messages, writable, preventClose: true, sendFinish: false })
       } catch {
         // The agent's model step does not retry, and a failure here would
         // fail the run. The conversation keeps what it had before the call.
+      }
+      if (!result || emptyAnswer(result)) {
+        // An empty answer is asked again with the same messages, while the
+        // turn has calls left.
+        if (result && call < MAX_MODEL_CALLS_PER_TURN - 1) continue
         await write(textParts(`unanswered-${turns}-${call}`, UNANSWERED))
         break
       }
@@ -240,30 +279,10 @@ export async function testimonial(first: TurnInput | null): Promise<TestimonialR
       const results: { call: ToolCallRef; output: unknown }[] = []
       for (const toolCall of others) {
         const call = { toolCallId: toolCall.toolCallId, toolName: toolCall.toolName }
-        if (!isServerTool(call.toolName)) {
-          results.push({ call, output: { error: `There is no tool called ${call.toolName}.` } })
-          continue
-        }
-        try {
-          const outcome = await runServerTool(call.toolName, conversation, serverSteps, context)
-          conversation = outcome.conversation
-          results.push({ call, output: outcome.output })
-        } catch {
-          // A step that failed all its retries; the model may try again.
-          results.push({ call, output: { error: 'That did not work this time. Try again.' } })
-        }
+        results.push({ call, output: await serve(call) })
       }
       messages.push(toolMessage(results))
-      await write([
-        ...results.map(({ call, output }): RunPart => ({
-          type: 'tool-result',
-          toolCallId: call.toolCallId,
-          toolName: call.toolName,
-          input: {},
-          output,
-        })),
-        draftPart(conversation.draft),
-      ])
+      await write(resultParts(results))
       if (pending.length > 0) break
     }
 

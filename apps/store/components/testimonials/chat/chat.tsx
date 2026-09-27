@@ -10,7 +10,6 @@ import { Spinner } from '@/components/spinner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DraftBar, DraftCard } from './draft-card'
-import { runOfPathname } from './photo'
 import type { ChatMessage, ChatProduct, CurrentChat } from './types'
 import {
   CodeWidget,
@@ -22,16 +21,15 @@ import {
   QuoteWidget,
 } from './widgets'
 
-const GREETING =
-  'Hi! Share a photo of something you bought from us, and I will help you turn it into a testimonial. You can also just type.'
-
-/** What the visitor sees for a photo chosen in the greeting. */
-const PHOTO_TEXT = 'Here is my photo.'
+const GREETING = [
+  "Hello, I'm your testimonial submission agent. Great that you like our products, and we're excited to get your testimonial onto our site!",
+  'First, what name should we show with it?',
+]
 
 const RUN_ID_HEADER = 'x-workflow-run-id'
 
 /** Sent beside the next request's messages, once, and never kept in them. */
-type Extras = { photo?: string; email?: string; code?: string }
+type Extras = { name?: string; email?: string; code?: string }
 
 const isClientTool = (name: string): name is ClientTool => (CLIENT_TOOLS as readonly string[]).includes(name)
 const toolName = (part: { type: string }) => part.type.slice('tool-'.length)
@@ -64,7 +62,7 @@ function useTransport(
           answered.current = false
           return runId.current
             ? { api: `/api/testimonials/chat/${runId.current}/message`, body: { messages, ...sent } }
-            : { api: '/api/testimonials/chat', body: { messages } }
+            : { api: '/api/testimonials/chat', body: { messages, ...sent } }
         },
         prepareReconnectToStreamRequest: ({ api }) => ({
           api: runId.current ? `/api/testimonials/chat/${runId.current}/stream` : api,
@@ -146,7 +144,6 @@ export function Chat({
   const ended = draft?.submitted === true || /\b410\b/.test(error?.message ?? '')
 
   function keepPhoto(pathname: string, jpeg: Blob) {
-    runId.current ??= runOfPathname(pathname)
     setPhoto(URL.createObjectURL(jpeg))
     return pathname
   }
@@ -166,15 +163,19 @@ export function Chat({
       <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_16rem]">
         <div className="flex min-h-80 flex-col gap-4">
           <ol ref={list} aria-live="polite" className="flex flex-col gap-4">
-            <li className="max-w-prose text-pretty">{GREETING}</li>
+            <li className="flex max-w-prose flex-col gap-3">
+              {GREETING.map((line) => (
+                <p key={line} className="text-pretty">
+                  {line}
+                </p>
+              ))}
+            </li>
             {messages.length === 0 ? (
               <li>
-                <PhotoWidget
-                  runId={currentRun}
-                  attemptsLeft={MAX_PHOTO_ATTEMPTS}
-                  onUploaded={(pathname, jpeg) => {
-                    extras.current = { photo: keepPhoto(pathname, jpeg) }
-                    void sendMessage({ text: PHOTO_TEXT })
+                <NameWidget
+                  onSubmit={(name) => {
+                    extras.current = { name }
+                    void sendMessage({ text: name })
                   }}
                 />
               </li>

@@ -33,12 +33,10 @@ export class UploadError extends Error {
 
 /**
  * Uploads a re-encoded photo to the private Blob store and answers its
- * pathname. The route first reserves the pathname; `runId` is `null` when
- * the photo is the visitor's first action, and the route then starts the
- * run. Aborted after `UPLOAD_TIMEOUT_SECONDS`, because a refused request is
- * retried silently.
+ * pathname. The route first reserves the pathname in the run. Aborted after
+ * `UPLOAD_TIMEOUT_SECONDS`, because a refused request is retried silently.
  */
-export async function uploadPhoto(jpeg: Blob, runId: string | null): Promise<string> {
+export async function uploadPhoto(jpeg: Blob, runId: string): Promise<string> {
   const signal = AbortSignal.timeout(UPLOAD_TIMEOUT_SECONDS * 1000)
   const reserved = await fetch(UPLOAD_ROUTE, {
     method: 'POST',
@@ -58,6 +56,3 @@ export async function uploadPhoto(jpeg: Blob, runId: string | null): Promise<str
   })
   return pathname
 }
-
-/** The run a pathname `testimonials/<runId>/<attempt>.jpg` belongs to. */
-export const runOfPathname = (pathname: string) => pathname.split('/')[1] ?? null

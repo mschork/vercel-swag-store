@@ -8,8 +8,8 @@ import { testimonial } from '@/workflows/testimonial'
 /**
  * The testimonial chat of this session (specs/E25-testimonial-agent.md).
  * GET answers the conversation still going, with the browser's messages, so
- * a reload can resume it; POST starts one with a typed first message and
- * streams its first turn.
+ * a reload can resume it; POST starts one with the name entered in the
+ * greeting, or a typed first message, and streams its first turn.
  */
 
 export async function GET(request: Request): Promise<Response> {
@@ -27,7 +27,7 @@ export async function POST(request: Request): Promise<Response> {
   if (admitted instanceof Response) return admitted
   const body = await readChatBody(request)
   const input = body && turnOf(body)
-  if (!body || input?.kind !== 'message') return refuse(400, 'Invalid body')
+  if (!body || (input?.kind !== 'message' && input?.kind !== 'name')) return refuse(400, 'Invalid body')
 
   const run = await start(testimonial, [input])
   const saved =

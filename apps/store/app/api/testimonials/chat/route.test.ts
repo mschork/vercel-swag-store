@@ -64,8 +64,13 @@ describe('POST /api/testimonials/chat', () => {
     expect(m.turnResponse).toHaveBeenCalledWith('wrun_new', 0)
   })
 
-  it('refuses anything but a typed first message', async () => {
-    expect((await post({ messages, photo: 'testimonials/wrun_1/1.jpg' })).status).toBe(400)
+  it('starts a run with the name entered in the greeting', async () => {
+    await post({ messages, name: 'Ada' })
+    expect(m.start).toHaveBeenCalledWith('testimonial', [{ kind: 'name', name: 'Ada' }])
+  })
+
+  it('refuses anything but a greeting name or a typed first message', async () => {
+    expect((await post({ messages, name: ' ' })).status).toBe(400)
     expect((await post({})).status).toBe(400)
     expect(m.start).not.toHaveBeenCalled()
   })

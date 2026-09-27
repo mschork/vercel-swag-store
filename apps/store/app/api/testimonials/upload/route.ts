@@ -1,24 +1,21 @@
 import { MAX_PHOTO_ATTEMPTS } from '@repo/testimonials/constants'
 import { PhotoUploadedSchema, photoPathname, runIdOfPathname } from '@repo/testimonials/schemas'
 import { handleUploadPresigned, type HandleUploadPresignedBody } from '@vercel/blob/client'
-import { start } from 'workflow/api'
 import { z } from 'zod'
 import { sessionStore } from '@/lib/session/store'
 import { signUpload } from '@/lib/testimonials/blob'
 import { admit, ownChat, refuse, runLive } from '@/lib/testimonials/guard'
-import { testimonial } from '@/workflows/testimonial'
 
 /**
  * A photo upload to the private Blob store, in two calls. `reserve` answers
- * the pathname the photo goes to, `testimonials/<runId>/<attempt>.jpg`,
- * starting the run when the photo is the visitor's first action and refusing
- * past `MAX_PHOTO_ATTEMPTS`. The browser then asks `uploadPresigned` for that
+ * the pathname the photo goes to, `testimonials/<runId>/<attempt>.jpg`, and
+ * refuses past `MAX_PHOTO_ATTEMPTS`. The browser then asks `uploadPresigned` for that
  * pathname, and the route signs one JPEG `put` to it, over OIDC, once the
  * pathname belongs to a live run of this session. The SDK sends the browser's
  * own pathname with the upload, so the route cannot choose it at signing.
  */
 
-const ReserveSchema = z.object({ type: z.literal('reserve'), runId: z.string().min(1).nullable() })
+const ReserveSchema = z.object({ type: z.literal('reserve'), runId: z.string().min(1) })
 
 export async function POST(request: Request): Promise<Response> {
   const admitted = await admit(request)
@@ -48,21 +45,10 @@ export async function POST(request: Request): Promise<Response> {
   return Response.json(result)
 }
 
-async function reservePathname(sid: string, named: string | null): Promise<Response> {
-  let runId: string
-  if (named) {
-    const chat = await ownChat(named, sid)
-    if (chat instanceof Response) return chat
-    if (!(await runLive(named))) return refuse(410, 'The conversation has ended')
-    runId = named
-  } else {
-    const run = await start(testimonial, [null])
-    if (!(await sessionStore.openChat(sid, run.runId))) {
-      await run.cancel().catch(() => {})
-      return refuse(503, 'Try again')
-    }
-    runId = run.runId
-  }
+async function reservePathname(sid: string, runId: string): Promise<Response> {
+  const chat = await ownChat(runId, sid)
+  if (chat instanceof Response) return chat
+  if (!(await runLive(runId))) return refuse(410, 'The conversation has ended')
   const attempt = await sessionStore.countUpload(runId)
   if (attempt === null) return refuse(503, 'Try again')
   if (attempt > MAX_PHOTO_ATTEMPTS) return refuse(409, 'No uploads left')
