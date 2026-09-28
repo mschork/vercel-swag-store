@@ -213,6 +213,9 @@ test('rapid plus clicks save once, with the final quantity', async ({
 
   // One save after the pause; the reload shows what the API holds.
   await expect(line).toHaveAttribute('aria-busy', 'true', SAVED)
+  // While it saves, Remove says so, as it does for an add.
+  await expect(statusOf(line)).toHaveText('Saving…')
+  await expect(line.getByRole('button', { name: /^Remove/ })).toBeDisabled()
   await expect(line).not.toHaveAttribute('aria-busy', SAVED)
   expect(actions.sent()).toBe(1)
   await page.reload()
