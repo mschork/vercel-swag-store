@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useOptimistic, useState } from 'react'
-import { useCartCount } from '@/components/cart/cart-count'
+import { useCartCountActions } from '@/components/cart/cart-count'
 import { useVisit } from '@/components/visit/visit-provider'
 import {
   dismissFailure,
@@ -63,7 +63,7 @@ export function CartView({
   const [optimisticLines, applyChange] = useOptimistic(current.lines, applyLineChange)
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({})
   const [drafts, setDrafts] = useState<Drafts>({})
-  const { setCartPage } = useCartCount()
+  const { setCartPage } = useCartCountActions()
   const hydrated = useHydrated()
 
   const draft = (productId: string, quantity: number | null, onlyIf?: number) =>

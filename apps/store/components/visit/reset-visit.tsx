@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
-import { useVisit } from './visit-provider'
+import { useVisitActions } from './visit-provider'
 
 /**
  * Throws the visitor's stock draws away and draws new ones. The store is a
@@ -14,7 +14,7 @@ import { useVisit } from './visit-provider'
  * interesting case, and the cart page says so.
  */
 export function ResetVisit() {
-  const { reset } = useVisit()
+  const { reset } = useVisitActions()
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   return (
