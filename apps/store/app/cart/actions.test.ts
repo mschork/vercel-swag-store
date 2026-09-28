@@ -4,6 +4,7 @@ import * as api from '@/lib/api/cart'
 import { ApiError } from '@/lib/api/client'
 import type { Cart } from '@/lib/api/types'
 import { toLines } from '@/lib/cart/lines'
+import { CART_MAX_QUANTITY } from '@/lib/quantity'
 import { sessionStore, type CartRecord } from '@/lib/session/store'
 import * as draw from '@/lib/visit/draw'
 import { product } from '@/test/helpers'
@@ -39,8 +40,9 @@ vi.mock('@/lib/api/cart', () => ({
   updateCartItem: vi.fn(),
   removeCartItem: vi.fn(),
 }))
-// The visit's own tests cover drawing; here a draw is whatever a test says.
-vi.mock('@/lib/visit/draw', () => ({ drawFor: vi.fn(async () => null) }))
+// The visit's own tests cover drawing; here a draw is whatever a test says,
+// and the most a cart holds when it says nothing.
+vi.mock('@/lib/visit/draw', () => ({ drawFor: vi.fn() }))
 
 const mocked = vi.mocked(api)
 const drawFor = vi.mocked(draw.drawFor)
@@ -141,6 +143,7 @@ function expectOrderRefreshed(): void {
 
 beforeEach(() => {
   vi.resetAllMocks()
+  drawFor.mockResolvedValue(CART_MAX_QUANTITY)
   session.id = crypto.randomUUID()
 })
 
@@ -748,14 +751,25 @@ describe('the visit caps every write', () => {
     expectNoApiCall()
   })
 
-  it('enforces nothing when the draw is unknown', async () => {
+  it('refuses an add when the draw is unknown, before calling the API', async () => {
     await seedCart('live')
     drawFor.mockResolvedValue(null)
-    mocked.addCartItem.mockResolvedValue(cart(99))
 
     await expect(
-      addToCart(null, form({ productId: 'tshirt_001', quantity: '99' })),
-    ).resolves.toMatchObject({ ok: true, totalItems: 99 })
+      addToCart(null, form({ productId: 'tshirt_001', quantity: '1' })),
+    ).resolves.toEqual({ ok: false, error: ADD_FAILED })
+    expectNoApiCall()
+  })
+
+  it('holds a quantity change to no draw when the draw is unknown', async () => {
+    await seedCart('live')
+    drawFor.mockResolvedValue(null)
+    mocked.updateCartItem.mockResolvedValue(cart(5))
+
+    await expect(updateQuantity('tshirt_001', 5)).resolves.toMatchObject({
+      ok: true,
+      totalItems: 5,
+    })
   })
 })
 

@@ -100,10 +100,10 @@ export async function addToCart(
   }
 
   // Checked before the write, so an add the visit cannot cover costs no call.
+  // Without a draw there is no limit to hold the add to, so it is refused.
   const draw = await drawFor(productId, session)
-  if (exceedsDraw(quantity, draw) && draw !== null) {
-    return { ok: false, error: tooMany(draw) }
-  }
+  if (draw === null) return { ok: false, error: copy.failed }
+  if (exceedsDraw(quantity, draw)) return { ok: false, error: tooMany(draw) }
   const add = (token: string) => () => addCartItem(token, productId, quantity)
 
   // Into a new cart: its 404 can only mean the product, so nothing retries.

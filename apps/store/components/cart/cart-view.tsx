@@ -4,6 +4,7 @@ import { useEffect, useOptimistic, useState } from 'react'
 import { useCartCount } from '@/components/cart/cart-count'
 import { useVisit } from '@/components/visit/visit-provider'
 import {
+  dismissFailure,
   dismissFailures,
   holdLines,
   publishLines,
@@ -18,6 +19,7 @@ import {
   setDraft,
   type Drafts,
   type Line,
+  type LineChange,
 } from '@/lib/cart/lines'
 import { useHydrated } from '@/lib/use-hydrated'
 import { exceedsDraw } from '@/lib/visit/limits'
@@ -34,8 +36,9 @@ import { EmptyCart } from './empty-cart'
  * quantities a row shows during its pause before saving. Above those, the
  * pending lines of adds still saving, as rows that say so. Messages are kept
  * here, keyed by product, because a row removed optimistically unmounts and
- * has to show why if the removal fails; an add that failed is listed at the
- * top until the visitor's next add or until they leave the page.
+ * has to show why if the removal fails. An add that failed and left its
+ * product without a row is listed at the top until the visitor changes that
+ * product's line, adds again or leaves the page.
  *
  * Each row's cap is the visitor's draw: what the provider holds, or what the
  * server read for `serverDraws` until it does. While hydrating it is always
@@ -66,7 +69,8 @@ export function CartView({
   const draft = (productId: string, quantity: number | null, onlyIf?: number) =>
     setDrafts((existing) => setDraft(existing, productId, quantity, onlyIf))
 
-  const report = (productId: string, error: string | null) =>
+  const report = (productId: string, error: string | null) => {
+    dismissFailure(productId)
     setErrors((existing) => {
       if (error !== null) return { ...existing, [productId]: error }
       if (!(productId in existing)) return existing
@@ -74,12 +78,21 @@ export function CartView({
       delete next[productId]
       return next
     })
+  }
+  const change = (lineChange: LineChange) => {
+    dismissFailure(lineChange.productId)
+    applyChange(lineChange)
+  }
 
   const shownLines = withPending(applyDrafts(optimisticLines, drafts), inFlight.pending)
   const { totalItems, subtotal } = cartTotals(shownLines)
   const saving = shownLines.some((line) => line.pending)
   const drawOf = (productId: string) =>
     (hydrated ? heldDraw(productId) : undefined) ?? serverDraws[productId] ?? null
+  // A product that still has a row shows its quantity there, not a failure.
+  const failures = inFlight.failures.filter(
+    (failure) => !shownLines.some((line) => line.productId === failure.productId),
+  )
   const overDrawn = shownLines.some((line) =>
     exceedsDraw(line.quantity, drawOf(line.productId)),
   )
@@ -97,7 +110,7 @@ export function CartView({
 
   return (
     <>
-      <FailedAdds failures={inFlight.failures} />
+      <FailedAdds failures={failures} />
       {shownLines.length === 0 ? (
         <EmptyCart />
       ) : (
@@ -112,7 +125,7 @@ export function CartView({
                 pending={line.pending}
                 priority={index === 0}
                 error={errors[line.productId] ?? null}
-                onChange={applyChange}
+                onChange={change}
                 onDraft={draft}
                 onSaved={publishLines}
                 onResult={report}

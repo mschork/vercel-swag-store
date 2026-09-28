@@ -24,9 +24,10 @@ const DRAW_CONCURRENCY = 8
 
 /**
  * How many of a product the visit says there are, drawing and claiming it
- * when the visit has no draw for it. `null` when the API failed: there is
- * nothing to enforce, and the caller enforces nothing. A Server Action passes
- * the session it read, because `getSession` is not memoized inside an action.
+ * when the visit has no draw for it. `null` when the API failed: `addToCart`
+ * then refuses the add, and a quantity change is held to no draw. A Server
+ * Action passes the session it read, because `getSession` is not memoized
+ * inside an action.
  */
 export async function drawFor(
   productId: string,
