@@ -23,3 +23,13 @@ export async function findCategory(slug: string): Promise<Category | null> {
   const categories = await getCategories()
   return categories.find((category) => category.slug === slug) ?? null
 }
+
+/**
+ * A lookup from a category slug to its name, for a card that shows "Bags"
+ * rather than the slug. A slug the API does not list maps to itself.
+ */
+export async function getCategoryNames(): Promise<(slug: string) => string> {
+  const categories = await getCategories()
+  const names = new Map(categories.map(({ slug, name }) => [slug, name]))
+  return (slug) => names.get(slug) ?? slug
+}

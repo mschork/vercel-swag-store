@@ -100,10 +100,13 @@ export function BuyableItems({
     const rects = before.current
     if (rects.size === 0) return
     before.current = new Map()
-    for (const [id, node] of nodes.current) {
+    // Every rect is read before any animation starts: a read after an
+    // animation has begun forces the layout again.
+    const moves = [...nodes.current].flatMap(([id, node]) => {
       const from = rects.get(id)
-      if (!from) continue
-      const to = node.getBoundingClientRect()
+      return from ? [{ node, from, to: node.getBoundingClientRect() }] : []
+    })
+    for (const { node, from, to } of moves) {
       const dx = from.left - to.left
       const dy = from.top - to.top
       if (dx === 0 && dy === 0) continue
