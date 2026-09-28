@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, use, useState, type ReactNode } from 'react'
+import { createContext, use, useCallback, useMemo, useState, type ReactNode } from 'react'
 import { ErrorBoundary } from '@/components/error-boundary'
 import type { Category } from '@/lib/api/types'
 import type { Searchable } from '@/lib/search'
@@ -53,10 +53,20 @@ export function SearchStateProvider({
   catalogue: SearchCatalogueValue
   children: ReactNode
 }) {
-  const [applied, apply] = useState<AppliedSearch | null>(null)
-  return (
-    <SearchStateContext value={{ applied, apply, catalogue }}>{children}</SearchStateContext>
+  const [applied, setApplied] = useState<AppliedSearch | null>(null)
+  // Applying the search already applied keeps the same object, so React
+  // skips the render and the grid does not search again.
+  const apply = useCallback(
+    (search: AppliedSearch) =>
+      setApplied((current) =>
+        current?.query === search.query && current.category === search.category
+          ? current
+          : search,
+      ),
+    [],
   )
+  const value = useMemo(() => ({ applied, apply, catalogue }), [applied, apply, catalogue])
+  return <SearchStateContext value={value}>{children}</SearchStateContext>
 }
 
 /**
