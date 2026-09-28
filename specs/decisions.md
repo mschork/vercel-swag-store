@@ -63,7 +63,8 @@ Store, E13 only: `SANITY_API_WRITE_TOKEN` (server only), `DEMAND_ANALYSE_SECRET`
 Sanity Functions, E13 only: `STORE_URL` and `DEMAND_ANALYSE_SECRET` on `gap-threshold`, set with `sanity functions env add`, never in `sanity.blueprint.ts`.
 Store, E25 only, server only: `SANITY_API_WRITE_TOKEN` (shared with E13), `BLOB_READ_WRITE_TOKEN`, `RESEND_API_KEY`, `EMAIL_DOMAIN`, `TESTIMONIAL_PHOTO_SECRET`, `TESTIMONIAL_DECISION_SECRET`.
 Sanity Functions, E25 only: `STORE_URL` and `TESTIMONIAL_DECISION_SECRET` on `submission-decided`.
-Studio: `SANITY_STUDIO_PROJECT_ID`, `SANITY_STUDIO_DATASET`. No API variables: the product picker reads `catalogProduct` documents.
+Sanity Functions, E15 only: `API_BASE_URL` and `API_BYPASS_TOKEN` on `catalogue-sync`; its Sanity token is a robot token declared in `sanity.blueprint.ts`.
+Studio: `SANITY_STUDIO_PROJECT_ID`, `SANITY_STUDIO_DATASET`. No API variables: product and category references point at the mirrored product and category documents.
 Local scripts only: `SANITY_API_WRITE_TOKEN` for the seed script.
 
 ## Epic index

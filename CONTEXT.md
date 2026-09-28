@@ -46,7 +46,7 @@ _Avoid_: Mode, dark mode, colour scheme, theme selector
 
 **Product document**:
 The Sanity document for one product: its API fields mirrored read-only, plus the editorial fields an editor writes. Distinct from a Product, which is what the API returns and what the store renders (`docs/adr/0003-sanity-mirrors-api-products-and-categories.md`).
-_Avoid_: Sanity product, enrichment document, product entry
+_Avoid_: Sanity product, enrichment document, product entry, catalog product
 
 **Enrichment**:
 The editorial fields on a product document: the longer description, the care text, extra photos of the product and the questions it attaches. Never commerce facts; the API wins for anything it owns.
@@ -144,9 +144,9 @@ _Avoid_: Sale, banner, deal, pinned promotion
 Catalogue products appended after the featured products so a grid reaches its minimum size. Never labelled as featured.
 _Avoid_: Filler, fallback products
 
-**Catalog product**:
-A read-only copy in Sanity of one API product, kept so editors can pick and reference products without the Studio calling the API.
-_Avoid_: Product (when the API record is meant), enrichment
+**Catalogue sync**:
+The job that brings the mirrored fields of every product document and category document in line with the API, once a day. It writes only what changed, and flags a document whose product or category the API no longer returns as missing instead of deleting it. It never touches what an editor wrote.
+_Avoid_: Import, seed, catalogue refresh (that is the store's cache)
 
 **Collection**:
 An editorial grouping of products curated in Sanity, referencing products by API id. May span categories and never mirrors one.
