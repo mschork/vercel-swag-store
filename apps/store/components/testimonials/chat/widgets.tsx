@@ -190,6 +190,7 @@ function LineWidget({
   autoComplete,
   action,
   onSubmit,
+  autoFocus = true,
 }: {
   label: string
   type?: 'text' | 'email'
@@ -197,6 +198,8 @@ function LineWidget({
   autoComplete: string
   action: string
   onSubmit: (value: string) => void
+  /** Off for a field that is there as the panel opens, where the heading takes focus. */
+  autoFocus?: boolean
 }) {
   const id = useId()
   return (
@@ -220,7 +223,7 @@ function LineWidget({
           maxLength={maxLength}
           autoComplete={autoComplete}
           className="h-9"
-          autoFocus
+          autoFocus={autoFocus}
         />
         <Button type="submit" size="lg" className="px-4">
           {action}
@@ -230,7 +233,13 @@ function LineWidget({
   )
 }
 
-export function NameWidget({ onSubmit }: { onSubmit: (name: string) => void }) {
+export function NameWidget({
+  onSubmit,
+  autoFocus,
+}: {
+  onSubmit: (name: string) => void
+  autoFocus?: boolean
+}) {
   return (
     <LineWidget
       label="Your name, as it will be published"
@@ -238,6 +247,7 @@ export function NameWidget({ onSubmit }: { onSubmit: (name: string) => void }) {
       autoComplete="name"
       action="Continue"
       onSubmit={onSubmit}
+      autoFocus={autoFocus}
     />
   )
 }

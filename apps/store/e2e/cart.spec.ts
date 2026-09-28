@@ -500,6 +500,46 @@ test('a product added from the row leaves it, and the next one takes the last pl
   expect(after).toHaveLength(rest.length + 1)
 })
 
+test('keyboard focus and announcements follow quick adds and removals', async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(240_000)
+  const favourites = await openCartToAddFrom(page, context)
+  const actions = watchActions(page)
+  const said = (text: string | RegExp) => page.getByRole('status').filter({ hasText: text })
+
+  // A card added from the keyboard hands focus to the card after it.
+  const firstCard = favourites.getByRole('listitem').first()
+  const first = await productOf(firstCard)
+  await firstCard.getByRole('button', { name: ADD }).focus()
+  await page.keyboard.press('Enter')
+  const focusedCard = favourites.getByRole('button', { name: ADD }).and(page.locator(':focus'))
+  await expect(focusedCard).toHaveCount(1, AT_ONCE)
+  const second = (await focusedCard.getAttribute('aria-label'))?.match(ADD)?.[1] ?? ''
+  expect(second).not.toBe(first)
+  await expect(said('1 item in your cart')).toHaveCount(1, AT_ONCE)
+
+  await page.keyboard.press('Enter')
+  await expect(rows(page)).toHaveCount(2, AT_ONCE)
+  await expect(said('2 items in your cart')).toHaveCount(1, AT_ONCE)
+  await expect.poll(actions.addsAnswered, { timeout: 2 * SAVED.timeout }).toBe(2)
+  await expect(rows(page).getByText('Saving…')).toHaveCount(0)
+
+  // Removing a row moves focus to the row that takes its place and says so.
+  await rowNamed(page, first).getByRole('button', { name: `Remove ${first}` }).focus()
+  await page.keyboard.press('Enter')
+  await expect(said(`${first} removed from your cart`)).toHaveCount(1, AT_ONCE)
+  await expect(rowNamed(page, second).getByRole('link', { name: second })).toBeFocused(AT_ONCE)
+
+  // The last one hands focus to the empty cart's heading.
+  await rowNamed(page, second).getByRole('button', { name: `Remove ${second}` }).focus()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('heading', { name: 'Your cart is empty' })).toBeFocused(AT_ONCE)
+  await expect(said(`${second} removed from your cart`)).toHaveCount(1)
+  await expect.poll(actions.answered, { timeout: 2 * SAVED.timeout }).toBeGreaterThanOrEqual(4)
+})
+
 test('an order placed from a cart that was empty on load clears the badge', async ({
   page,
   context,

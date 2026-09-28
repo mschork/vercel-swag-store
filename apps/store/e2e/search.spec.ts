@@ -79,6 +79,18 @@ test('typing three characters searches without pressing Enter', async ({
   await expect(cards(page).first()).toContainText('Black Beanie')
 })
 
+test('a status line says what every search found, a miss included', async ({ page }) => {
+  // The server's form looks the same and ignores typing until hydration.
+  await page.goto('/search', { waitUntil: 'networkidle' })
+  const status = page.getByRole('status').filter({ hasText: /./ })
+  await expect(status).toHaveCount(0)
+
+  await queryBox(page).fill('beanie')
+  await expect(status).toHaveText('1 result for “beanie”')
+  await queryBox(page).fill('umbrella')
+  await expect(status).toHaveText('No products match “umbrella”')
+})
+
 test('several words match in either order', async ({ page }) => {
   await gotoLive(page, 'bag canvas')
   await expect(cards(page).first()).toContainText('Black Canvas Tote Bag')
@@ -123,7 +135,7 @@ test('the category select filters, and combined with text it narrows', async ({
 
   await categorySelect(page).selectOption('bags')
   await expect(page).toHaveURL('/search?q=bucket&category=bags')
-  await expect(results(page)).toContainText('No products match "bucket" in Bags')
+  await expect(results(page)).toContainText('No products match “bucket” in Bags')
 })
 
 test('Back returns to the previous category and the previous submitted search', async ({
@@ -174,9 +186,9 @@ test('a query with no matches offers the categories and says the miss is recorde
   page,
 }) => {
   await gotoLive(page, 'umbrella')
-  await expect(results(page)).toContainText('No products match "umbrella"')
+  await expect(results(page)).toContainText('No products match “umbrella”')
   await expect(results(page)).toContainText(
-    "We keep track of what people look for and don't find.",
+    "We keep track of what people look for and don’t find.",
   )
   await expect(
     results(page).getByRole('link', { name: 'Hats', exact: true }),

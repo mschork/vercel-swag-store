@@ -8,7 +8,9 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { createPortal } from 'react-dom'
 import { shownCount } from '@/lib/cart/count'
+import { useHydrated } from '@/lib/use-hydrated'
 import { CartIcon } from './cart-icon'
 
 type CartCountState = {
@@ -77,9 +79,32 @@ export function CartCount({ serverRead }: { serverRead: { count: number | null }
   useEffect(() => {
     confirm(serverRead.count)
   }, [serverRead, confirm])
+  const count = shownCount({ server: serverCount, confirmed, adding, cartPage })
   return (
-    <CartIcon
-      count={shownCount({ server: serverCount, confirmed, adding, cartPage })}
-    />
+    <>
+      <CartIcon count={count} />
+      <CountStatus count={count} />
+    </>
+  )
+}
+
+/**
+ * Says the badge's new count to screen readers when it changes, never on the
+ * first render. A portal to the end of the body, because inside the header
+ * link the status would join the link's name.
+ */
+function CountStatus({ count }: { count: number | null }) {
+  const hydrated = useHydrated()
+  const [said, setSaid] = useState({ count, text: '' })
+  if (said.count !== count) {
+    const text = count === null ? '' : `${count} ${count === 1 ? 'item' : 'items'} in your cart`
+    setSaid({ count, text })
+  }
+  if (!hydrated) return null
+  return createPortal(
+    <p role="status" className="sr-only">
+      {said.text}
+    </p>,
+    document.body,
   )
 }

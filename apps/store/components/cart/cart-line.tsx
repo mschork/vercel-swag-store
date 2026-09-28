@@ -50,6 +50,7 @@ export function CartLine({
   onDraft,
   onSaved,
   onResult,
+  onRemove,
 }: {
   line: Line
   currency: string
@@ -70,6 +71,8 @@ export function CartLine({
    */
   onSaved: (lines: Line[]) => void
   onResult: (productId: string, error: string | null) => void
+  /** Told at the click, before the row leaves, so the view can move focus. */
+  onRemove: (productId: string) => void
 }) {
   const { productId } = line
   const overDrawn = exceedsDraw(line.quantity, draw)
@@ -119,6 +122,7 @@ export function CartLine({
   }
 
   const remove = () => {
+    onRemove(productId)
     waiting.current?.cancel()
     onDraft(productId, null)
     save(0, () => removeItem(productId))

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useOptimistic, useState } from 'react'
+import { useEffect, useOptimistic, useRef, useState } from 'react'
 import { useCartCountActions } from '@/components/cart/cart-count'
 import { useVisit } from '@/components/visit/visit-provider'
 import {
@@ -26,7 +26,7 @@ import { exceedsDraw } from '@/lib/visit/limits'
 import { cn } from '@/lib/utils'
 import { CartLine } from './cart-line'
 import { CartSummary } from './cart-summary'
-import { EmptyCart } from './empty-cart'
+import { EMPTY_CART_HEADING, EmptyCart } from './empty-cart'
 
 /**
  * The cart page's client leaf. Lines live in `useOptimistic`, so a quantity
@@ -45,6 +45,10 @@ import { EmptyCart } from './empty-cart'
  * `serverDraws`, so the first client render repeats the server's HTML. A row
  * above its cap, which happens when the visit was reset while the cart lived
  * on, says so and keeps Checkout disabled until it is reduced or removed.
+ *
+ * A removal says so in a status line, and focus moves from the Remove button
+ * that leaves with its row to the row that takes its place, or to the empty
+ * cart's heading.
  */
 export function CartView({
   lines,
@@ -63,6 +67,10 @@ export function CartView({
   const [optimisticLines, applyChange] = useOptimistic(current.lines, applyLineChange)
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({})
   const [drafts, setDrafts] = useState<Drafts>({})
+  const [removed, setRemoved] = useState('')
+  const list = useRef<HTMLUListElement>(null)
+  // The row a removal took and where it stood, until focus has moved on.
+  const leaving = useRef<{ productId: string; index: number } | null>(null)
   const { setCartPage } = useCartCountActions()
   const hydrated = useHydrated()
 
@@ -97,6 +105,23 @@ export function CartView({
     exceedsDraw(line.quantity, drawOf(line.productId)),
   )
 
+  const remove = (productId: string) => {
+    const index = shownLines.findIndex((line) => line.productId === productId)
+    leaving.current = { productId, index }
+    setRemoved(`${shownLines[index]?.name ?? 'Product'} removed from your cart`)
+  }
+  // Every render, because the row leaves in whichever render the optimistic
+  // removal lands in.
+  useEffect(() => {
+    const from = leaving.current
+    if (!from || shownLines.some((line) => line.productId === from.productId)) return
+    leaving.current = null
+    const rows = list.current?.children
+    const row = rows?.[Math.min(from.index, rows.length - 1)]
+    const target = row?.querySelector('a') ?? document.getElementById(EMPTY_CART_HEADING)
+    target?.focus()
+  })
+
   useEffect(() => {
     setCartPage(totalItems)
   }, [totalItems, setCartPage])
@@ -111,11 +136,14 @@ export function CartView({
   return (
     <>
       <FailedAdds failures={failures} />
+      <p role="status" className="sr-only">
+        {removed}
+      </p>
       {shownLines.length === 0 ? (
         <EmptyCart />
       ) : (
         <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-start lg:grid-cols-[minmax(0,1fr)_20rem]">
-          <ul className="flex flex-col divide-y divide-border border-y border-border">
+          <ul ref={list} className="flex flex-col divide-y divide-border border-y border-border">
             {shownLines.map((line, index) => (
               <CartLine
                 key={line.productId}
@@ -129,6 +157,7 @@ export function CartView({
                 onDraft={draft}
                 onSaved={publishLines}
                 onResult={report}
+                onRemove={remove}
               />
             ))}
           </ul>
