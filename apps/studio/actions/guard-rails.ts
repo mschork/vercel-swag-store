@@ -3,7 +3,7 @@ import { SINGLETON_IDS } from '@repo/sanity'
 
 const SINGLETON_TYPES: readonly string[] = Object.keys(SINGLETON_IDS)
 
-/** The types `scripts/sync.ts` writes under ids built from the API's. */
+/** The types the catalogue sync writes under ids built from the API's. */
 const MIRROR_TYPES: readonly string[] = ['product', 'category']
 
 /** Actions that would leave the store without a page it reads by fixed id. */

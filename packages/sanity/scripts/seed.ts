@@ -1,7 +1,7 @@
 import { createClient } from '@sanity/client'
 import { queueCategoryIntros } from './category-intros.ts'
 import { required } from './env.ts'
-import { syncCatalogue } from './sync.ts'
+import { syncFromApi } from './sync.ts'
 
 /**
  * Fills a fresh dataset: the catalogue mirror, the three pages that exist
@@ -27,7 +27,7 @@ const HOODIE = 'hoodie_001'
 const BACKPACK = 'backpack_001'
 
 async function seed() {
-  const catalogue = await syncCatalogue()
+  const catalogue = await syncFromApi()
 
   const client = createClient({
     projectId: required('NEXT_PUBLIC_SANITY_PROJECT_ID'),

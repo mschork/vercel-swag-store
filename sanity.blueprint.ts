@@ -1,5 +1,10 @@
 import { readFileSync } from 'node:fs'
-import { defineBlueprint, defineDocumentFunction } from '@sanity/blueprints'
+import {
+  defineBlueprint,
+  defineDocumentFunction,
+  defineRobotToken,
+  defineScheduledFunction,
+} from '@sanity/blueprints'
 import { ANALYSE_THRESHOLD } from './packages/demand/src/constants.ts'
 
 /**
@@ -72,6 +77,23 @@ export default defineBlueprint({
         filter: `_type == 'testimonialSubmission' && status in ['accepted', 'rejected'] && delta::changedAny(status)`,
         projection: '{_id, runId, status, rejectionReason, photoAlt}',
       },
+    }),
+    // The catalogue sync's own credential; removing it here revokes it.
+    defineRobotToken({
+      name: 'catalogue-sync-robot',
+      memberships: [{ resourceType: 'project', resourceId: project, roleNames: ['editor'] }],
+    }),
+    // A scheduled Function's context has no project or dataset, so the env
+    // names them. Daily is the Free plan's shortest schedule.
+    defineScheduledFunction({
+      name: 'catalogue-sync',
+      src: './apps/functions/catalogue-sync',
+      project,
+      timeout: 60,
+      event: { expression: '0 4 * * *' },
+      timezone: 'UTC',
+      robotToken: '$.resources.catalogue-sync-robot.token',
+      env: { SANITY_PROJECT_ID: project, SANITY_DATASET: 'production' },
     }),
   ],
 })

@@ -12,7 +12,7 @@ export type TestimonialsClient = Pick<SanityClient, 'createIfNotExists' | 'patch
 /** Dotted, so an anonymous client in this public dataset can never read it. */
 export const submissionId = (runId: string) => `${SUBMISSION_TYPE}.${runId}`
 export const testimonialId = (runId: string) => `${TESTIMONIAL_TYPE}-${runId}`
-/** The product mirror's id, as `packages/sanity/scripts/sync.ts` builds it. */
+/** The product mirror's id, as `productId` in `@repo/sanity/catalogue-sync` builds it. */
 export const productDocId = (apiId: string) => `product-${apiId}`
 
 const productRefs = (apiIds: readonly string[], weak: boolean) =>

@@ -121,6 +121,26 @@ A manual run of the analysis is the same call the Function makes:
 curl -X POST https://<host>/api/demand/analyse -H "Authorization: Bearer $DEMAND_ANALYSE_SECRET"
 ```
 
+## Catalogue sync
+
+Sanity keeps a product document for every API product and a category document for every API category, so editors can link to them (`docs/adr/0003-sanity-mirrors-api-products-and-categories.md`). The catalogue sync keeps their mirrored fields in line with the API. The store never reads those fields; it renders from the API.
+
+`catalogue-sync` runs every day at 04:00 UTC. It writes only fields that changed, so on a day when the API changed nothing it writes nothing, and the webhook does not fire. A product or category the API stops returning is flagged "No longer in the API", never deleted. If an API request fails, the run writes nothing and fails. If the API returns no products or no categories, nothing is flagged.
+
+It authenticates with the robot token `catalogue-sync-robot`, which the blueprint declares, so no Sanity token is set by hand. Its two API variables are set once after the first deploy:
+
+```sh
+pnpm exec sanity functions env add catalogue-sync API_BASE_URL <the same value as on Vercel>
+pnpm exec sanity functions env add catalogue-sync API_BYPASS_TOKEN <the same value as on Vercel>
+pnpm exec sanity functions logs catalogue-sync   # "created 0, updated 0, flagged 0" on a quiet day
+```
+
+`sanity functions test catalogue-sync` reads the API and writes nothing. To sync by hand, for example into a local dataset, run the script, which does the same work as the Function:
+
+```sh
+pnpm --filter @repo/sanity sync
+```
+
 ## Environment
 
 Only `.env.example` files are committed. Copy them and fill in the values.
