@@ -39,12 +39,12 @@ No new dependency beyond `@ai-sdk/workflow`, `@ai-sdk/react`, `@vercel/blob`, `b
 footer "Submit a testimonial" ──▶ /testimonials#share  (chat opens)
 /testimonials ──▶ CTA "Submit a testimonial" ──▶ chat loads on demand, URL gains #share
 
-first photo or message ──▶ POST /api/testimonials/chat ──▶ start(testimonial)  run bound to the session id
+name in the greeting, or a message ──▶ POST /api/testimonials/chat ──▶ start(testimonial)  run bound to the session id
    loop: agent.stream() until it ends or asks for a widget ─▶ await the turn hook (or 30 min idle)
          next message or widget answer ──▶ POST /api/testimonials/chat/<runId>/message ──▶ resumeHook
      photo widget ─▶ browser downsizes, re-encodes (EXIF gone) ─▶ private Blob
-     analysePhoto ─▶ quality, safety, ranked products ─▶ confirm widget (Yes / pick another)
-     name, quote (≤ 240, visitor approves the exact text), consent ─▶ checkText
+     analysePhoto (run by the run on every new photo) ─▶ quality, safety, ranked products ─▶ confirm widget (Yes / pick another)
+     quote about the named product (≤ 240, visitor approves the exact text), consent ─▶ checkText
      email ─▶ sendCode ─▶ code widget ─▶ verifyCode
      submit ─▶ testimonialSubmission.<id> written (private) ─▶ "Thanks, an editor will look at it"
    idle 30 min before submit ─▶ blobs deleted, run ends
@@ -66,7 +66,7 @@ first photo or message ──▶ POST /api/testimonials/chat ──▶ start(tes
 
 - `app/testimonials/page.tsx`, prerendered. A heading, one line of intro, a "Submit a testimonial" button, and the wall below.
 - The wall is every published testimonial with consent, newest first, `"use cache"` and tagged `sanity:testimonial` through `sanityFetch`. Page 1 renders in the shell. Further pages are prerendered at `/testimonials/page/[n]` with `generateStaticParams` from the count, and a `beforeFiles` rewrite sends `/testimonials?page=:n` there, the way `/search?category=` is rewritten in `next.config.ts`. No `searchParams` read, so no dynamic hole. `WALL_PAGE_SIZE` is a named constant.
-- The chat is a client island loaded with `next/dynamic` only when it opens. The button opens it and sets `#share`; a small client component opens it on load when the URL already has `#share`. The server render is the same either way. The chat opens ready to use, with no second click: a greeting written into the component, not generated, and the photo widget already shown. Opening it starts no run. The visitor's first action, choosing a photo or sending a message, starts the run, and from then on the agent leads.
+- The chat is a client island loaded with `next/dynamic` only when it opens. The button opens it and sets `#share`; a small client component opens it on load when the URL already has `#share`. The server render is the same either way. The chat opens ready to use, with no second click: a greeting written into the component, not generated, and the name widget already shown. Opening it starts no run. The visitor's first action, entering a name or sending a message, starts the run, and from then on the agent leads: the photo, the product, then the quote, asked about the confirmed product by its name.
 - The footer gains one link, "Submit a testimonial", to `/testimonials#share`. Every "Submit a testimonial" link elsewhere in the store points there too, so the chat is open on arrival; only the button on `/testimonials` itself opens it in place. The copy lives in `siteSettings` with a shipped fallback, like the footer text.
 - Metadata, the sitemap and the Markdown route (`/md/testimonials`) include the page. `robots` follows E20.
 
@@ -94,7 +94,7 @@ How a turn works under `WorkflowAgent`:
 | Tool | Kind | What happens |
 |---|---|---|
 | `askPhoto` | client | an upload button; the browser downsizes to `MAX_PHOTO_EDGE` px and re-encodes as JPEG through a canvas, which drops EXIF including location, then uploads to private Blob with `uploadPresigned` and answers the pathname. The upload is aborted after `UPLOAD_TIMEOUT_SECONDS`, because a refused request is retried silently |
-| `analysePhoto` | server | reads the blob with `get(pathname, { access: 'private' })`; one vision call with structured output: quality (score, issues), safety (ok, reason), `markVisible` (the store's mark, see below), up to three candidate products (id, confidence), a suggested alt text. Runs against the catalogue from `getAllProducts` |
+| `analysePhoto` | server | run by the run itself on every new photo, before the model's next call, because the model does not reliably call it after an upload; the model gets the result as this tool's. Reads the blob with `get(pathname, { access: 'private' })`; one vision call with structured output: quality (score, issues), safety (ok, reason), `markVisible` (the store's mark, see below), up to three candidate products (id, confidence), a suggested alt text. Runs against the catalogue from `getAllProducts` |
 | `confirmProduct` | client | the top candidate's card with its API image: Yes, or "Pick another" showing the next two and a catalogue picker. The next two matter: the vision model confuses near-identical products (the notebooks, the book; the tumbler and the travel mug), and the right one is then almost always second |
 | `askName` | client | a text input; the name is published exactly as typed |
 | `reviewQuote` | client | an editable text area holding the visitor's words, or the agent's shorter suggestion when they run over 240 characters; the visitor approves the exact text |
@@ -231,20 +231,20 @@ Done on a throwaway branch (PR 17): Workflow 5 with Cache Components and the E13
 
 ## Acceptance criteria
 
-- [ ] `/testimonials` is prerendered; the build output shows it static, and the chat's JavaScript is not in its first load.
-- [ ] `/testimonials#share` from the footer opens the chat ready to use, with no further click; opening it starts no run, the first photo or message does.
-- [ ] A visitor can go from photo to submitted in one conversation, and a reload in the middle resumes it.
-- [ ] A photo of a catalogue product with its mark visible is identified and confirmed; a black item without the mark, or with the triangle pointing down, is not matched; a photo of something else leads to one retry, then the picker; the submission records which.
-- [ ] An unsafe or unusable photo never reaches Sanity or an editor.
-- [ ] A name or quote with abusive words is refused with a request to rephrase.
-- [ ] The published quote is exactly the text the visitor approved.
-- [ ] The email is verified by code before submit, never published, and gone from the submission after the decision.
-- [ ] Anonymous GROQ returns nothing for `testimonialSubmission`.
-- [ ] Accept publishes a testimonial with the photo in Sanity; it appears on the product page, the wall and in the favourites ranking without a redeploy.
-- [ ] Reject sends the email with the reason; the blob is deleted after either decision and after an abandoned conversation.
-- [ ] Off-topic requests are declined.
-- [ ] No secret is prefixed `NEXT_PUBLIC_`, sent to the browser or logged.
-- [ ] `pnpm verify` passes.
+- [x] `/testimonials` is prerendered; the build output shows it static, and the chat's JavaScript is not in its first load.
+- [x] `/testimonials#share` from the footer opens the chat ready to use, with no further click; opening it starts no run, the first name or message does.
+- [x] A visitor can go from photo to submitted in one conversation, and a reload in the middle resumes it.
+- [x] A photo of a catalogue product with its mark visible is identified and confirmed; a black item without the mark, or with the triangle pointing down, is not matched; a photo of something else leads to one retry, then the picker; the submission records which.
+- [x] An unsafe or unusable photo never reaches Sanity or an editor.
+- [x] A name or quote with abusive words is refused with a request to rephrase.
+- [x] The published quote is exactly the text the visitor approved.
+- [x] The email is verified by code before submit, never published, and gone from the submission after the decision.
+- [x] Anonymous GROQ returns nothing for `testimonialSubmission`.
+- [x] Accept publishes a testimonial with the photo in Sanity; it appears on the product page, the wall and in the favourites ranking without a redeploy.
+- [x] Reject sends the email with the reason; the blob is deleted after either decision and after an abandoned conversation.
+- [x] Off-topic requests are declined.
+- [x] No secret is prefixed `NEXT_PUBLIC_`, sent to the browser or logged.
+- [x] `pnpm verify` passes.
 
 ## Deferred
 
