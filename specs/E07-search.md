@@ -20,7 +20,7 @@ Branch: `epic/E07-search`. Depends on: E02, E03, E04 (ProductCard). Blocks: E13.
 
 - `searchParams` is a Promise; the page passes it unawaited into `<SearchResults />` so the shell (heading, form) stays static. The page component itself must not `await searchParams` at the top level, or the whole route becomes dynamic.
 - Layout: h1 "Search", the form, then `<Suspense fallback={<ResultsSkeleton />}><SearchResults searchParams={searchParams} /></Suspense>`. `SearchResults` reads the URL for the first render only and hands it to `SearchResultsView`, a client component that searches the catalogue from then on. `SearchCatalogue` loads the catalogue, the featured products, the categories and one server-rendered card per product into the shell; every read is cached, so it is part of the prerender. The skeleton only shows on the route's first load.
-- `generateMetadata` awaits `searchParams`: title `q ? \`Results for "${q}"\` : 'Search'`; `robots: { index: false }` when `q` is set. Metadata streams, so `/search` stays a partial prerender.
+- `generateMetadata` awaits `searchParams`: title `q ? \`Results for “${q}”\` : 'Search'`; `robots: { index: false }` when `q` is set. Metadata streams, so `/search` stays a partial prerender.
 - No `opengraph-image.tsx` for search; the root image applies by Next's file convention.
 
 ### Search form `components/search/search-form.tsx`
@@ -43,7 +43,7 @@ A client component. `components/search/search-results.tsx` is the server half: i
 - Category only: that category's products, capped at 5.
 - Query present, no explicit `category`: category-aware expansion. If `expandQuery` matches a category, the first 5 hits and the first 5 products of that category are merged with `mergeResults`; otherwise the first 5 hits.
 - Query plus an explicit `category`: the hits in that category, capped at 5.
-- Heading, plain path: "N results" / "1 result" when there are at most 5, otherwise "Showing 5 of {total} results". Expansion path: "N results" when nothing was cut, otherwise "Showing the first 5". A visually hidden status line, always in the page, carries `aria-live="polite"` and says what a search found: the heading's text, or the empty state's headline when it found nothing, so a first search and a search with no results are announced too.
+- Heading, plain path: "N results" / "1 result" when there are at most 5, otherwise "Showing 5 of {total} results". Expansion path: "N results" when nothing was cut, otherwise "Showing the first 5". A visually hidden status line, always in the page, carries `aria-live="polite"` and says what a search found: the heading's text followed by `for “{q}”` when there is a query, or the empty state's headline when it found nothing, so a first search, a search with no results and two searches with the same count are all announced.
 - Whenever results were capped, add the nudge "Pick a category to narrow it down".
 - The hint "Includes everything in {Category}" appears only when the category added at least one product the search did not find *and* none of the category's products were cut by the cap; otherwise it would promise something the grid does not show.
 - The featured products stay on the page below the results in their own section, headed by `siteSettings.searchPage.featuredHeading` ("Explore our featured products" by default), set apart like the favourites row so they never read as results: 5 of `getFeaturedProducts({ limit: 5, min: 5 })`. A search opens the results above them and pushes them down; clearing it slides them back up. Five, not more: asking for more than the API flags as featured would fill the section with ordinary catalogue products.
@@ -61,8 +61,8 @@ Shared by the home page and search, so the column count and the `sizes` string c
 
 One component, three variants, all of them ending in category chips (links to `/search?category=<slug>`, name only).
 
-- `q` only: `No products match "{q}"`, the chips and a "Clear search" link to `/search`. This branch is E13's hook point (record the miss); E07 marks it with a one-line comment and no code.
-- `q` and category: `No products match "{q}" in {Category}`, a "Search all categories" link to `/search?q={q}`, then the chips.
+- `q` only: `No products match “{q}”`, the chips and a "Clear search" link to `/search`. This branch is E13's hook point (record the miss); E07 marks it with a one-line comment and no code.
+- `q` and category: `No products match “{q}” in {Category}`, a "Search all categories" link to `/search?q={q}`, then the chips.
 - Category only: `Nothing in {Category} right now`, then the chips.
 
 ### Loading state
