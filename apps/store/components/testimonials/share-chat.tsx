@@ -34,8 +34,8 @@ let opening = CLOSED
 
 /**
  * Starts the GET when the chat opens, in parallel with the panel's code
- * rather than after it, and forgets it when the chat closes, so opening it
- * again reads the conversation again.
+ * rather than after it, and forgets it when the chat closes or the link
+ * leaves the page, so opening it again reads the conversation again.
  */
 function readOpening(): Opening {
   const open = window.location.hash === SHARE_HASH
@@ -44,13 +44,18 @@ function readOpening(): Opening {
 }
 
 // Back from the entry `openChat` pushes fires `popstate`, which a browser
-// need not follow with `hashchange`.
+// need not follow with `hashchange`. While nothing listens, a navigation can
+// change the fragment unseen, so the last listener leaving forgets the opening.
+let listening = 0
 function subscribe(onChange: () => void) {
+  listening += 1
   window.addEventListener('hashchange', onChange)
   window.addEventListener('popstate', onChange)
   return () => {
     window.removeEventListener('hashchange', onChange)
     window.removeEventListener('popstate', onChange)
+    listening -= 1
+    if (listening === 0) opening = CLOSED
   }
 }
 
