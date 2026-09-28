@@ -173,11 +173,11 @@ export async function runServerTool(
       })
     }
     case 'checkText': {
-      if (!draft.name || !draft.quote) return done(draft, { error: 'Ask for the name and the quote first.' })
+      if (!draft.name) return done(draft, { error: 'Ask for the name first.' })
       const check = await steps.screen(draft)
       return done(applyToolResult(draft, { tool: 'checkText', output: check }), {
         nameOk: check.nameOk,
-        quoteOk: check.quoteOk,
+        ...(draft.quote !== null && { quoteOk: check.quoteOk }),
       })
     }
     case 'sendCode': {
@@ -234,6 +234,43 @@ export function toolCallMessage(calls: readonly ToolCallRef[]): ModelMessage {
  * `analysePhoto` after an upload.
  */
 export const needsAnalysis = (draft: Draft) => draft.photo !== null && draft.analysis === null
+
+/**
+ * Whether the name, the quote or the alt text changed since the last text
+ * check. The run checks them before the model speaks, so the agent never
+ * repeats a name or a quote the check would refuse.
+ */
+export const needsTextCheck = (draft: Draft) => draft.name !== null && draft.textCheck === null
+
+/** The name and the quote a text check cleared from the draft. */
+export function refusedTexts(before: Draft, after: Draft): { name?: string; quote?: string } {
+  return {
+    ...(before.name !== null && after.name === null && { name: before.name }),
+    ...(before.quote !== null && after.quote === null && { quote: before.quote }),
+  }
+}
+
+/** Put in place of a refused text, so the model cannot repeat it. */
+export const WITHHELD = '[withheld]'
+
+/**
+ * The messages with every value that is exactly a refused text, or the
+ * greeting's message naming it, replaced by `WITHHELD`. Whole values only, so
+ * a short name never blanks out other words.
+ */
+export function withhold(messages: readonly ModelMessage[], texts: readonly string[]): ModelMessage[] {
+  if (texts.length === 0) return [...messages]
+  const hidden = new Map(texts.flatMap((text) => [[text, WITHHELD], [nameMessage(text), nameMessage(WITHHELD)]]))
+  const walk = (value: unknown): unknown => {
+    if (typeof value === 'string') return hidden.get(value) ?? value
+    if (Array.isArray(value)) return value.map(walk)
+    if (value && typeof value === 'object') {
+      return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, walk(inner)]))
+    }
+    return value
+  }
+  return messages.map((message) => walk(message) as ModelMessage)
+}
 
 /** What a widget the visitor typed past answers. */
 export const TYPED_INSTEAD = { visitorTypedInstead: true } as const

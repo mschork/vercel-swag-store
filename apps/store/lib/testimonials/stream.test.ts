@@ -75,6 +75,19 @@ describe('turnChunks', () => {
     expect((await collect(parts, 5)).map((chunk) => chunk.type)).toEqual(['data-draft', 'finish-step', 'finish'])
   })
 
+  it('turns a step break into the end of one step and the start of the next', async () => {
+    const chunks = await collect([{ type: 'text-start', id: 't' }, { type: 'step-break' }, { type: 'turn-end' }])
+    expect(chunks.map((chunk) => chunk.type)).toEqual([
+      'start',
+      'start-step',
+      'text-start',
+      'finish-step',
+      'start-step',
+      'finish-step',
+      'finish',
+    ])
+  })
+
   it('finishes when the stream ends without a turn-end', async () => {
     expect((await collect([{ type: 'text-start', id: 't' }])).at(-1)).toEqual({ type: 'finish' })
   })

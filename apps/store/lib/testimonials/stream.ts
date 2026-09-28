@@ -14,7 +14,13 @@ import { getRun } from 'workflow/api'
 
 export type DraftPart = { type: 'data-draft'; id: 'draft'; data: DraftView; transient: true }
 export type TurnEndPart = { type: 'turn-end' }
-export type RunPart = ModelCallStreamPart | DraftPart | TurnEndPart
+/**
+ * Ends the step and starts the next. Each model call opens with `reset-step`,
+ * which drops the parts of the current step, so text the run writes before a
+ * model call stays only behind a step break.
+ */
+export type StepBreakPart = { type: 'step-break' }
+export type RunPart = ModelCallStreamPart | DraftPart | TurnEndPart | StepBreakPart
 
 /** How often a streaming route checks whether the run failed, which leaves its stream open. */
 export const RUN_CHECK_MS = 3000
@@ -45,6 +51,9 @@ export function turnChunks(skip = 0): TransformStream<RunPart, UIMessageChunk> {
       if (part.type === 'turn-end') {
         finish(controller)
         controller.terminate()
+      } else if (part.type === 'step-break') {
+        emit(controller, { type: 'finish-step' })
+        emit(controller, { type: 'start-step' })
       } else if (part.type === 'data-draft') {
         emit(controller, part)
       } else {
