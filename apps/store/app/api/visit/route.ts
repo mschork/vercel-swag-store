@@ -1,5 +1,5 @@
 import { getSession, sessionStore } from '@/lib/session/store'
-import { completeVisit } from '@/lib/visit/draw'
+import { catalogueIds, completeVisit } from '@/lib/visit/draw'
 import type { OpenedVisit } from '@/lib/visit/open'
 
 /**
@@ -9,10 +9,14 @@ import type { OpenedVisit } from '@/lib/visit/open'
  * next render.
  */
 export async function DELETE(): Promise<Response> {
+  // The catalogue read never rejects, so it can start before the session's.
+  const productIds = catalogueIds()
   const session = await getSession()
   if (session === 'unavailable' || !(await sessionStore.clearVisit(session.sid))) {
     return Response.json({ ok: false }, { status: 503 })
   }
-  const visit: OpenedVisit = { stock: await completeVisit(session.sid, null) }
+  const visit: OpenedVisit = {
+    stock: await completeVisit(session.sid, null, (await productIds) ?? []),
+  }
   return Response.json(visit)
 }

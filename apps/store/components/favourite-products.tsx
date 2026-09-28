@@ -8,24 +8,21 @@ import { MAX_FAVOURITES, getFavourites } from '@/lib/home'
  * entries per product, and the API supplies every fact on the card, so a
  * product the API has dropped never appears. Both reads are cached and
  * tagged, so this stays part of the static shell and a published entry
- * refreshes it. Renders nothing without testimonials. The cart page renders
- * the same row with `buyable`: the whole ranking goes into the shell, and the
- * browser shows the first products the visitor can buy (`BuyableItems`). The
- * home page's row shows every favourite, and an unavailable one is badged
- * there rather than dropped.
+ * refreshes it. Renders nothing without testimonials. The home page's row
+ * shows the first `limit` favourites, and an unavailable one is badged there
+ * rather than dropped; `grid` lays the products out, a plain grid by default.
  */
 export async function FavouriteProducts({
   heading,
-  addCard,
-  buyable = false,
+  limit = MAX_FAVOURITES,
+  grid = (products) => <ProductGrid products={products} variant="favourites" />,
 }: {
   heading: string
-  /** Makes each card an add button in place of a link (`ProductGrid`). */
-  addCard?: (product: Product, card: ReactNode, className: string) => ReactNode
-  /** Shows only products the visitor can buy. */
-  buyable?: boolean
+  /** How many favourites to read; `null` reads the whole ranking. */
+  limit?: number | null
+  grid?: (products: readonly Product[]) => ReactNode
 }) {
-  const products = await getFavourites(buyable ? null : MAX_FAVOURITES)
+  const products = await getFavourites(limit)
   if (products.length === 0) return null
   return (
     <section
@@ -36,12 +33,7 @@ export async function FavouriteProducts({
       <h2 id="favourites-heading" className="text-2xl font-medium tracking-tight">
         {heading}
       </h2>
-      <ProductGrid
-        products={products}
-        variant={addCard ? 'addCards' : 'favourites'}
-        addCard={addCard}
-        buyableLimit={buyable ? MAX_FAVOURITES : undefined}
-      />
+      {grid(products)}
     </section>
   )
 }

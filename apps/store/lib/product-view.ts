@@ -1,6 +1,6 @@
 import 'server-only'
 import type { TestimonialsForProductQueryResult } from '@repo/sanity/generated'
-import { findCategory } from '@/lib/api/categories'
+import { getCategoryNames } from '@/lib/api/categories'
 import { findProduct } from '@/lib/api/products'
 import { PRODUCT_HEADINGS_FALLBACK, type ProductHeadings } from '@/lib/content/fallbacks'
 import {
@@ -37,18 +37,22 @@ export async function getProductView(
   slug: string,
   { stega = true }: { stega?: boolean } = {},
 ): Promise<ProductView | null> {
-  const product = await findProduct(slug)
+  // The category names and the settings do not depend on the product, so
+  // they load beside it; on a cache miss that saves a round trip.
+  const [product, nameOf, settings] = await Promise.all([
+    findProduct(slug),
+    getCategoryNames(),
+    stega ? getSiteSettings() : getSiteSettingsForMetadata(),
+  ])
   if (!product) return null
-  const [category, document, testimonials, settings] = await Promise.all([
-    findCategory(product.category),
+  const [document, testimonials] = await Promise.all([
     getProductDocument(product.id, { stega }),
     getTestimonialsForProduct(product.id, { stega }),
-    stega ? getSiteSettings() : getSiteSettingsForMetadata(),
   ])
   const copy = settings?.productPage
   return {
     product: mergeProduct(product, document),
-    categoryName: category?.name ?? product.category,
+    categoryName: nameOf(product.category),
     testimonials: testimonials ?? [],
     headings: {
       about: copy?.aboutHeading || PRODUCT_HEADINGS_FALLBACK.about,
