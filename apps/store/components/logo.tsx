@@ -18,7 +18,7 @@ export function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2 font-medium" aria-label="Vercel Swag Store, home">
       <Triangle />
-      <span className="hidden sm:inline">Vercel Swag Store</span>
+      <span translate="no" className="hidden sm:inline">Vercel Swag Store</span>
     </Link>
   )
 }

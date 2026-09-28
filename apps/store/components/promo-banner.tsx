@@ -15,7 +15,7 @@ export async function PromoBanner() {
         <p className="py-2 text-sm leading-5">
           <strong className="font-medium">{promotion.title}.</strong>{' '}
           {promotion.description} {promotion.discountPercent}% off with code{' '}
-          <code className="ml-0.5 border-x-4 border-y border-accent-fg/70 px-1.5 py-px font-mono text-sm">
+          <code translate="no" className="ml-0.5 border-x-4 border-y border-accent-fg/70 px-1.5 py-px font-mono text-sm">
             {promotion.code}
           </code>
         </p>

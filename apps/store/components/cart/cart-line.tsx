@@ -168,6 +168,7 @@ export function CartLine({
               defaultValue={line.quantity}
               pending={pending}
               labelClassName="sr-only md:not-sr-only"
+              itemName={line.name}
               onCommit={change}
             />
             <Button

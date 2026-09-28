@@ -13,7 +13,7 @@ import type { TestimonialsForProductQueryResult } from '@repo/sanity/generated'
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="grid gap-3 border-t border-border pt-6 md:grid-cols-2 md:gap-12">
-      <h2 className="text-xl font-medium tracking-tight">{title}</h2>
+      <h2 className="text-xl font-medium tracking-tight text-balance">{title}</h2>
       <div className="flex flex-col gap-3">{children}</div>
     </section>
   )
@@ -124,7 +124,7 @@ export function Testimonials({
   const [second] = row
   return (
     <section className="flex flex-col gap-5 border-t border-border pt-6">
-      <h2 className="text-xl font-medium tracking-tight">{heading}</h2>
+      <h2 className="text-xl font-medium tracking-tight text-balance">{heading}</h2>
       <WideEntry entry={feature} />
       {row.length === 1 && second ? (
         <div className="mt-3">
@@ -176,7 +176,7 @@ export function Faqs({
         {faqs.map((faq) => (
           <li key={faq._id}>
             <details className="disclosure group py-3">
-              <summary className="flex cursor-pointer list-none items-center gap-3 font-medium">
+              <summary className="flex cursor-pointer list-none items-center gap-3 font-medium underline-offset-4 hover:underline">
                 <Chevron />
                 {faq.question}
               </summary>

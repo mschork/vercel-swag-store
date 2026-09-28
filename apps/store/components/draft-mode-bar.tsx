@@ -28,7 +28,7 @@ export function DraftModeBar() {
       <span aria-hidden="true">·</span>
       <a
         href={`/api/draft-mode/disable?redirect=${encodeURIComponent(pathname)}`}
-        className="underline underline-offset-4"
+        className="underline underline-offset-4 hover:decoration-2"
       >
         Exit
       </a>

@@ -31,7 +31,7 @@ export default async function CheckoutPage() {
         <p className="max-w-prose text-fg-secondary">{CHECKOUT_FALLBACK.body}</p>
       )}
       <p>
-        <Link href="/" className="underline underline-offset-4">
+        <Link href="/" className="underline underline-offset-4 hover:decoration-2">
           {label}
         </Link>
       </p>

@@ -93,6 +93,8 @@
 @layer base {
   html {
     color-scheme: light dark;
+    /* A light wash in place of iOS's grey flash, from the theme's own colour. */
+    -webkit-tap-highlight-color: color-mix(in srgb, var(--color-fg) 8%, transparent);
   }
   body {
     background-color: var(--color-bg);

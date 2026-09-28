@@ -10,10 +10,10 @@ export default function NotFound() {
       <h1 className="text-3xl font-medium tracking-tight">Page not found</h1>
       <p className="text-fg-secondary">There is nothing at this address.</p>
       <p className="flex gap-4">
-        <Link href="/" className="underline underline-offset-4">
+        <Link href="/" className="underline underline-offset-4 hover:decoration-2">
           Go home
         </Link>
-        <Link href="/search" className="underline underline-offset-4">
+        <Link href="/search" className="underline underline-offset-4 hover:decoration-2">
           Search products
         </Link>
       </p>

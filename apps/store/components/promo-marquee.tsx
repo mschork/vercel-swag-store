@@ -35,6 +35,9 @@ export function PromoMarquee({ children }: { children: React.ReactNode }) {
     <div
       ref={strip}
       tabIndex={scrolling ? 0 : undefined}
+      // A focus stop pauses the scroll, so it needs a name of its own.
+      role={scrolling ? 'group' : undefined}
+      aria-label={scrolling ? 'Scrolling promotion' : undefined}
       className="group/marquee w-full overflow-hidden outline-none focus-visible:outline-2 focus-visible:outline-accent-fg"
       style={scrolling ? { '--marquee-duration': `${width / PX_PER_SECOND}s` } as React.CSSProperties : undefined}
     >

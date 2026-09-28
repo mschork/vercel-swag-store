@@ -64,7 +64,7 @@ export async function ProductListing({
         />
       ) : (
         <EmptyState title={`Nothing in ${category?.name ?? 'the store'} right now`}>
-          <Link href="/products" className="underline underline-offset-4">
+          <Link href="/products" className="underline underline-offset-4 hover:decoration-2">
             See all products
           </Link>
         </EmptyState>
