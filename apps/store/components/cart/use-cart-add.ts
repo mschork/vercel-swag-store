@@ -7,8 +7,8 @@ import {
   type AddToCartState,
   type CartActionResult,
 } from '@/app/cart/actions'
-import { useCartCount } from '@/components/cart/cart-count'
-import { useVisit } from '@/components/visit/visit-provider'
+import { useCartCountActions } from '@/components/cart/cart-count'
+import { useVisitActions } from '@/components/visit/visit-provider'
 import {
   addsInFlight,
   publishLines,
@@ -43,8 +43,8 @@ export function prepareOnIntent(): void {
  * takes an answer the native form post brought.
  */
 export function useCartAdd() {
-  const { confirm, setAdding } = useCartCount()
-  const { confirmLine, setAdding: setAddingFor } = useVisit()
+  const { confirm, setAdding } = useCartCountActions()
+  const { confirmLine, setAdding: setAddingFor } = useVisitActions()
 
   const confirmAnswer = useCallback(
     (result: CartActionResult) => {

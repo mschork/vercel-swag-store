@@ -25,19 +25,22 @@ export async function generateStaticParams() {
 }
 
 /**
- * Settled above any boundary, so an unknown slug is a real 404, as in
- * `productFor` on the product page.
+ * The category and its Sanity document, settled above any boundary, so an
+ * unknown slug is a real 404, as in `productFor` on the product page. The
+ * document is read by the requested slug beside the category, not after it.
  */
-async function categoryFor(params: Props['params']) {
+async function categoryFor(
+  params: Props['params'],
+  documentFor: typeof getCategoryDocument,
+) {
   const { slug } = await params
-  const category = await findCategory(slug)
+  const [category, document] = await Promise.all([findCategory(slug), documentFor(slug)])
   if (!category) notFound()
-  return category
+  return { category, document }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const category = await categoryFor(params)
-  const document = await getCategoryDocumentForMetadata(category.slug)
+  const { category, document } = await categoryFor(params, getCategoryDocumentForMetadata)
   return {
     title: category.name,
     // The editor's intro when there is one; read without stega, because a
@@ -52,8 +55,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  * call is `null`, and the page then shows the fallback intro.
  */
 export default async function CategoryPage({ params }: Props) {
-  const category = await categoryFor(params)
-  const document = await getCategoryDocument(category.slug)
+  const { category, document } = await categoryFor(params, getCategoryDocument)
   return (
     <ProductListing
       category={category}
