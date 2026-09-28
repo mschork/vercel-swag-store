@@ -192,10 +192,31 @@ describe('matchesQuery', () => {
     expect(matchesQuery(mug, 'kitch')).toBe(true)
   })
 
-  it('matches a substring, not words: a category name matches nothing', () => {
+  it('matches a substring of a word: a category name matches nothing', () => {
     expect(matchesQuery(mug, 'mugs')).toBe(false)
-    expect(matchesQuery(mug, 'black ceramic')).toBe(true)
-    expect(matchesQuery(mug, 'black mug')).toBe(false)
+    expect(matchesQuery(mug, 'cera')).toBe(true)
+  })
+
+  it('matches several words in either order, each in any field', () => {
+    expect(matchesQuery(mug, 'black mug')).toBe(true)
+    expect(matchesQuery(mug, 'mug black')).toBe(true)
+    expect(matchesQuery(mug, 'mug   coffee kitchen')).toBe(true)
+  })
+
+  it('needs every word', () => {
+    expect(matchesQuery(mug, 'black umbrella')).toBe(false)
+  })
+
+  it('finds the canvas tote for "canvas bag" and "bag canvas"', () => {
+    const tote = {
+      id: 'bag_001',
+      name: 'Black Canvas Tote Bag',
+      description: 'A sturdy tote.',
+      tags: ['bags'],
+      category: 'bags',
+    }
+    expect(matchesQuery(tote, 'canvas bag')).toBe(true)
+    expect(matchesQuery(tote, 'bag canvas')).toBe(true)
   })
 })
 

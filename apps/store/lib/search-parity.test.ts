@@ -4,12 +4,13 @@ import { matchesQuery } from './search'
 
 /**
  * Holds `matchesQuery` against the API's own `search`, which the store no
- * longer calls. Hits the live API: opt in with `API_INTEGRATION=1 pnpm test`,
- * as in `lib/api/integration.test.ts`.
+ * longer calls, for one-word queries; several words match word by word, which
+ * the API does not. Hits the live API: opt in with
+ * `API_INTEGRATION=1 pnpm test`, as in `lib/api/integration.test.ts`.
  */
 const QUERIES = [
-  'mug', 'MUG', 'hat', 'hats', 'tee', 'black', 'steel', 'desk mat', 'black mug',
-  'pen', 'bag', 'bags', 't-shirt', 'tshirt', 'sock', 'umbrella', 'x', 'ab', 'café',
+  'mug', 'MUG', 'hat', 'hats', 'tee', 'black', 'steel', 'pen', 'bag', 'bags',
+  't-shirt', 'tshirt', 'sock', 'umbrella', 'x', 'ab', 'café',
 ]
 
 describe.skipIf(!process.env.API_INTEGRATION)('search parity with the API', () => {
