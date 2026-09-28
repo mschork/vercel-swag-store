@@ -21,8 +21,7 @@ import {
 } from '@/lib/cart/coalesce'
 import { inOrder } from '@/lib/cart/in-order'
 import type { Line, LineChange } from '@/lib/cart/lines'
-import { CART_MAX_QUANTITY } from '@/lib/quantity'
-import { exceedsDraw, tooMany } from '@/lib/visit/limits'
+import { allows, refusal } from '@/lib/visit/remaining'
 import { cn } from '@/lib/utils'
 
 /**
@@ -34,7 +33,9 @@ import { cn } from '@/lib/utils'
  * `draw` is what the visit says there is of the product, and caps the stepper.
  * A line already above it keeps its real quantity in the control, because a
  * row that silently showed fewer than the cart holds would be a lie; it says
- * how many there are instead, and the summary refuses to check out.
+ * how many there are instead, and the summary refuses to check out. With no
+ * draw the product is not available: the stepper takes no input and only
+ * Remove works.
  *
  * A `pending` line holds an add that is still saving. It says so, and its
  * stepper and Remove take no input until the add answers.
@@ -75,8 +76,7 @@ export function CartLine({
   onRemove: (productId: string) => void
 }) {
   const { productId } = line
-  const overDrawn = exceedsDraw(line.quantity, draw)
-  const message = error ?? (overDrawn && draw !== null ? tooMany(draw) : null)
+  const message = error ?? (allows(draw, line.quantity) ? null : refusal(draw, 0))
   const [changing, startTransition] = useTransition()
   const { confirm } = useCartCountActions()
   const { confirmLine } = useVisitActions()
@@ -168,8 +168,9 @@ export function CartLine({
             <QuantityStepper
               name="quantity"
               min={1}
-              max={Math.max(draw ?? CART_MAX_QUANTITY, line.quantity)}
+              max={Math.max(draw ?? line.quantity, line.quantity)}
               defaultValue={line.quantity}
+              disabled={draw === null}
               pending={pending}
               labelClassName="sr-only md:not-sr-only"
               itemName={line.name}

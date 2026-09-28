@@ -9,7 +9,7 @@ import { productIdOf, readVisit } from './visit'
  */
 const STOCK_LINE = /^(In stock|Only \d+ left|This item is out of stock at the moment\. Check back soon\.)$/
 
-/** Where "Only N left" starts (`LOW_STOCK_THRESHOLD` in lib/stock-status.ts). */
+/** Where "Only N left" starts (`LOW_STOCK_THRESHOLD` in lib/visit/remaining.ts). */
 const LOW_STOCK = 5
 /** The stepper's limit before the draw reaches it (`CART_MAX_QUANTITY` in lib/quantity.ts). */
 const CART_MAX = 99

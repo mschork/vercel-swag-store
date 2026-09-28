@@ -598,6 +598,7 @@ describe('placeOrder', () => {
   })
 
   it('forgets the mirror of a cart with lines and lands on the checkout page, without an API call', async () => {
+    await seedVisit({ tshirt_001: 5 })
     await seedCart('live', cart(2))
 
     await expect(redirectTarget(placeOrder)).resolves.toBe('/checkout')
@@ -637,11 +638,20 @@ describe('placeOrder', () => {
     expect(await visitStock()).toEqual({ tshirt_001: 1 })
     expect(await mirror()).toMatchObject({ token: 'live', totalItems: 2 })
   })
+
+  it('sends a cart holding a product the visit has no draw for back to the cart', async () => {
+    await seedCart('live', cart(2))
+
+    await expect(redirectTarget(placeOrder)).resolves.toBe('/cart')
+
+    expect(await mirror()).toMatchObject({ token: 'live', totalItems: 2 })
+    expectNoApiCall()
+  })
 })
 
 describe('the visit caps every write', () => {
   it('refuses an add above the draw before calling the API', async () => {
-    await seedCart('live')
+    await seedCart('live', cart(0))
     drawFor.mockResolvedValue(3)
 
     await expect(
@@ -683,7 +693,7 @@ describe('the visit caps every write', () => {
   })
 
   it('allows an add up to the draw, with one call', async () => {
-    await seedCart('live')
+    await seedCart('live', cart(0))
     drawFor.mockResolvedValue(3)
     mocked.addCartItem.mockResolvedValue(cart(3))
 
@@ -701,7 +711,7 @@ describe('the visit caps every write', () => {
   })
 
   it('sets a line the API left above the draw back, keeps the capped cart and says why', async () => {
-    await seedCart('live')
+    await seedCart('live', cart(0))
     drawFor.mockResolvedValue(2)
     // The cart already held two from an earlier visit, so one more is three.
     mocked.addCartItem.mockResolvedValue(cart(3))
@@ -723,7 +733,7 @@ describe('the visit caps every write', () => {
 
   it('keeps the over-drawn cart when it cannot be set back', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
-    await seedCart('live')
+    await seedCart('live', cart(0))
     drawFor.mockResolvedValue(2)
     mocked.addCartItem.mockResolvedValue(cart(3))
     mocked.updateCartItem.mockRejectedValue(new ApiError(0, 'TIMEOUT', 'timed out', '/cart'))
@@ -751,25 +761,45 @@ describe('the visit caps every write', () => {
     expectNoApiCall()
   })
 
+  it('refuses an add past what remains, counting what the mirror holds, before calling the API', async () => {
+    await seedCart('live', cart(2))
+    drawFor.mockResolvedValue(3)
+
+    await expect(
+      addToCart(null, form({ productId: 'tshirt_001', quantity: '2' })),
+    ).resolves.toEqual({ ok: false, error: 'Only 1 more available.' })
+    expectNoApiCall()
+  })
+
+  it('names the cart when it already holds the whole draw', async () => {
+    await seedCart('live', cart(3))
+    drawFor.mockResolvedValue(3)
+
+    await expect(
+      addToCart(null, form({ productId: 'tshirt_001', quantity: '1' })),
+    ).resolves.toEqual({ ok: false, error: 'All 3 are in your cart.' })
+    expectNoApiCall()
+  })
+
   it('refuses an add when the draw is unknown, before calling the API', async () => {
     await seedCart('live')
     drawFor.mockResolvedValue(null)
 
     await expect(
       addToCart(null, form({ productId: 'tshirt_001', quantity: '1' })),
-    ).resolves.toEqual({ ok: false, error: ADD_FAILED })
+    ).resolves.toEqual({ ok: false, error: 'This product is not available right now.' })
     expectNoApiCall()
   })
 
-  it('holds a quantity change to no draw when the draw is unknown', async () => {
+  it('refuses a quantity change when the draw is unknown, before calling the API', async () => {
     await seedCart('live')
     drawFor.mockResolvedValue(null)
-    mocked.updateCartItem.mockResolvedValue(cart(5))
 
-    await expect(updateQuantity('tshirt_001', 5)).resolves.toMatchObject({
-      ok: true,
-      totalItems: 5,
+    await expect(updateQuantity('tshirt_001', 1)).resolves.toEqual({
+      ok: false,
+      error: 'This product is not available right now.',
     })
+    expectNoApiCall()
   })
 })
 

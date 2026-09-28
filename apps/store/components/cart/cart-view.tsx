@@ -22,7 +22,7 @@ import {
   type LineChange,
 } from '@/lib/cart/lines'
 import { useHydrated } from '@/lib/use-hydrated'
-import { exceedsDraw } from '@/lib/visit/limits'
+import { allows } from '@/lib/visit/remaining'
 import { cn } from '@/lib/utils'
 import { CartLine } from './cart-line'
 import { CartSummary } from './cart-summary'
@@ -44,7 +44,8 @@ import { EMPTY_CART_HEADING, EmptyCart } from './empty-cart'
  * server read for `serverDraws` until it does. While hydrating it is always
  * `serverDraws`, so the first client render repeats the server's HTML. A row
  * above its cap, which happens when the visit was reset while the cart lived
- * on, says so and keeps Checkout disabled until it is reduced or removed.
+ * on, or without a draw, says so and keeps Checkout disabled until it is
+ * reduced or removed.
  *
  * A removal says so in a status line, and focus moves from the Remove button
  * that leaves with its row to the row that takes its place, or to the empty
@@ -101,9 +102,7 @@ export function CartView({
   const failures = inFlight.failures.filter(
     (failure) => !shownLines.some((line) => line.productId === failure.productId),
   )
-  const overDrawn = shownLines.some((line) =>
-    exceedsDraw(line.quantity, drawOf(line.productId)),
-  )
+  const blocked = shownLines.some((line) => !allows(drawOf(line.productId), line.quantity))
 
   const remove = (productId: string) => {
     const index = shownLines.findIndex((line) => line.productId === productId)
@@ -165,7 +164,7 @@ export function CartView({
             totalItems={totalItems}
             subtotal={subtotal}
             currency={currency}
-            blocked={overDrawn}
+            blocked={blocked}
             saving={saving}
           />
         </div>

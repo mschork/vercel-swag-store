@@ -16,7 +16,7 @@ import { toLines, type Line } from '@/lib/cart/lines'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
 import { getSession, sessionStore } from '@/lib/session/store'
 import { drawFor } from '@/lib/visit/draw'
-import { exceedsDraw, tooMany } from '@/lib/visit/limits'
+import { allows, refusal } from '@/lib/visit/remaining'
 import { afterOrder } from '@/lib/visit/visit'
 
 /**
@@ -100,10 +100,9 @@ export async function addToCart(
   }
 
   // Checked before the write, so an add the visit cannot cover costs no call.
-  // Without a draw there is no limit to hold the add to, so it is refused.
   const draw = await drawFor(productId, session)
-  if (draw === null) return { ok: false, error: copy.failed }
-  if (exceedsDraw(quantity, draw)) return { ok: false, error: tooMany(draw) }
+  const inCart = session.cart?.lines.find((line) => line.productId === productId)?.quantity ?? 0
+  if (!allows(draw, inCart + quantity)) return { ok: false, error: refusal(draw, inCart) }
   const add = (token: string) => () => addCartItem(token, productId, quantity)
 
   // Into a new cart: its 404 can only mean the product, so nothing retries.
@@ -157,9 +156,7 @@ export async function updateQuantity(
   const token = session.cart?.token
   if (!token) return expired()
   const draw = await drawFor(input.data.productId, session)
-  if (exceedsDraw(input.data.quantity, draw) && draw !== null) {
-    return { ok: false, error: tooMany(draw) }
-  }
+  if (!allows(draw, input.data.quantity)) return { ok: false, error: refusal(draw, 0) }
   return write(
     session.sid,
     token,
@@ -191,7 +188,7 @@ export async function removeItem(productId: string): Promise<CartActionResult> {
 /**
  * The demo order, bound to the Checkout form. It orders the cart mirror,
  * which the store trusts, so it makes no API call. Only a mirror with lines,
- * each within its draw, can be ordered; anything else goes back to `/cart`,
+ * each with a draw it is within, can be ordered; anything else goes back to `/cart`,
  * which shows why. Ordering forgets the mirror, then lowers the draws: the API
  * has no clear-cart endpoint and its cart expires on its own. It is the one
  * action that refreshes, so the layout's badge and seed stop showing the cart
@@ -203,10 +200,9 @@ export async function placeOrder(): Promise<void> {
   const lines = session.cart?.lines ?? []
   if (lines.length === 0) redirect('/cart')
   const { visit } = session
-  const overDrawn = lines.some((line) =>
-    exceedsDraw(line.quantity, visit?.stock[line.productId] ?? null),
-  )
-  if (overDrawn) redirect('/cart')
+  if (lines.some((line) => !allows(visit?.stock[line.productId] ?? null, line.quantity))) {
+    redirect('/cart')
+  }
   // A mirror the store could not forget is an order not placed.
   if (!(await sessionStore.clearCart(session.sid))) redirect('/cart')
   if (visit) await sessionStore.setStock(session.sid, afterOrder(visit.stock, lines))
@@ -292,13 +288,13 @@ async function capLine(
   draw: number | null | undefined,
 ): Promise<{ cart: Cart; error?: string }> {
   if (draw === undefined || draw === null) return { cart }
-  if (!exceedsDraw(lineOf(cart, productId).quantity, draw)) return { cart }
+  if (allows(draw, lineOf(cart, productId).quantity)) return { cart }
   try {
-    return { cart: await updateCartItem(token, productId, draw), error: tooMany(draw) }
+    return { cart: await updateCartItem(token, productId, draw), error: refusal(draw, 0) }
   } catch (error) {
     unstable_rethrow(error)
     console.error('[cart] could not set an over-drawn line back', error)
-    return { cart, error: tooMany(draw) }
+    return { cart, error: refusal(draw, 0) }
   }
 }
 

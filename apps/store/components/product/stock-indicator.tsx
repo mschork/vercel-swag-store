@@ -1,4 +1,4 @@
-import type { StockStatus, StockTone } from '@/lib/stock-status'
+import type { PageStock, StockTone } from '@/lib/visit/remaining'
 
 const TONE_CLASS: Record<StockTone, string> = {
   success: 'text-success',
@@ -11,7 +11,7 @@ const TONE_CLASS: Record<StockTone, string> = {
 export function StockIndicator({
   status,
 }: {
-  status: Pick<StockStatus, 'label' | 'tone'>
+  status: Pick<PageStock, 'label' | 'tone'>
 }) {
   return (
     <p className={`text-sm leading-6 font-medium ${TONE_CLASS[status.tone]}`}>
