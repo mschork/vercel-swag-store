@@ -23,10 +23,12 @@ function searchHref(query: string, category: string): string {
 /**
  * The live form. Typing, Enter, the button and the category select all apply
  * the search at once: the results view searches the catalogue in the browser,
- * and the URL is replaced with `history.replaceState`, which Next's
+ * and the URL is written through the History API, which Next's
  * `useSearchParams` follows, so a search is still a link and a reload
- * reproduces it, with a single history entry. A link that changes the URL,
- * such as a category chip or "Clear search", is applied the same way.
+ * reproduces it. A submit or a new category adds a history entry, so Back
+ * returns to the search before it; typing replaces the current entry
+ * (specs/E07-search.md). A link that changes the URL, such as a category chip
+ * or "Clear search", is applied the same way.
  *
  * Reads `useSearchParams`, so it sits inside a Suspense boundary whose
  * fallback is the same markup rendered by the server (`search-form.tsx`).
@@ -67,11 +69,18 @@ export function SearchFormClient({
     setQuery(urlQuery)
   }, [urlQuery, urlCategory, apply])
 
-  const search = (nextQuery: string, nextCategory: string) => {
+  const search = (
+    nextQuery: string,
+    nextCategory: string,
+    { step = false }: { step?: boolean } = {},
+  ) => {
     const trimmed = nextQuery.trim()
     applied.current = trimmed
     apply({ query: trimmed, category: nextCategory })
-    window.history.replaceState(null, '', searchHref(trimmed, nextCategory))
+    const href = searchHref(trimmed, nextCategory)
+    const same = href === `${window.location.pathname}${window.location.search}`
+    if (step && !same) window.history.pushState(null, '', href)
+    else window.history.replaceState(null, '', href)
   }
 
   const onQueryChange = (value: string) => {
@@ -98,10 +107,10 @@ export function SearchFormClient({
       onSubmit={(event) => {
         event.preventDefault()
         press()
-        search(query, urlCategory)
+        search(query, urlCategory, { step: true })
       }}
       onQueryChange={onQueryChange}
-      onCategoryChange={(value) => search(query, value)}
+      onCategoryChange={(value) => search(query, value, { step: true })}
     />
   )
 }

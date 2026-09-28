@@ -118,6 +118,38 @@ test('the category select filters, and combined with text it narrows', async ({
   await expect(results(page)).toContainText('No products match "bucket" in Bags')
 })
 
+test('Back returns to the previous category and the previous submitted search', async ({
+  page,
+}) => {
+  await page.goto('/')
+  // The server's form looks the same and ignores the select until hydration.
+  await page.goto('/search', { waitUntil: 'networkidle' })
+  await categorySelect(page).selectOption('hats')
+  await expect(page).toHaveURL('/search?category=hats')
+  await categorySelect(page).selectOption('bags')
+  await expect(page).toHaveURL('/search?category=bags')
+
+  await page.goBack()
+  await expect(page).toHaveURL('/search?category=hats')
+  await expect(categorySelect(page)).toHaveValue('hats')
+
+  // Typing replaces the entry; the submit after it adds one.
+  await queryBox(page).fill('black')
+  await expect(page).toHaveURL('/search?q=black&category=hats')
+  await queryBox(page).fill('be')
+  await page.getByRole('button', { name: 'Search' }).click()
+  await expect(page).toHaveURL('/search?q=be&category=hats')
+
+  await page.goBack()
+  await expect(page).toHaveURL('/search?q=black&category=hats')
+  await expect(queryBox(page)).toHaveValue('black')
+
+  await page.goBack()
+  await expect(page).toHaveURL('/search')
+  await page.goBack()
+  await expect(page).toHaveURL('/')
+})
+
 test('clearing the query keeps the category', async ({ page }) => {
   await page.goto('/search')
   await categorySelect(page).selectOption('hats')
