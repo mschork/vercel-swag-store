@@ -231,7 +231,7 @@ export async function testimonial(first: TurnInput | null): Promise<TestimonialR
       inputs.next().then((next) => (next.done ? null : next.value)),
       sleep(IDLE_TIMEOUT).then(() => null),
     ])
-    if (!input) break
+    if (!input || input.kind === 'close') break
 
     const received = receiveTurn(conversation, pending, input, context)
     input = null

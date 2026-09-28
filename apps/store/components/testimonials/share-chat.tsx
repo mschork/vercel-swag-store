@@ -16,9 +16,18 @@ const SharePanel = dynamic(() => loadPanel().then((module) => module.SharePanel)
 
 const preloadPanel = () => void loadPanel()
 
+/** The last close, which a new opening waits for so it never reads the conversation it ended. */
+let ending: Promise<unknown> = Promise.resolve()
+
+/** Ends the session's conversation; `keepalive` lets it finish if the page goes away. */
+function endCurrentChat() {
+  ending = fetch('/api/testimonials/chat', { method: 'DELETE', keepalive: true }).catch(() => null)
+}
+
 /** The session's conversation still going; `null` for none or a failed read. */
 function requestCurrentChat(): Promise<CurrentChat> {
-  return fetch('/api/testimonials/chat')
+  return ending
+    .then(() => fetch('/api/testimonials/chat'))
     .then((response) => (response.ok ? (response.json() as Promise<CurrentChat>) : null))
     .catch(() => null)
 }
@@ -91,7 +100,9 @@ export function ShareChat({ label, products }: { label: string; products: ChatPr
     wasOpen.current = open
   }, [open])
 
+  /** The Close button: ends the conversation, so the next opening starts afresh. */
   function close() {
+    endCurrentChat()
     const { pathname, search } = window.location
     window.history.replaceState(window.history.state, '', `${pathname}${search}`)
     // `replaceState` fires no event, and the fragment is what `open` reads.

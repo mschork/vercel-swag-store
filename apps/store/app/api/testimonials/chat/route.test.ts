@@ -10,6 +10,17 @@ const m = vi.hoisted(() => ({
   openChat: vi.fn(),
   saveChat: vi.fn(),
   turnResponse: vi.fn(() => new Response('turn')),
+  chatEnded: vi.fn(),
+  endChat: vi.fn(),
+  resume: vi.fn(),
+}))
+const errors = vi.hoisted(() => ({
+  HookNotFoundError: class HookNotFoundError extends Error {
+    static is(error: unknown) {
+      return error instanceof Error && error.name === 'HookNotFoundError'
+    }
+    name = 'HookNotFoundError'
+  },
 }))
 
 vi.mock('@/lib/testimonials/guard', () => ({
@@ -19,13 +30,20 @@ vi.mock('@/lib/testimonials/guard', () => ({
   refuse: (status: number, error: string) => Response.json({ error }, { status }),
 }))
 vi.mock('workflow/api', () => ({ start: m.start }))
-vi.mock('@/workflows/testimonial', () => ({ testimonial: 'testimonial' }))
+vi.mock('workflow/errors', () => errors)
+vi.mock('@/workflows/testimonial', () => ({ testimonial: 'testimonial', turnHook: { resume: m.resume } }))
 vi.mock('@/lib/session/store', () => ({
-  sessionStore: { currentChat: m.currentChat, openChat: m.openChat, saveChat: m.saveChat },
+  sessionStore: {
+    currentChat: m.currentChat,
+    openChat: m.openChat,
+    saveChat: m.saveChat,
+    chatEnded: m.chatEnded,
+    endChat: m.endChat,
+  },
 }))
 vi.mock('@/lib/testimonials/stream', () => ({ turnResponse: m.turnResponse }))
 
-const { GET, POST } = await import('./route')
+const { DELETE, GET, POST } = await import('./route')
 const url = 'http://localhost/api/testimonials/chat'
 const messages = [{ id: 'u1', role: 'user', parts: [{ type: 'text', text: 'Hello' }] }]
 
@@ -38,6 +56,9 @@ beforeEach(() => {
   m.currentChat.mockResolvedValue('wrun_1')
   m.openChat.mockResolvedValue(true)
   m.saveChat.mockResolvedValue(true)
+  m.chatEnded.mockResolvedValue(false)
+  m.endChat.mockResolvedValue(true)
+  m.resume.mockResolvedValue({ runId: 'wrun_1' })
 })
 
 describe('GET /api/testimonials/chat', () => {
@@ -93,5 +114,39 @@ describe('POST /api/testimonials/chat', () => {
     m.openChat.mockResolvedValue(false)
     expect((await post({ messages })).status).toBe(503)
     expect(m.cancel).toHaveBeenCalled()
+  })
+})
+
+describe('DELETE /api/testimonials/chat', () => {
+  const del = () => DELETE(new Request(url, { method: 'DELETE' }))
+
+  it('marks the conversation ended, then tells the run to close', async () => {
+    expect((await del()).status).toBe(204)
+    expect(m.endChat).toHaveBeenCalledWith('wrun_1')
+    expect(m.resume).toHaveBeenCalledWith('testimonial-turn:wrun_1', { kind: 'close' })
+    expect(m.endChat.mock.invocationCallOrder[0]).toBeLessThan(m.resume.mock.invocationCallOrder[0]!)
+  })
+
+  it('does nothing for no conversation or one already ended', async () => {
+    m.currentChat.mockResolvedValue(null)
+    expect((await del()).status).toBe(204)
+    m.currentChat.mockResolvedValue('wrun_1')
+    m.chatEnded.mockResolvedValue(true)
+    expect((await del()).status).toBe(204)
+    expect(m.resume).not.toHaveBeenCalled()
+  })
+
+  it('answers 204 when the run takes no more turns, such as a submitted one', async () => {
+    m.resume.mockRejectedValue(new errors.HookNotFoundError('gone'))
+    expect((await del()).status).toBe(204)
+  })
+
+  it('answers 503 when the session store fails', async () => {
+    m.currentChat.mockResolvedValue('unavailable')
+    expect((await del()).status).toBe(503)
+    m.currentChat.mockResolvedValue('wrun_1')
+    m.endChat.mockResolvedValue(false)
+    expect((await del()).status).toBe(503)
+    expect(m.resume).not.toHaveBeenCalled()
   })
 })
