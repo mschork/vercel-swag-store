@@ -114,7 +114,7 @@ export function listingMarkdown({
   siteUrl,
 }: {
   category: Category | null
-  intro?: string | null
+  intro: string
   products: readonly Product[]
   categories: readonly Category[]
   siteUrl: string
@@ -123,7 +123,7 @@ export function listingMarkdown({
   const others = categories.filter((entry) => entry.slug !== category?.slug)
   return document([
     ...opening(category?.name ?? 'All products', path, 'View this page in the store', siteUrl),
-    intro ? escapeMarkdown(intro) : null,
+    escapeMarkdown(intro),
     products.length > 0
       ? productList(products, siteUrl)
       : `Nothing in ${escapeMarkdown(category?.name ?? 'the store')} right now.`,

@@ -9,6 +9,7 @@ import { testimonialsCopy } from '@/lib/testimonials/copy'
 import { SHARE_PATH } from '@/lib/testimonials/share'
 import { ResetVisit } from './visit/reset-visit'
 import { Container } from './container'
+import { MarkdownLink } from './markdown-link'
 
 /**
  * The year is computed on the server inside a cached component so the shell
@@ -87,6 +88,7 @@ export function Footer() {
             <ShareLink />
           </p>
         ) : null}
+        <MarkdownLink />
         <ResetVisit />
       </Container>
     </footer>
