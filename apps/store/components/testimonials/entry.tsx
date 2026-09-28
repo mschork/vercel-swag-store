@@ -34,10 +34,13 @@ export function EntryPhoto({
   entry,
   sizes,
   preload = false,
+  fetchPriority,
 }: {
   entry: TestimonialEntry
   sizes: string
   preload?: boolean
+  /** Set with `preload`, which alone leaves the browser's default priority. */
+  fetchPriority?: 'high'
 }) {
   if (!entry.photo) return null
   return (
@@ -48,6 +51,7 @@ export function EntryPhoto({
         fill
         sizes={sizes}
         preload={preload}
+        fetchPriority={fetchPriority}
         className="object-cover"
       />
     </div>

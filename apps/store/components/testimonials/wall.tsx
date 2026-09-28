@@ -7,6 +7,8 @@ import { Attribution, EntryPhoto, Quote } from './entry'
 
 /** The first row at the widest grid; the photos are the page's largest paint. */
 const PRELOAD_COUNT = 4
+/** The photos in view first: one column on a phone, two on a tablet. */
+const HIGH_PRIORITY_COUNT = 2
 
 /**
  * Every published testimonial with consent, newest first, as cards: the
@@ -37,6 +39,7 @@ export function TestimonialWall({
               entry={entry}
               sizes="(min-width: 1024px) 22vw, (min-width: 768px) 30vw, (min-width: 640px) 45vw, 90vw"
               preload={index < PRELOAD_COUNT}
+              fetchPriority={index < HIGH_PRIORITY_COUNT ? 'high' : undefined}
             />
             <div className="flex flex-col gap-1">
               <Quote className="text-sm">{entry.quote}</Quote>
