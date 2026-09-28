@@ -25,17 +25,21 @@ export interface Searchable extends Placed {
 }
 
 /**
- * Whether a product matches a query the way the API's `search` does: the
- * query, ignoring case, is a substring of the name, the description or a tag.
- * `search-parity.test.ts` holds this against the API's own answers.
+ * Whether a product matches a query: every word of it, ignoring case, is a
+ * substring of the name, the description or a tag, in any order. For one word
+ * this is the API's `search`, and `search-parity.test.ts` holds it against the
+ * API's own answers; for several, the API matches the whole query as one
+ * substring and finds nothing for "canvas bag" (specs/E07-search.md).
  */
 export function matchesQuery(product: Searchable, query: string): boolean {
-  const needle = query.toLowerCase()
-  return (
-    product.name.toLowerCase().includes(needle) ||
-    product.description.toLowerCase().includes(needle) ||
-    product.tags.some((tag) => tag.toLowerCase().includes(needle))
+  const fields = [product.name, product.description, ...product.tags].map((field) =>
+    field.toLowerCase(),
   )
+  return query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((word) => fields.some((field) => field.includes(word)))
 }
 
 /** What the results region shows for one search. */

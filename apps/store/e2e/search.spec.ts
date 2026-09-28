@@ -79,6 +79,14 @@ test('typing three characters searches without pressing Enter', async ({
   await expect(cards(page).first()).toContainText('Black Beanie')
 })
 
+test('several words match in either order', async ({ page }) => {
+  await gotoLive(page, 'bag canvas')
+  await expect(cards(page).first()).toContainText('Black Canvas Tote Bag')
+  await queryBox(page).fill('canvas bag')
+  await expect(page).toHaveURL('/search?q=canvas+bag')
+  await expect(cards(page).first()).toContainText('Black Canvas Tote Bag')
+})
+
 test('two characters do not search', async ({ page }) => {
   await gotoLive(page, 'hat')
   await expect(cards(page)).toHaveCount(3)
