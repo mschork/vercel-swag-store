@@ -35,6 +35,8 @@ export type TurnInput =
   /** The name entered in the greeting, which starts the run. */
   | { kind: 'name'; name: string }
   | { kind: 'tools'; answers: ClientAnswer[]; email?: string; code?: string }
+  /** The visitor closed the chat: the conversation ends as when idle. */
+  | { kind: 'close' }
 
 export interface ToolCallRef {
   toolCallId: string
@@ -300,7 +302,7 @@ export const nameMessage = (name: string) => `My name is ${name}.`
 export function receiveTurn(
   conversation: Conversation,
   pending: readonly ToolCallRef[],
-  input: TurnInput,
+  input: Exclude<TurnInput, { kind: 'close' }>,
   context: TurnContext,
 ): TurnReceived | null {
   const typedInstead = () => pending.map((call) => ({ call, output: TYPED_INSTEAD }))
