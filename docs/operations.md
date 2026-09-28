@@ -184,7 +184,8 @@ There is no AI Gateway key. On Vercel the AI SDK authenticates with the deployme
 | `SANITY_STUDIO_DATASET` | Sanity dataset, `production` |
 | `SANITY_STUDIO_PREVIEW_ORIGIN` | Optional. The store the Presentation tool frames; defaults to the production store |
 
-The Studio holds no API credential. Its product picker reads the `catalogProduct`
-documents mirrored into Sanity, so nothing in the Studio ever calls the Swag Store API.
+The Studio holds no API credential. Its product and category references point at
+the product and category documents mirrored into Sanity, so nothing in the Studio
+ever calls the Swag Store API.
 
 The store fails at startup with a clear message if `API_BASE_URL` or `API_BYPASS_TOKEN` is missing (`apps/store/lib/env.ts`, called from `instrumentation.ts`). The Studio fails at build or dev time if its project id or dataset is missing.
