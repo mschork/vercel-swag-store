@@ -121,18 +121,27 @@ describe('listingMarkdown', () => {
 
   it('says so when a category is empty', () => {
     expect(
-      listingMarkdown({ category: bags, products: [], categories: [bags], siteUrl: SITE }),
+      listingMarkdown({
+        category: bags,
+        intro: 'Bags.',
+        products: [],
+        categories: [bags],
+        siteUrl: SITE,
+      }),
     ).toContain('Nothing in Bags right now.')
   })
 
   it('is the whole catalogue without a category', () => {
     const markdown = listingMarkdown({
       category: null,
+      intro: 'Everything in the store.',
       products: [tee, tote],
       categories: [tees, bags],
       siteUrl: SITE,
     })
-    expect(markdown).toContain('# All products\n\n[View this page in the store](https://store.test/products)')
+    expect(markdown).toContain(
+      '# All products\n\n[View this page in the store](https://store.test/products)\n\nEverything in the store.',
+    )
     expect(markdown).toContain('- [Tote](https://store.test/products/tote.md): $20.00')
     expect(markdown).not.toContain('[All products](')
   })

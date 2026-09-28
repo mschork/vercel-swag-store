@@ -1,3 +1,4 @@
+import { listingIntro } from '@/lib/content/fallbacks'
 import { findCategory, getCategories } from '@/lib/api/categories'
 import { getProductsInCategory } from '@/lib/api/products'
 import { publicEnv } from '@/lib/env.public'
@@ -23,7 +24,7 @@ export async function GET(_request: Request, { params }: RouteContext<'/md/categ
   ])
   const body = listingMarkdown({
     category,
-    intro: document?.intro,
+    intro: listingIntro(category, document?.intro),
     products,
     categories,
     siteUrl: publicEnv.NEXT_PUBLIC_SITE_URL,

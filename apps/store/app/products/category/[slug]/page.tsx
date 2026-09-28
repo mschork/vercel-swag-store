@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { ProductListing } from '@/components/listing/product-listing'
 import { findCategory, getCategories } from '@/lib/api/categories'
-import { categoryIntroFallback } from '@/lib/content/fallbacks'
+import { listingIntro } from '@/lib/content/fallbacks'
 import { categoryPath } from '@/lib/listing'
 import { markdownAlternate } from '@/lib/markdown/paths'
 import {
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: category.name,
     // The editor's intro when there is one; read without stega, because a
     // description is exported to machines.
-    description: document?.intro || categoryIntroFallback(category.name),
+    description: listingIntro(category, document?.intro),
     alternates: markdownAlternate(categoryPath(category.slug)),
   }
 }
@@ -57,9 +57,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CategoryPage({ params }: Props) {
   const { category, document } = await categoryFor(params, getCategoryDocument)
   return (
-    <ProductListing
-      category={category}
-      intro={document?.intro || categoryIntroFallback(category.name)}
-    />
+    <ProductListing category={category} intro={listingIntro(category, document?.intro)} />
   )
 }

@@ -67,8 +67,17 @@ export const LISTING_FALLBACK = {
   intro: 'Filter through our great range of swag products.',
 } as const
 
-/** A category's listing intro and description, until its document has an intro. */
-export const categoryIntroFallback = (name: string) => `Browse all ${name} in the store.`
+/**
+ * A product listing's intro and description: the editor's line when there is
+ * one, the shipped one for that listing otherwise.
+ */
+export function listingIntro(
+  category: { name: string } | null,
+  edited: string | null | undefined,
+): string {
+  if (edited) return edited
+  return category ? `Browse all ${category.name} in the store.` : LISTING_FALLBACK.intro
+}
 
 /**
  * The heading over the search page's default grid, matching
