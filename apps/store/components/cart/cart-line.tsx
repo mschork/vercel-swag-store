@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useRef, useTransition } from 'react'
+import { flushSync } from 'react-dom'
 import {
   removeItem,
   updateQuantity,
@@ -19,6 +20,7 @@ import {
   QUANTITY_PAUSE_MS,
   type Coalescer,
 } from '@/lib/cart/coalesce'
+import { settleChange, startChange } from '@/lib/cart/changes-in-flight'
 import { inOrder } from '@/lib/cart/in-order'
 import type { Line, LineChange } from '@/lib/cart/lines'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
@@ -79,22 +81,31 @@ export function CartLine({
   const message = error ?? (overDrawn && draw !== null ? tooMany(draw) : null)
   const [changing, startTransition] = useTransition()
   const { confirm } = useCartCountActions()
-  const { confirmLine } = useVisitActions()
+  const { confirmCart } = useVisitActions()
 
-  const save = (quantity: number, action: () => Promise<CartActionResult>) =>
+  const save = (quantity: number, action: () => Promise<CartActionResult>) => {
+    // Outside the transition, so every stock count shows the change while it
+    // saves, including a product page the visitor returns to meanwhile.
+    startChange(productId, quantity)
     startTransition(async () => {
       onChange({ productId, quantity })
       // Held with the transition, so the draft gives way to the server's
       // lines only once they arrive, and never if a newer draft replaced it.
       onDraft(productId, null, quantity)
       const result = await inOrder(action)
+      // One commit, so no stock count shows the old quantity between the
+      // answer and the change it replaces.
+      flushSync(() => {
+        if (result.lines) confirmCart(result.lines)
+        settleChange(productId, quantity)
+      })
       startTransition(() => {
         if (result.totalItems !== undefined) confirm(result.totalItems)
         if (result.lines) onSaved(result.lines)
-        if (result.line) confirmLine(result.line.productId, result.line.quantity)
         onResult(productId, result.ok ? null : result.error)
       })
     })
+  }
 
   // The coalescer outlives renders; it calls whichever `save` is current.
   const saveQuantity = useRef<(quantity: number) => void>(() => {})

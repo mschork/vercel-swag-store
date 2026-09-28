@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import type { Cart } from '@/lib/api/types'
 import { product } from '@/test/helpers'
-import { applyDrafts, applyLineChange, cartTotals, setDraft, toLines, type Line } from './lines'
+import {
+  applyDrafts,
+  applyLineChange,
+  cartTotals,
+  quantitiesOf,
+  setDraft,
+  toLines,
+  type Line,
+} from './lines'
 
 const cart: Cart = {
   items: [
@@ -118,5 +126,30 @@ describe('drafts', () => {
   it('a late removal never wipes a newer draft', () => {
     expect(setDraft({ a: 5 }, 'a', null, 4)).toEqual({ a: 5 })
     expect(setDraft({ a: 4 }, 'a', null, 4)).toEqual({})
+  })
+})
+
+describe('quantitiesOf', () => {
+  const current = { tshirt_001: 2, mug_001: 1 }
+
+  it('keys the quantities of a whole cart by product id', () => {
+    expect(
+      quantitiesOf(current, [
+        { productId: 'tshirt_001', quantity: 3 },
+        { productId: 'pen_001', quantity: 1 },
+      ]),
+    ).toEqual({ tshirt_001: 3, pen_001: 1 })
+  })
+
+  it('forgets every product when the cart is empty', () => {
+    expect(quantitiesOf(current, [])).toEqual({})
+  })
+
+  it('keeps the same object when nothing changed, so an effect can settle', () => {
+    const same = [
+      { productId: 'mug_001', quantity: 1 },
+      { productId: 'tshirt_001', quantity: 2 },
+    ]
+    expect(quantitiesOf(current, same)).toBe(current)
   })
 })
