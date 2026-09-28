@@ -56,7 +56,7 @@ The rule is what the page shows, minus anything per visitor: no stock, no promot
 
 ## Discovery
 
-Each page that has a Markdown version carries `<link rel="alternate" type="text/markdown">` in its head, through `alternates.types` in its metadata. There is no visible control.
+Each page that has a Markdown version carries `<link rel="alternate" type="text/markdown">` in its head, through `alternates.types` in its metadata. The footer links to it as "This page for agents"; a page without a Markdown version shows no link.
 
 ## Crawlers `app/robots.ts`
 
@@ -66,7 +66,7 @@ The Markdown and `llms.txt` stay fetchable by anyone who asks: a reader, or an a
 
 ## Out of scope
 
-A theme switcher; a visible link or button for the Markdown; `llms-full.txt`; content negotiation; blocking crawlers by user agent on the server; `Review`, `Organization` and `availability` markup; Markdown for search, cart and checkout.
+A theme switcher; `llms-full.txt`; content negotiation; blocking crawlers by user agent on the server; `Review`, `Organization` and `availability` markup; Markdown for search, cart and checkout.
 
 ## Acceptance
 
