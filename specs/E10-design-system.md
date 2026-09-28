@@ -112,7 +112,7 @@ Squint test on each page in both themes; text-mask test; 390 and 1440 screenshot
 - [x] axe: zero serious or critical issues on `/`, a PDP, `/search`, `/cart`.
 - [x] No hard-coded colour values outside `globals.css`.
 - [x] Only the listed shadcn components exist under `components/ui`.
-- [ ] Lighthouse accessibility 100 and best practices 100 on all routes.
+- [x] Lighthouse accessibility 100 and best practices 100 on all routes.
 - [x] The hero image is the LCP element on `/` at 390 and 1440, and `/` is still a partial prerender with the banner as its only dynamic hole.
 
 ## Out of scope

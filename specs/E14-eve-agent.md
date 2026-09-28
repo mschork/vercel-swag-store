@@ -1,5 +1,7 @@
 # E14 Eve agent (stretch)
 
+Not built. The spec stays as the design, should the agent be picked up.
+
 Branch: `epic/E14-eve-agent`. Depends on: E13 (slices 1 to 3 at least). Blocks: nothing. Attempt only after E13 is merged and E12 is release-ready; it must never delay the release.
 
 ## Goal

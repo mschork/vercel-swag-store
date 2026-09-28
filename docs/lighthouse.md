@@ -1,5 +1,25 @@
 # Lighthouse
 
+## Production, every route, 28 Sep 2026
+
+`https://vercel-swag-store-ms.vercel.app`, Lighthouse 12 CLI, headless Chrome, mobile, one run per route.
+
+| Route | Accessibility | Best practices |
+|---|---|---|
+| `/` | 100 | 100 |
+| `/products` | 100 | 100 |
+| `/products/category/bottles` | 100 | 100 |
+| `/products/minimal-black-backpack` | 100 | 100 |
+| `/search` | 100 | 100 |
+| `/search?q=black` | 100 | 100 |
+| `/cart` | 100 | 100 |
+| `/checkout` | 100 | 100 |
+| `/testimonials` | 100 | 100 |
+
+`/testimonials` first scored 96: `target-size` failed on the product links under a testimonial that names several products, 18 px tall with 22 px of clear space. They are 24 px tall since PR 61, and the page scores 100.
+
+Home page performance, three runs after live editing (E17) shipped: 99, 99 and 98, largest paint 2.3 s, blocking time 0 to 10 ms, layout shift 0. The run before E17, below, scored 96 to 98.
+
 ## Production, 17 Sep 2026
 
 `https://vercel-swag-store-ms.vercel.app/`, Lighthouse 13 in Chrome DevTools, mobile. Three runs over the evening scored 96, 97 and 98 for performance; the table records the lowest.

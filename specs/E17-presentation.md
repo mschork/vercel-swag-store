@@ -92,9 +92,9 @@ Answer on a throwaway branch and record the answers in the PR description.
 - [x] Every route keeps its rendering mode; only `/api/draft-mode/enable` and `/api/draft-mode/disable` are new.
 - [x] A visitor's HTML, JavaScript and response headers are unchanged apart from `frame-ancestors` when the env is set: no stega characters, no overlay script, no token anywhere in the payload.
 - [x] With `SANITY_API_READ_TOKEN` unset the store builds and runs, the enable route answers 404, and nothing else differs.
-- [ ] In Presentation, every editable item listed above opens its field on click, and a draft edit shows in the page without publishing.
-- [ ] Lighthouse on the production home page is within noise of the run before this epic.
-- [ ] README, `AGENTS.md`, ADR 0005, `decisions.md` and `callout.md` written.
+- [x] In Presentation, every editable item listed above opens its field on click, and a draft edit shows in the page without publishing.
+- [x] Lighthouse on the production home page is within noise of the run before this epic.
+- [x] README, `AGENTS.md`, ADR 0005, `decisions.md` and `callout.md` written.
 
 ## Set up by hand
 

@@ -41,13 +41,13 @@ Keep the mirror current without anyone running a script. The product documents a
 
 ## Acceptance criteria
 
-- [ ] `sanity blueprints deploy` succeeds; `catalogue-sync` appears in the Functions list with the daily schedule, and its robot token exists.
+- [x] `sanity blueprints deploy` succeeds; `catalogue-sync` appears in the Functions list with the daily schedule, and its robot token exists.
 - [ ] A manual run against an unchanged API writes no document.
 - [ ] A manual run after a mirrored field is changed by hand restores that field, sets `syncedAt` on that document only, and leaves its editorial fields as they were.
 - [ ] A product the API no longer returns is flagged `missing`, not deleted; a failed API request or an empty answer writes nothing.
-- [ ] No API variable exists in the Studio environment or the blueprint file.
-- [ ] Vitest covers the comparison (unchanged, changed, new, missing, returned) and the empty-answer guard.
-- [ ] `pnpm verify` passes.
+- [x] No API variable exists in the Studio environment or the blueprint file.
+- [x] Vitest covers the comparison (unchanged, changed, new, missing, returned) and the empty-answer guard.
+- [x] `pnpm verify` passes.
 
 ## Out of scope
 

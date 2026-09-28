@@ -50,9 +50,9 @@ Runs the sync, then writes demonstration content: the three singletons with the 
 
 ## Acceptance criteria
 
-- [ ] Studio runs locally and on both deployed URLs; an editor can create an FAQ and a testimonial and enrich a product.
+- [x] Studio runs locally and on both deployed URLs; an editor can create an FAQ and a testimonial and enrich a product.
 - [x] Mirrored fields are visible and not editable; editorial fields are editable.
-- [ ] `testimonial` cannot be published without `consent`.
+- [x] `testimonial` cannot be published without `consent`.
 - [x] Typegen output committed and imported by the store.
 - [x] Sync and seed populate a fresh dataset in one run and are safe to re-run.
 
