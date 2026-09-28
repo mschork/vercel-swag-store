@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useEffect, useRef, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useSyncExternalStore, type MouseEvent } from 'react'
 import { buttonVariants } from '@/components/ui/button-variants'
 import { SHARE_HASH } from '@/lib/testimonials/share'
 import type { ChatProduct, CurrentChat } from './chat/types'
@@ -43,9 +43,29 @@ function readOpening(): Opening {
   return opening
 }
 
+// Back from the entry `openChat` pushes fires `popstate`, which a browser
+// need not follow with `hashchange`.
 function subscribe(onChange: () => void) {
   window.addEventListener('hashchange', onChange)
-  return () => window.removeEventListener('hashchange', onChange)
+  window.addEventListener('popstate', onChange)
+  return () => {
+    window.removeEventListener('hashchange', onChange)
+    window.removeEventListener('popstate', onChange)
+  }
+}
+
+/**
+ * Opens the chat where the link is. Following the link would scroll `#share`
+ * to the top of the window, so a plain click sets the fragment through
+ * `pushState`, which does not scroll; Back still closes the chat. A click
+ * with a modifier keeps the browser's own behaviour.
+ */
+function openChat(event: MouseEvent<HTMLAnchorElement>) {
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+  event.preventDefault()
+  window.history.pushState(window.history.state, '', SHARE_HASH)
+  // `pushState` fires no event, and the fragment is what `open` reads.
+  window.dispatchEvent(new HashChangeEvent('hashchange'))
 }
 
 /**
@@ -78,6 +98,7 @@ export function ShareChat({ label, products }: { label: string; products: ChatPr
     <a
       ref={link}
       href={SHARE_HASH}
+      onClick={openChat}
       onPointerEnter={preloadPanel}
       onFocus={preloadPanel}
       onTouchStart={preloadPanel}

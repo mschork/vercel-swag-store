@@ -26,7 +26,9 @@ export function SharePanel({
   const [current, setCurrent] = useState<CurrentChat | undefined>(undefined)
   const [attempt, setAttempt] = useState(0)
 
-  useEffect(() => heading.current?.focus(), [])
+  // The panel opens where the link was, so focus moves without scrolling;
+  // arriving on `#share` has already scrolled the panel into view.
+  useEffect(() => heading.current?.focus({ preventScroll: true }), [])
   useEffect(() => {
     let live = true
     void chat.then((answer) => {
