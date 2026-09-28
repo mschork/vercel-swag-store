@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, type FormEvent, type ReactNode } from 'react'
+import { useActionState, useEffect, useId, type FormEvent, type ReactNode } from 'react'
 import { addToCart } from '@/app/cart/actions'
 import type { LineDisplay } from '@/lib/cart/adds-in-flight'
 import { cn } from '@/lib/utils'
@@ -21,6 +21,9 @@ import { prepareOnIntent, useCartAdd } from './use-cart-add'
  * cart view shows as a saving row, and the row hides this card at once
  * (`BuyableItems`). A failed add brings the card back, and the cart view says
  * why.
+ *
+ * The button is named "Add {name} to cart", and the card's text, price and
+ * stock included, is its description.
  */
 export function QuickAddForm({
   productId,
@@ -35,6 +38,7 @@ export function QuickAddForm({
 }) {
   const [posted, formAction] = useActionState(addToCart, null)
   const { add, apply } = useCartAdd()
+  const card = useId()
 
   // The native path: a form posted before hydration answers through here.
   useEffect(() => {
@@ -59,9 +63,12 @@ export function QuickAddForm({
       <button
         type="submit"
         aria-label={`Add ${display.name} to cart`}
+        aria-describedby={card}
         className={cn(className, 'w-full flex-1 cursor-pointer text-left')}
       >
-        {children}
+        <span id={card} className="block h-full">
+          {children}
+        </span>
       </button>
       {posted && !posted.ok ? (
         <p role="status" className="text-sm leading-5 text-danger">

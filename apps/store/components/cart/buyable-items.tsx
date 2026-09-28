@@ -34,6 +34,9 @@ const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)'
  * A product added from the row fades out, then the row closes up: the other
  * cards slide into its place, then the next one fades in at the end. The cards
  * are measured before and after, and each is moved from where it was.
+ *
+ * A card that leaves while it has focus hands focus to the next card in the
+ * row, or the one before it, or the page's heading when none is left.
  */
 export function BuyableItems({
   items,
@@ -117,6 +120,32 @@ export function BuyableItems({
     }
   }, [view.shown])
 
+  // The card that last took focus; kept when focus is lost because the card
+  // went inert or left, which gives no other element focus.
+  const focused = useRef<string | null>(null)
+  const order = useRef(view.shown)
+  useLayoutEffect(() => {
+    const previous = order.current
+    order.current = view.shown
+    const id = focused.current
+    if (!id || (view.shown.includes(id) && !view.leaving.includes(id))) return
+    focused.current = null
+    const active = document.activeElement
+    if (active && active !== document.body && !nodes.current.get(id)?.contains(active)) return
+    const at = view.shown.includes(id) ? view.shown : previous
+    const index = at.indexOf(id)
+    const rest = view.shown.filter((other) => other !== id && !view.leaving.includes(other))
+    const next =
+      at.slice(index + 1).find((other) => rest.includes(other)) ??
+      at.slice(0, index).reverse().find((other) => rest.includes(other))
+    const target = next
+      ? nodes.current.get(next)?.querySelector('button')
+      : document.querySelector<HTMLElement>('main h1')
+    if (!target) return
+    if (!next) target.tabIndex = -1
+    target.focus()
+  })
+
   const byId = new Map(items.map((item) => [item.productId, item.node]))
   return view.shown.map((productId) => {
     const leaving = view.leaving.includes(productId)
@@ -129,6 +158,14 @@ export function BuyableItems({
           else nodes.current.delete(productId)
         }}
         inert={leaving}
+        onFocus={() => {
+          focused.current = productId
+        }}
+        onBlur={(event) => {
+          if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) {
+            focused.current = null
+          }
+        }}
         className={cn(
           leaving && 'opacity-0 transition-opacity ease-out',
           entering && 'animate-fade-in',

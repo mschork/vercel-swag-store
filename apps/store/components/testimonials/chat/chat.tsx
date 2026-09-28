@@ -172,6 +172,15 @@ export function Chat({
   }, [messages, status])
 
   const busy = status === 'submitted' || status === 'streaming'
+  // A reply is said once it has finished streaming, not word by word; the
+  // list itself is no live region, so widgets and "Thinking…" stay quiet.
+  const [spoken, setSpoken] = useState('')
+  const last = messages.at(-1)
+  const reply =
+    last?.role === 'assistant'
+      ? last.parts.map((part) => (part.type === 'text' ? part.text : '')).join(' ').trim()
+      : ''
+  if (!busy && reply && reply !== spoken) setSpoken(reply)
   const ended = draft?.submitted === true || /\b410\b/.test(error?.message ?? '')
 
   function keepPhoto(pathname: string, jpeg: Blob) {
@@ -193,7 +202,10 @@ export function Chat({
       <DraftBar draft={draft} photo={photo} products={products} />
       <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_16rem]">
         <div className="flex min-h-80 flex-col gap-4">
-          <ol ref={list} aria-live="polite" className="flex flex-col gap-4">
+          <p role="status" className="sr-only">
+            {spoken}
+          </p>
+          <ol ref={list} className="flex flex-col gap-4">
             <li className="flex max-w-prose flex-col gap-3">
               {GREETING.map((line) => (
                 <p key={line} className="text-pretty">
@@ -204,6 +216,7 @@ export function Chat({
             {messages.length === 0 ? (
               <li>
                 <NameWidget
+                  autoFocus={false}
                   onSubmit={(name) => {
                     extras.current = { name }
                     void sendMessage({ text: name })

@@ -7,7 +7,7 @@ import { gridVariant } from '@/components/grid-variants'
 import type { Category } from '@/lib/api/types'
 import { RESULT_CAP, searchCatalogue, type SearchOutcome } from '@/lib/search'
 import { cn } from '@/lib/utils'
-import { EmptyState as SearchEmptyState } from './empty-state'
+import { headline, EmptyState as SearchEmptyState } from './empty-state'
 import { useSearchState, type SearchCatalogueValue } from './search-state'
 
 /**
@@ -65,8 +65,20 @@ export function SearchResultsView({
   const panel = searching ? { outcome, query, category } : kept
 
   const featured = featuredIds.slice(0, RESULT_CAP)
+  // Always in the page, so the first search and a search that finds nothing
+  // are announced too; the query keeps two searches with one count apart.
+  const status = !searching
+    ? ''
+    : outcome.ids.length === 0
+      ? headline(query, category)
+      : query
+        ? `${outcome.heading} for “${query}”`
+        : outcome.heading
   return (
     <>
+      <p role="status" className="sr-only">
+        {status}
+      </p>
       {/* Results open above the featured products and push them down, and
           collapse back up when the search is cleared. */}
       <section
@@ -123,7 +135,7 @@ function SearchPanel({
   return (
     <>
       <div className="flex flex-col gap-1">
-        <h2 aria-live="polite" className="text-xl font-medium tracking-tight">
+        <h2 className="text-xl font-medium tracking-tight">
           {outcome.heading}
         </h2>
         {outcome.hint ? <p className="text-sm text-fg-secondary">{outcome.hint}</p> : null}
