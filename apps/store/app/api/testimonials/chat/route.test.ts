@@ -51,6 +51,20 @@ describe('GET /api/testimonials/chat', () => {
     m.currentChat.mockResolvedValue(null)
     await expect((await GET(new Request(url))).json()).resolves.toBeNull()
   })
+
+  it('answers null for a run bound to another session', async () => {
+    m.ownChat.mockResolvedValue(Response.json({ error: 'Not found' }, { status: 404 }))
+    await expect((await GET(new Request(url))).json()).resolves.toBeNull()
+  })
+
+  it('checks the run and reads its chat at the same time', async () => {
+    let settle = () => {}
+    m.runLive.mockReturnValue(new Promise<boolean>((resolve) => (settle = () => resolve(true))))
+    const response = GET(new Request(url))
+    await vi.waitFor(() => expect(m.ownChat).toHaveBeenCalledWith('wrun_1', 'sid-1'))
+    settle()
+    await expect((await response).json()).resolves.toEqual({ runId: 'wrun_1', messages })
+  })
 })
 
 describe('POST /api/testimonials/chat', () => {

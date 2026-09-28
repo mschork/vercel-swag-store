@@ -1,17 +1,76 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useEffect, useRef, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useSyncExternalStore, type MouseEvent } from 'react'
 import { buttonVariants } from '@/components/ui/button-variants'
 import { SHARE_HASH } from '@/lib/testimonials/share'
-import type { ChatProduct } from './chat/types'
+import type { ChatProduct, CurrentChat } from './chat/types'
 
-/** The panel's code loads only when the chat opens, so the page's first load never carries it. */
-const SharePanel = dynamic(() => import('./share-panel').then((module) => module.SharePanel))
+const loadPanel = () => import('./share-panel')
 
+/**
+ * The panel's code loads only when the chat opens, or when the visitor points
+ * at, focuses or touches the link, so the page's first load never carries it.
+ */
+const SharePanel = dynamic(() => loadPanel().then((module) => module.SharePanel))
+
+const preloadPanel = () => void loadPanel()
+
+/** The session's conversation still going; `null` for none or a failed read. */
+function requestCurrentChat(): Promise<CurrentChat> {
+  return fetch('/api/testimonials/chat')
+    .then((response) => (response.ok ? (response.json() as Promise<CurrentChat>) : null))
+    .catch(() => null)
+}
+
+interface Opening {
+  open: boolean
+  /** The GET started when the fragment turned to `#share`; one per opening. */
+  chat: Promise<CurrentChat> | null
+}
+
+const CLOSED: Opening = { open: false, chat: null }
+let opening = CLOSED
+
+/**
+ * Starts the GET when the chat opens, in parallel with the panel's code
+ * rather than after it, and forgets it when the chat closes or the link
+ * leaves the page, so opening it again reads the conversation again.
+ */
+function readOpening(): Opening {
+  const open = window.location.hash === SHARE_HASH
+  if (open !== opening.open) opening = open ? { open, chat: requestCurrentChat() } : CLOSED
+  return opening
+}
+
+// Back from the entry `openChat` pushes fires `popstate`, which a browser
+// need not follow with `hashchange`. While nothing listens, a navigation can
+// change the fragment unseen, so the last listener leaving forgets the opening.
+let listening = 0
 function subscribe(onChange: () => void) {
+  listening += 1
   window.addEventListener('hashchange', onChange)
-  return () => window.removeEventListener('hashchange', onChange)
+  window.addEventListener('popstate', onChange)
+  return () => {
+    window.removeEventListener('hashchange', onChange)
+    window.removeEventListener('popstate', onChange)
+    listening -= 1
+    if (listening === 0) opening = CLOSED
+  }
+}
+
+/**
+ * Opens the chat where the link is. Following the link would scroll `#share`
+ * to the top of the window, so a plain click sets the fragment through
+ * `pushState`, which does not scroll; Back still closes the chat. A click
+ * with a modifier keeps the browser's own behaviour.
+ */
+function openChat(event: MouseEvent<HTMLAnchorElement>) {
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+  event.preventDefault()
+  window.history.pushState(window.history.state, '', SHARE_HASH)
+  // `pushState` fires no event, and the fragment is what `open` reads.
+  window.dispatchEvent(new HashChangeEvent('hashchange'))
 }
 
 /**
@@ -22,11 +81,7 @@ function subscribe(onChange: () => void) {
  * the fragment until the browser hydrates.
  */
 export function ShareChat({ label, products }: { label: string; products: ChatProduct[] }) {
-  const open = useSyncExternalStore(
-    subscribe,
-    () => window.location.hash === SHARE_HASH,
-    () => false,
-  )
+  const { open, chat } = useSyncExternalStore(subscribe, readOpening, () => CLOSED)
   const link = useRef<HTMLAnchorElement>(null)
   const wasOpen = useRef(false)
 
@@ -43,9 +98,17 @@ export function ShareChat({ label, products }: { label: string; products: ChatPr
     window.dispatchEvent(new HashChangeEvent('hashchange'))
   }
 
-  if (open) return <SharePanel products={products} onClose={close} />
+  if (open && chat) return <SharePanel products={products} chat={chat} onClose={close} />
   return (
-    <a ref={link} href={SHARE_HASH} className={buttonVariants({ size: 'lg', className: 'self-start px-4' })}>
+    <a
+      ref={link}
+      href={SHARE_HASH}
+      onClick={openChat}
+      onPointerEnter={preloadPanel}
+      onFocus={preloadPanel}
+      onTouchStart={preloadPanel}
+      className={buttonVariants({ size: 'lg', className: 'self-start px-4' })}
+    >
       {label}
     </a>
   )

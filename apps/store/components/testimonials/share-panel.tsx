@@ -7,28 +7,37 @@ import { Chat } from './chat/chat'
 import type { ChatProduct, CurrentChat } from './chat/types'
 
 /**
- * Where the testimonial chat renders. Opening it starts no run: it asks for
- * the session's conversation still going, resumes that one, or shows the
- * greeting. The heading takes focus so a screen reader announces what opened.
+ * Where the testimonial chat renders. Opening it starts no run: `chat` is the
+ * GET for the session's conversation still going, started when the chat
+ * opened; the panel resumes that one or shows the greeting. A restart starts
+ * from the greeting and never reuses that answer. The heading takes focus so
+ * a screen reader announces what opened.
  */
-export function SharePanel({ products, onClose }: { products: ChatProduct[]; onClose: () => void }) {
+export function SharePanel({
+  products,
+  chat,
+  onClose,
+}: {
+  products: ChatProduct[]
+  chat: Promise<CurrentChat>
+  onClose: () => void
+}) {
   const heading = useRef<HTMLHeadingElement>(null)
   const [current, setCurrent] = useState<CurrentChat | undefined>(undefined)
   const [attempt, setAttempt] = useState(0)
 
-  useEffect(() => heading.current?.focus(), [])
+  // The panel opens where the link was, so focus moves without scrolling;
+  // arriving on `#share` has already scrolled the panel into view.
+  useEffect(() => heading.current?.focus({ preventScroll: true }), [])
   useEffect(() => {
     let live = true
-    fetch('/api/testimonials/chat')
-      .then((response) => (response.ok ? (response.json() as Promise<CurrentChat>) : null))
-      .catch(() => null)
-      .then((chat) => {
-        if (live) setCurrent(chat)
-      })
+    void chat.then((answer) => {
+      if (live) setCurrent(answer)
+    })
     return () => {
       live = false
     }
-  }, [])
+  }, [chat])
 
   return (
     <section aria-labelledby="share-heading" className="flex flex-col gap-6 rounded-lg border border-border p-4 md:p-6">

@@ -95,6 +95,38 @@ function answered(name: ClientTool, output: unknown): string | null {
 }
 
 /**
+ * The message field and its Send button. It owns the text being typed, so a
+ * keystroke re-renders the field and not the conversation.
+ */
+function Composer({ busy, onSend }: { busy: boolean; onSend: (text: string) => void }) {
+  const [text, setText] = useState('')
+  return (
+    <form
+      className="mt-auto flex gap-2"
+      onSubmit={(event) => {
+        event.preventDefault()
+        const message = text.trim()
+        if (!message || busy) return
+        onSend(message)
+        setText('')
+      }}
+    >
+      <Input
+        value={text}
+        onChange={(event) => setText(event.target.value)}
+        maxLength={MESSAGE_MAX_LENGTH}
+        aria-label="Message"
+        placeholder="Type a message"
+        className="h-9"
+      />
+      <Button type="submit" size="lg" className="px-4" disabled={busy || text.trim() === ''}>
+        Send
+      </Button>
+    </form>
+  )
+}
+
+/**
  * The testimonial conversation: messages on the left, the draft card on the
  * right, a one-line bar above the messages on small screens. `useChat`'s id is
  * the run id once there is a run, and the transport reconnects to the run's
@@ -118,7 +150,6 @@ export function Chat({
   const transport = useTransport(runId, extras, answeredWidget)
   const [draft, setDraft] = useState<DraftView | null>(null)
   const [photo, setPhoto] = useState<string | null>(null)
-  const [text, setText] = useState('')
   const list = useRef<HTMLOListElement>(null)
 
   const onData: ChatOnDataCallback<ChatMessage> = (part) => {
@@ -265,28 +296,7 @@ export function Chat({
                   Something went wrong. Send your message again.
                 </p>
               ) : null}
-              <form
-                className="mt-auto flex gap-2"
-                onSubmit={(event) => {
-                  event.preventDefault()
-                  const message = text.trim()
-                  if (!message || busy) return
-                  void sendMessage({ text: message })
-                  setText('')
-                }}
-              >
-                <Input
-                  value={text}
-                  onChange={(event) => setText(event.target.value)}
-                  maxLength={MESSAGE_MAX_LENGTH}
-                  aria-label="Message"
-                  placeholder="Type a message"
-                  className="h-9"
-                />
-                <Button type="submit" size="lg" className="px-4" disabled={busy || text.trim() === ''}>
-                  Send
-                </Button>
-              </form>
+              <Composer busy={busy} onSend={(message) => void sendMessage({ text: message })} />
             </>
           )}
         </div>
