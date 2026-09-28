@@ -23,7 +23,7 @@ export function EmptyState({
       {query && category ? (
         <Link
           href={`/search?q=${encodeURIComponent(query)}`}
-          className="underline underline-offset-4"
+          className="underline underline-offset-4 hover:decoration-2"
         >
           Search all categories
         </Link>
@@ -45,7 +45,7 @@ export function EmptyState({
       </div>
       {query && !category ? (
         <>
-          <Link href="/search" className="underline underline-offset-4">
+          <Link href="/search" className="underline underline-offset-4 hover:decoration-2">
             Clear search
           </Link>
           {/* The miss is counted (lib/search/record-gap.ts), so say so. */}
