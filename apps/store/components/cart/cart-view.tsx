@@ -7,7 +7,7 @@ import { useHydrated } from '@/lib/use-hydrated'
 import { allows } from '@/lib/visit/remaining'
 import { cn } from '@/lib/utils'
 import { CartLine } from './cart-line'
-import { useCart } from './cart-provider'
+import { useCart, useCartActions } from './cart-provider'
 import { CartSummary } from './cart-summary'
 import { EMPTY_CART_HEADING, EmptyCart } from './empty-cart'
 
@@ -40,6 +40,7 @@ export function CartView({
 }) {
   const { draw: heldDraw } = useVisit()
   const cart = useCart()
+  const { dismissFailure } = useCartActions()
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({})
   const [removed, setRemoved] = useState('')
   const list = useRef<HTMLUListElement>(null)
@@ -83,9 +84,18 @@ export function CartView({
     target?.focus()
   })
 
+  useEffect(() => dismissFailure, [dismissFailure])
+
   return (
     <>
-      <FailedAdd failure={cart.failure} />
+      <FailedAdd
+        // A product that still has a row shows its quantity there, not a failure.
+        failure={
+          cart.failure && !shownLines.some((line) => line.productId === cart.failure?.productId)
+            ? cart.failure.message
+            : null
+        }
+      />
       <p role="status" className="sr-only">
         {removed}
       </p>

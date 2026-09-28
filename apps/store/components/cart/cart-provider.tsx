@@ -34,7 +34,7 @@ interface CartState {
   /** How many of a product the cart holds, counting writes in flight. */
   quantity: (productId: string) => number
   /** The last add that failed, until the next write. */
-  failure: string | null
+  failure: { productId: string; message: string } | null
 }
 
 interface CartActions {
@@ -57,6 +57,8 @@ interface CartActions {
   draft: (productId: string, quantity: number | null, onlyIf?: number) => void
   /** Applies an answer the native form post brought. */
   apply: (result: AddToCartState) => void
+  /** Forgets the failed add, once the page that said it closes. */
+  dismissFailure: () => void
 }
 
 const CartContext = createContext<CartState | null>(null)
@@ -79,7 +81,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [saved, setSaved] = useState<Line[] | null>(null)
   const [writes, setWrites] = useState<readonly Write[]>([])
   const [drafts, setDrafts] = useState<Drafts>({})
-  const [failure, setFailure] = useState<string | null>(null)
+  const [failure, setFailure] = useState<CartState['failure']>(null)
 
   const write = useCallback(
     async (entry: Write, action: () => Promise<CartActionResult>) => {
@@ -90,8 +92,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setWrites((current) => current.filter((pending) => pending !== entry))
       if (entry.kind === 'set') {
         setDrafts((current) => setDraft(current, entry.productId, null, entry.quantity))
-      } else if (!result.ok && !result.lines?.some((line) => line.productId === entry.productId)) {
-        setFailure(`${entry.display.name}: ${result.error}`)
+      } else if (!result.ok) {
+        setFailure({
+          productId: entry.productId,
+          message: `${entry.display.name}: ${result.error}`,
+        })
       }
       return result
     },
@@ -114,6 +119,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       apply: (result) => {
         if (result?.lines) setSaved(result.lines)
       },
+      dismissFailure: () => setFailure(null),
     }),
     [write],
   )

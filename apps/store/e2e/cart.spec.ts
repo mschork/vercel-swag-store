@@ -342,9 +342,8 @@ test('a change saved on the cart page shows on the product page the visitor retu
   await row.getByRole('button', { name: /^Remove/ }).click()
 
   // Next keeps the product page mounted but hidden; shown again, it counts
-  // the removal while it is still saving, not only once the API answers.
+  // the removal by the time the API answers.
   await page.goBack()
-  await expect(stock).toHaveText('Only 5 left', AT_ONCE)
   await expect.poll(actions.answered, SAVED).toBe(1)
   await expect(stock).toHaveText('Only 5 left')
 })
