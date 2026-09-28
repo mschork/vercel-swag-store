@@ -10,12 +10,15 @@
         "API_BYPASS_TOKEN",
         "NEXT_PUBLIC_SANITY_*",
         "SANITY_*",
+        "BLOB_STORE_ID",
+        "TESTIMONIAL_*",
         "DEMAND_*",
         "CATALOG_REVALIDATE_SECRET",
         "PRESENTATION_STUDIO_ORIGINS",
         "NEXT_PUBLIC_SITE_URL",
         "ALLOW_INDEXING",
-        "EXPOSE_TESTING_API"
+        "EXPOSE_TESTING_API",
+        "VERCEL_ENV"
       ]
     },
     "dev": {
@@ -26,6 +29,8 @@
         "API_BYPASS_TOKEN",
         "NEXT_PUBLIC_SANITY_*",
         "SANITY_*",
+        "BLOB_STORE_ID",
+        "TESTIMONIAL_*",
         "DEMAND_*",
         "CATALOG_REVALIDATE_SECRET",
         "PRESENTATION_STUDIO_ORIGINS",
