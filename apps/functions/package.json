@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@repo/demand": "workspace:*",
+    "@repo/sanity": "workspace:*",
     "@sanity/client": "^8.6.1",
     "@sanity/functions": "^1.8.0"
   },

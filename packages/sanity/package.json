@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
+    "./catalogue-sync": "./src/catalogue-sync.ts",
     "./env": "./src/env.ts",
     "./schemas": "./src/schemas/index.ts",
     "./generated": "./src/generated/sanity.types.ts"

@@ -184,6 +184,9 @@ importers:
       '@repo/demand':
         specifier: workspace:*
         version: link:../../packages/demand
+      '@repo/sanity':
+        specifier: workspace:*
+        version: link:../../packages/sanity
       '@sanity/client':
         specifier: ^8.6.1
         version: 8.7.0(vitest@5.0.1)

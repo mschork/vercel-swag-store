@@ -10,7 +10,7 @@ import { checkoutPage, homePage, siteSettings } from './singletons'
 
 /**
  * Every type the Studio registers. Products and categories mirror the API and
- * are written by `scripts/sync.ts`; search gaps and product ideas are written
+ * are written by the catalogue sync; search gaps and product ideas are written
  * by the search-gap loop; testimonial submissions by the testimonial agent;
  * the rest is an editor's.
  */

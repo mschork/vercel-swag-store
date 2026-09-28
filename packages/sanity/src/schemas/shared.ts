@@ -71,7 +71,7 @@ export function imageField(options: {
   })
 }
 
-/** Written by the sync script; an editor sees the values but cannot change them. */
+/** Written by the catalogue sync; an editor sees the values but cannot change them. */
 export const syncedFields = [
   defineField({
     name: 'syncedAt',
