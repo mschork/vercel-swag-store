@@ -63,8 +63,8 @@ clearCart(sid): Promise<void>
 
 ## Pending lines
 
-- `lib/cart/adds-in-flight.ts` holds, per product, the quantity in flight and what a row shows: `name`, `slug`, `image`, `price`. The Add to Cart form records them at the click, from props the product page passes down. Redis never holds a pending line.
-- `CartView` merges the in-flight products over the lines it holds: a product already in the lines gets its quantity raised; a new one gets a row at the end. Such a row shows "Saving…" in its status line, its stepper and Remove are disabled, and `CartSummary` keeps Checkout disabled while any line is pending. When the add's answer arrives its `lines` replace the held lines and the in-flight entry is released, so the row settles in one paint. When a failed add leaves its product without a row, the page says why, keyed by product as today's errors are, until the visitor changes that product's line, adds again or leaves the page. A failed add whose product keeps its row, such as a line set back to its draw, lists nothing.
+- `CartProvider` (`components/cart/cart-provider.tsx`) holds each add in flight with what a row shows: `name`, `slug`, `image`, `price`. The Add to Cart form records them at the click, from props the product page passes down. Redis never holds a pending line.
+- `shownLines()` in `lib/cart/lines.ts` merges the adds in flight over the saved lines: a product already in the lines gets its quantity raised; a new one gets a row at the end. Such a row shows "Saving…" in its status line, its stepper and Remove are disabled, and `CartSummary` keeps Checkout disabled while any line is pending. When the add's answer arrives its `lines` replace the saved lines and the add is released in the same update, so the row settles in one paint. When the last failed add leaves its product without a row, the page says why until the visitor's next cart write or until they leave the page. A failed add whose product keeps its row, such as a line set back to its draw, lists nothing.
 - A full reload while a save is in flight shows the cart without that line until the save lands. This is accepted.
 
 ## Tests
@@ -82,7 +82,7 @@ Each slice is one commit, in this order. A file belongs to one slice; a slice ne
 1. **The store.** Files: `lib/session/*` and their tests, `lib/env.ts`, `lib/env.test.ts`, `.env.example`, `proxy.ts` finished, `proxy.test.ts`, delete `app/spike/`.
 2. **The visit on the session.** Files: `lib/visit/*` and tests, `app/api/visit/*`, `components/visit/visit-seed.tsx`, `components/promo-banner.tsx`, `components/product/stock-and-cart.tsx`, `components/product/stock-skeleton.tsx`.
 3. **The cart on the session.** Files: `lib/cart/get-cart.ts` and test, delete `lib/cart/cookie.ts` and test, `app/cart/actions.ts` and test, `app/cart/page.tsx`, `components/cart/cart-badge.tsx`, `components/cart/cart-contents.tsx`, the favourites row wrapper.
-4. **The client.** Files: `components/visit/visit-provider.tsx`, `components/product/stock-and-cart-client.tsx`, `components/product/add-to-cart-form.tsx`, `lib/cart/adds-in-flight.ts` and test, `components/cart/cart-view.tsx`, `cart-line.tsx`, `cart-summary.tsx`.
+4. **The client.** Files: `components/visit/visit-provider.tsx`, `components/product/stock-and-cart-client.tsx`, `components/product/add-to-cart-form.tsx`, `components/cart/cart-provider.tsx`, `lib/cart/lines.ts` and test, `components/cart/cart-view.tsx`, `cart-line.tsx`, `cart-summary.tsx`.
 5. **Browser tests.** Files: `app/api/test/session/*`, `playwright.config.ts`, everything under `e2e/`.
 6. **Docs.** Files: `CONTEXT.md` (already updated; verify), `AGENTS.md` cache policy rows (already updated; verify), `docs/static-vs-dynamic.md`, `README.md` env section, `specs/callout.md` entry "The session store" with the measurements, `specs/decisions.md` lines 15 to 17, and the ticks below.
 

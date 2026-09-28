@@ -62,8 +62,8 @@ Twenty-seven files carry `"use client"`, all interactive leaves. No page and no 
 
 | File | Why it is client-side |
 |---|---|
-| `cart/cart-count`, `cart/cart-view`, `cart/cart-line`, `cart/cart-summary` | Hold the badge count, the optimistic lines and the pending state |
-| `cart/quick-add-form`, `cart/use-cart-add`, `cart/in-cart-hidden` | The quick-add row, and the adds the browser holds while they save |
+| `cart/cart-provider`, `cart/cart-count`, `cart/cart-view`, `cart/cart-line`, `cart/cart-summary` | Hold the cart the browser shows, with the writes still saving, and the badge count |
+| `cart/quick-add-form`, `cart/in-cart-hidden` | The quick-add row |
 | `product/add-to-cart-form`, `product/stock-and-cart-client` | Optimistic confirmation, the pending button, the visitor's own draw |
 | `card-stock` | Fades a grid badge in from the visit once it is known |
 | `quantity-stepper` | Clamps the value, disables at bounds, announces changes |

@@ -73,9 +73,9 @@ const FAILED: CartActionResult = { ok: false, error: 'This item could not be add
  * and a row's unsaved quantity above those. An answer replaces the lines and
  * drops its write in one update, so no count shows both.
  *
- * Writes in flight are plain state, not `useOptimistic`: that needs a
- * transition, and React holds a navigation until every pending transition
- * ends, so the visitor could not open the cart while an add is saving.
+ * Writes in flight are plain state, not `useOptimistic`, whose transition
+ * would hold every navigation until the save answers
+ * (docs/adr/0009-one-cart-provider.md).
  */
 export function CartProvider({ children }: { children: ReactNode }) {
   const [saved, setSaved] = useState<Line[] | null>(null)

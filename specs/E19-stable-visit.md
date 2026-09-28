@@ -88,9 +88,7 @@ Pages cannot set cookies, so the visit is opened by `POST /api/visit`, called on
 
 ### Reaching the client
 
-The pattern is `CartCountProvider` again.
-
-- `VisitProvider` wraps the layout beside `CartCountProvider`. It holds `stock` and `inCart`, both keyed by product id, and the pinned promotion. It keeps no data of its own.
+- `VisitProvider` wraps the layout inside `CartProvider`. It holds `stock`, keyed by product id; how many of a product the cart holds comes from `CartProvider` (`docs/adr/0009-one-cart-provider.md`). It keeps no data of its own.
 - `VisitSeed` is a server component in the root layout inside `<Suspense fallback={null}>`. It runs on a full load and on `refresh()`, not on a client-side navigation, because the root layout is preserved across those; the provider is therefore the client's source of truth and a seed that finds no cookie never resets it. It reads the visit cookie and the cart through the request-memoized `loadCart`, so it adds no API call to a request that renders the badge. Inside an action's response it skips the cart, as the badge does. It compares the visit against the cached catalogue and renders a client leaf that seeds the provider and, when the cookie is absent or the visit does not cover every product, calls `openVisit()` once. The guard that keeps that to one call is a ref, because the repo's `react-hooks/set-state-in-effect` rule rejects a `setState` in an effect body.
 - Cart actions answer with the touched line as well as the count: `{ ok: true, totalItems, line: { productId, quantity } }`. The provider applies it, so remaining moves at once and without a read. The result still never carries the token or the other lines.
 - `useProductStock(productId, serverDraw?)` returns the product's draw and how many of it the cart holds. The draw is `undefined` before the visit arrives and `null` when the visit has no count for it; `serverDraw` is what the server read in this render, from the visit or as an opening draw, so a page that knows the count paints it without waiting for hydration.
