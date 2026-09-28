@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useCart } from '@/components/cart/cart-provider'
 import { useVisit } from '@/components/visit/visit-provider'
 import { useHydrated } from '@/lib/use-hydrated'
 import { cn } from '@/lib/utils'
@@ -45,7 +46,8 @@ export function BuyableItems({
   items: readonly { productId: string; node: ReactNode }[]
   limit: number
 }) {
-  const { inCart, draw } = useVisit()
+  const { draw } = useVisit()
+  const inCart = useCart().quantity
   const hydrated = useHydrated()
   const buyable = hydrated
     ? items.filter(({ productId }) => inCart(productId) === 0 && draw(productId) !== 0)

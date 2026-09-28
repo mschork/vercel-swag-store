@@ -2,9 +2,9 @@
 
 import { useActionState, useEffect, useId, type FormEvent, type ReactNode } from 'react'
 import { addToCart } from '@/app/cart/actions'
-import type { LineDisplay } from '@/lib/cart/adds-in-flight'
+import type { LineDisplay } from '@/lib/cart/lines'
 import { cn } from '@/lib/utils'
-import { prepareOnIntent, useCartAdd } from './use-cart-add'
+import { prepareOnIntent, useCartActions } from './cart-provider'
 
 /**
  * Adds one of a product straight from the favourites row on the cart page:
@@ -37,7 +37,7 @@ export function QuickAddForm({
   children: ReactNode
 }) {
   const [posted, formAction] = useActionState(addToCart, null)
-  const { add, apply } = useCartAdd()
+  const { add, apply } = useCartActions()
   const card = useId()
 
   // The native path: a form posted before hydration answers through here.

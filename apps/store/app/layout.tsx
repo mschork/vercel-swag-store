@@ -3,7 +3,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import type { Metadata, Viewport } from 'next'
 import { Suspense } from 'react'
-import { CartCountProvider } from '@/components/cart/cart-count'
+import { CartProvider } from '@/components/cart/cart-provider'
 import { DraftMode } from '@/components/draft-mode'
 import { Footer } from '@/components/footer'
 import { Header } from '@/components/header'
@@ -61,8 +61,8 @@ export const viewport: Viewport = {
 }
 
 /**
- * `CartCountProvider` holds the badge's count and `VisitProvider` the
- * visitor's stock draws, both updated by actions without a re-read.
+ * `CartProvider` holds the cart and `VisitProvider` the visitor's stock
+ * draws, both updated by actions without a re-read.
  */
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
@@ -74,7 +74,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         >
           Skip to content
         </a>
-        <CartCountProvider>
+        <CartProvider>
           <VisitProvider>
             {/* Seeds the visit's stock; renders nothing. */}
             <VisitSeedBoundary />
@@ -86,7 +86,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
             </main>
             <Footer />
           </VisitProvider>
-        </CartCountProvider>
+        </CartProvider>
         {/* Draft mode only: nothing for a visitor, not even the script. */}
         <Suspense fallback={null}>
           <DraftMode />

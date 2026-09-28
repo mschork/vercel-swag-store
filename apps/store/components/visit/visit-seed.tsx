@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { getSession, type CartRecord } from '@/lib/session/store'
+import { getSession } from '@/lib/session/store'
 import { catalogueIds, completeVisit } from '@/lib/visit/draw'
 import { VisitSeedClient } from './visit-provider'
 
@@ -19,7 +19,7 @@ export async function VisitSeedBoundary() {
 }
 
 /**
- * Hands the visit and the cart's quantities to the provider; renders nothing
+ * Hands the visit and the cart's lines to the providers; renders nothing
  * visible. It completes the visit first, drawing and claiming every product
  * the visit has no draw for, so what it hands over always covers the
  * catalogue. When the session store cannot be reached it hands over nothing.
@@ -29,9 +29,5 @@ async function VisitSeed({ productIds }: { productIds?: readonly string[] }) {
   if (session === 'unavailable') return <VisitSeedClient value={null} />
 
   const stock = await completeVisit(session.sid, session.visit, productIds)
-  return <VisitSeedClient value={{ stock, lines: lineQuantities(session.cart) }} />
-}
-
-function lineQuantities(cart: CartRecord | null): Record<string, number> {
-  return Object.fromEntries((cart?.lines ?? []).map((line) => [line.productId, line.quantity]))
+  return <VisitSeedClient value={{ stock, lines: session.cart?.lines ?? [] }} />
 }

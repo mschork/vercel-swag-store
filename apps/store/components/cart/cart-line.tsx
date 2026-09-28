@@ -2,15 +2,12 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useRef, useTransition } from 'react'
-import { flushSync } from 'react-dom'
+import { useEffect, useRef } from 'react'
 import {
   removeItem,
   updateQuantity,
   type CartActionResult,
 } from '@/app/cart/actions'
-import { useCartCountActions } from '@/components/cart/cart-count'
-import { useVisitActions } from '@/components/visit/visit-provider'
 import { Price } from '@/components/price'
 import { Spinner } from '@/components/spinner'
 import { QuantityStepper } from '@/components/quantity-stepper'
@@ -20,11 +17,10 @@ import {
   QUANTITY_PAUSE_MS,
   type Coalescer,
 } from '@/lib/cart/coalesce'
-import { settleChange, startChange } from '@/lib/cart/changes-in-flight'
-import { inOrder } from '@/lib/cart/in-order'
-import type { Line, LineChange } from '@/lib/cart/lines'
 import { allows, refusal } from '@/lib/visit/remaining'
 import { cn } from '@/lib/utils'
+import { useCartActions } from './cart-provider'
+import type { ShownLine } from '@/lib/cart/lines'
 
 /**
  * One line of the cart. Quantity changes wait for a short pause and then save
@@ -46,19 +42,14 @@ export function CartLine({
   line,
   currency,
   draw,
-  pending = false,
   error,
   priority = false,
-  onChange,
-  onDraft,
-  onSaved,
   onResult,
   onRemove,
 }: {
-  line: Line
+  line: ShownLine
   currency: string
   draw: number | null
-  pending?: boolean
   error: string | null
   /**
    * The first row's photo is the cart page's largest paint. It streams inside
@@ -66,44 +57,17 @@ export function CartLine({
    * eagerly at least starts the request the moment the hole arrives.
    */
   priority?: boolean
-  onChange: (change: LineChange) => void
-  onDraft: (productId: string, quantity: number | null, onlyIf?: number) => void
-  /**
-   * The cart as the action saved it, from a success or a failure that read
-   * it, which replaces the lines under the optimistic ones.
-   */
-  onSaved: (lines: Line[]) => void
   onResult: (productId: string, error: string | null) => void
   /** Told at the click, before the row leaves, so the view can move focus. */
   onRemove: (productId: string) => void
 }) {
-  const { productId } = line
+  const { productId, pending, changing } = line
   const message = error ?? (allows(draw, line.quantity) ? null : refusal(draw, 0))
-  const [changing, startTransition] = useTransition()
-  const { confirm } = useCartCountActions()
-  const { confirmCart } = useVisitActions()
+  const cart = useCartActions()
 
   const save = (quantity: number, action: () => Promise<CartActionResult>) => {
-    // Outside the transition, so every stock count shows the change while it
-    // saves, including a product page the visitor returns to meanwhile.
-    startChange(productId, quantity)
-    startTransition(async () => {
-      onChange({ productId, quantity })
-      // Held with the transition, so the draft gives way to the server's
-      // lines only once they arrive, and never if a newer draft replaced it.
-      onDraft(productId, null, quantity)
-      const result = await inOrder(action)
-      // One commit, so no stock count shows the old quantity between the
-      // answer and the change it replaces.
-      flushSync(() => {
-        if (result.lines) confirmCart(result.lines)
-        settleChange(productId, quantity)
-      })
-      startTransition(() => {
-        if (result.totalItems !== undefined) confirm(result.totalItems)
-        if (result.lines) onSaved(result.lines)
-        onResult(productId, result.ok ? null : result.error)
-      })
+    void cart.change(productId, quantity, action).then((result) => {
+      onResult(productId, result.ok ? null : result.error)
     })
   }
 
@@ -126,7 +90,7 @@ export function CartLine({
   }, [])
 
   const change = (quantity: number) => {
-    onDraft(productId, quantity)
+    cart.draft(productId, quantity)
     onResult(productId, null)
     if (waiting.current) waiting.current.push(quantity)
     else saveQuantity.current(quantity)
@@ -135,7 +99,7 @@ export function CartLine({
   const remove = () => {
     onRemove(productId)
     waiting.current?.cancel()
-    onDraft(productId, null)
+    cart.draft(productId, null)
     save(0, () => removeItem(productId))
   }
 
