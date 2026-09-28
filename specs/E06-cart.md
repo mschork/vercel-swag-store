@@ -40,7 +40,7 @@ Checked against the live API on 15 Sep 2026.
 - `addToCart(prevState, formData)`: keeps the E05 signature, the `AddToCartState` type and its error copy. Reads the token; if it is missing or `getCart` returns `null`, `createCart()` and set the cookie. Then `addCartItem`, set the cookie again and `refresh()`. The product page stays put and shows the inline "Added. View cart" line; the badge updates through the refresh.
 - `updateQuantity(productId, quantity)`: plain arguments, called from the client inside `startTransition`. `productId` is a non-empty string and `quantity` an integer in `[0, 99]`; 0 removes the line.
 - `removeItem(productId)`: plain argument, called the same way.
-- `placeOrder()`: the form action behind the Checkout button. No token, an expired cart, an empty cart, or a line holding more than the visitor has (E19) → `redirect('/cart')`. Otherwise it takes the order's lines off the visit, clears the cookie and redirects to `/checkout`. It drops the cookie only; the lines stay in the API cart until it expires.
+- `placeOrder()`: the form action behind the Checkout button, bound with `useActionState`. No token, an expired cart, an empty cart, or a line holding more than the visitor has (E19) → `redirect('/cart')`. A session store it cannot read, or that cannot forget the cart, answers an error the Checkout form shows under the button, "We couldn’t place your order. Try again.", because the cart page would otherwise come back unchanged and say nothing. Otherwise it takes the order's lines off the visit, clears the cookie and redirects to `/checkout`. It drops the cookie only; the lines stay in the API cart until it expires.
 
 A 404 on a write triggers one `getCart(token)`:
 
