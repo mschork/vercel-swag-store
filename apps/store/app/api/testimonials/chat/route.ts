@@ -16,9 +16,9 @@ export async function GET(request: Request): Promise<Response> {
   const admitted = await admit(request, { rateLimit: false })
   if (admitted instanceof Response) return admitted
   const runId = await sessionStore.currentChat(admitted.sid)
-  if (runId === 'unavailable' || runId === null || !(await runLive(runId))) return Response.json(null)
-  const chat = await ownChat(runId, admitted.sid)
-  if (chat instanceof Response) return Response.json(null)
+  if (runId === 'unavailable' || runId === null) return Response.json(null)
+  const [live, chat] = await Promise.all([runLive(runId), ownChat(runId, admitted.sid)])
+  if (!live || chat instanceof Response) return Response.json(null)
   return Response.json({ runId, messages: chat.messages })
 }
 
