@@ -49,6 +49,13 @@ test('shows name, price, stock and an Add to Cart button that follows it', async
   await expect(page.getByRole('button', { name: 'Add to Cart', exact: true })).toBeEnabled()
 })
 
+test('preloads the photo, its LCP, at high priority', async ({ page }) => {
+  await page.goto(await firstFeaturedHref(page))
+  const preload = page.locator('link[rel="preload"][as="image"]')
+  await expect(preload).toHaveCount(1)
+  await expect(preload).toHaveAttribute('fetchpriority', 'high')
+})
+
 test('says so and disables Add to Cart when the visit holds none', async ({
   page,
   context,
