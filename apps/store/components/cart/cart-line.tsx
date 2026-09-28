@@ -8,8 +8,8 @@ import {
   updateQuantity,
   type CartActionResult,
 } from '@/app/cart/actions'
-import { useCartCount } from '@/components/cart/cart-count'
-import { useVisit } from '@/components/visit/visit-provider'
+import { useCartCountActions } from '@/components/cart/cart-count'
+import { useVisitActions } from '@/components/visit/visit-provider'
 import { Price } from '@/components/price'
 import { Spinner } from '@/components/spinner'
 import { QuantityStepper } from '@/components/quantity-stepper'
@@ -75,8 +75,8 @@ export function CartLine({
   const overDrawn = exceedsDraw(line.quantity, draw)
   const message = error ?? (overDrawn && draw !== null ? tooMany(draw) : null)
   const [changing, startTransition] = useTransition()
-  const { confirm } = useCartCount()
-  const { confirmLine } = useVisit()
+  const { confirm } = useCartCountActions()
+  const { confirmLine } = useVisitActions()
 
   const save = (quantity: number, action: () => Promise<CartActionResult>) =>
     startTransition(async () => {
