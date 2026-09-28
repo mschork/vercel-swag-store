@@ -5,7 +5,7 @@ import { clampQuantity, parseQuantity, stepperState } from '@/lib/quantity'
 import { cn } from '@/lib/utils'
 
 const STEP_BUTTON =
-  'flex w-11 items-center justify-center text-lg hover:bg-bg-secondary disabled:pointer-events-none disabled:opacity-50'
+  'flex w-11 touch-manipulation items-center justify-center text-lg hover:bg-bg-secondary disabled:pointer-events-none disabled:opacity-50'
 
 /**
  * A native number input between minus and plus buttons. The input carries
@@ -23,6 +23,7 @@ export function QuantityStepper({
   pending = false,
   onCommit,
   labelClassName,
+  itemName,
 }: {
   name: string
   min: number
@@ -43,6 +44,8 @@ export function QuantityStepper({
   onCommit?: (value: number) => void
   /** Extra classes for the label, e.g. to hide it visually below a breakpoint. */
   labelClassName?: string
+  /** Names the buttons for their product, where a list holds several steppers. */
+  itemName?: string
 }) {
   const id = useId()
   const [draft, setDraft] = useState(() => String(defaultValue))
@@ -90,7 +93,7 @@ export function QuantityStepper({
           onClick={() => step(-1)}
           disabled={disabled || !canDecrement}
           aria-disabled={pending || undefined}
-          aria-label="Decrease quantity"
+          aria-label={itemName ? `Decrease quantity of ${itemName}` : 'Decrease quantity'}
           aria-controls={id}
         >
           <span aria-hidden="true">−</span>
@@ -127,7 +130,7 @@ export function QuantityStepper({
           onClick={() => step(1)}
           disabled={disabled || !canIncrement}
           aria-disabled={pending || undefined}
-          aria-label="Increase quantity"
+          aria-label={itemName ? `Increase quantity of ${itemName}` : 'Increase quantity'}
           aria-controls={id}
         >
           <span aria-hidden="true">+</span>

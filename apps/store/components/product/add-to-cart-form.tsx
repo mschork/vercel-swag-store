@@ -104,7 +104,7 @@ export function AddToCartForm({
         {saving || state?.ok ? (
           <>
             Added.{' '}
-            <Link href="/cart" className="underline underline-offset-4">
+            <Link href="/cart" className="underline underline-offset-4 hover:decoration-2">
               View cart
             </Link>
           </>

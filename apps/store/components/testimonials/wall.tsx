@@ -47,7 +47,7 @@ export function TestimonialWall({
                     <li key={product.id}>
                       <Link
                         href={`/products/${product.slug}`}
-                        className="underline underline-offset-4"
+                        className="underline underline-offset-4 hover:decoration-2"
                       >
                         {product.name}
                       </Link>

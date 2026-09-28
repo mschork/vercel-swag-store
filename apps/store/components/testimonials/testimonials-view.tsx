@@ -27,7 +27,7 @@ export async function TestimonialsView({ page, pageCount }: { page: number; page
     <Container className="flex flex-col gap-8 py-8 md:gap-12 md:py-12">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-3">
-          <h1 className="text-3xl font-medium tracking-tight">{copy.heading}</h1>
+          <h1 className="text-3xl font-medium tracking-tight text-balance">{copy.heading}</h1>
           <p className="max-w-prose text-pretty text-fg-secondary">{copy.intro}</p>
         </div>
         {chatOffered ? (
@@ -43,7 +43,7 @@ export async function TestimonialsView({ page, pageCount }: { page: number; page
         <TestimonialWall entries={entries} products={products} />
       ) : (
         <EmptyState title="No testimonials yet">
-          <Link href="/products" className="underline underline-offset-4">
+          <Link href="/products" className="underline underline-offset-4 hover:decoration-2">
             See all products
           </Link>
         </EmptyState>

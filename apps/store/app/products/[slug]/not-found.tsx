@@ -12,10 +12,10 @@ export default function ProductNotFound() {
         There is no product at this address. It may have been removed.
       </p>
       <p className="flex gap-4">
-        <Link href="/search" className="underline underline-offset-4">
+        <Link href="/search" className="underline underline-offset-4 hover:decoration-2">
           Search products
         </Link>
-        <Link href="/" className="underline underline-offset-4">
+        <Link href="/" className="underline underline-offset-4 hover:decoration-2">
           Go home
         </Link>
       </p>

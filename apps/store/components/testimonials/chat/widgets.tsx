@@ -313,18 +313,17 @@ export function ConsentWidget({ onSubmit }: { onSubmit: () => void }) {
         if (checked) onSubmit()
       }}
     >
-      <div className="flex items-start gap-3">
+      {/* The box inside its label: one hit target, no gap between them. */}
+      <label htmlFor={id} className="flex cursor-pointer items-start gap-3 text-sm">
         <input
           id={id}
           type="checkbox"
           checked={checked}
           onChange={(event) => setChecked(event.target.checked)}
-          className="mt-0.5 size-4 accent-accent"
+          className="mt-0.5 size-4 shrink-0 accent-accent"
         />
-        <label htmlFor={id} className="text-sm">
-          I took this photo and allow the store to publish it with my name and words.
-        </label>
-      </div>
+        I took this photo and allow the store to publish it with my name and words.
+      </label>
       <Button type="submit" size="lg" className="w-fit px-4" disabled={!checked}>
         Continue
       </Button>
@@ -406,7 +405,7 @@ export function CodeWidget({
           Verify
         </Button>
         <Button type="button" variant="ghost" size="lg" className="px-4" disabled={wait > 0} onClick={onResend}>
-          {wait > 0 ? `Send again in ${wait} s` : 'Send again'}
+          {wait > 0 ? `Send again in ${wait}\u00a0s` : 'Send again'}
         </Button>
       </div>
     </form>

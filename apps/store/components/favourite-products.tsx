@@ -30,7 +30,7 @@ export async function FavouriteProducts({
       // A buyable row can end up with no card once the visit arrives.
       className="flex flex-col gap-6 border-t border-border py-12 has-[ul:empty]:hidden md:py-16"
     >
-      <h2 id="favourites-heading" className="text-2xl font-medium tracking-tight">
+      <h2 id="favourites-heading" className="text-2xl font-medium tracking-tight text-balance">
         {heading}
       </h2>
       {grid(products)}
