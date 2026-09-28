@@ -236,7 +236,7 @@ Done on a throwaway branch (PR 17): Workflow 5 with Cache Components and the E13
 - [x] A visitor can go from photo to submitted in one conversation, and a reload in the middle resumes it.
 - [x] A photo of a catalogue product with its mark visible is identified and confirmed; a black item without the mark, or with the triangle pointing down, is not matched; a photo of something else leads to one retry, then the picker; the submission records which.
 - [x] An unsafe or unusable photo never reaches Sanity or an editor.
-- [x] A name or quote with abusive words is refused with a request to rephrase.
+- [ ] A name or quote with abusive words is refused with a request to rephrase.
 - [x] The published quote is exactly the text the visitor approved.
 - [x] The email is verified by code before submit, never published, and gone from the submission after the decision.
 - [x] Anonymous GROQ returns nothing for `testimonialSubmission`.
