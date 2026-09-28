@@ -4,7 +4,7 @@ import { createContext, use, useEffect, useState, type ReactNode } from 'react'
 import { useProductStock } from '@/components/visit/visit-provider'
 import type { LineDisplay } from '@/lib/cart/adds-in-flight'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
-import { stockStatus } from '@/lib/stock-status'
+import { pageStock } from '@/lib/visit/remaining'
 import { AddToCartForm } from './add-to-cart-form'
 import { StockIndicator } from './stock-indicator'
 
@@ -34,7 +34,7 @@ export function StockAndCartClient({
 }) {
   const [serverDraw, setServerDraw] = useState<number | null | undefined>(undefined)
   const { draw, inCart } = useProductStock(productId, serverDraw)
-  const status = draw === undefined ? null : stockStatus(draw, inCart)
+  const status = draw === undefined ? null : pageStock(draw, inCart)
   return (
     <ReportDraw value={setServerDraw}>
       {stockLine}
@@ -63,5 +63,5 @@ export function StockLine({
   const report = use(ReportDraw)
   useEffect(() => report(serverDraw), [report, serverDraw])
   const { draw, inCart } = useProductStock(productId, serverDraw)
-  return <StockIndicator status={stockStatus(draw ?? serverDraw, inCart)} />
+  return <StockIndicator status={pageStock(draw ?? serverDraw, inCart)} />
 }

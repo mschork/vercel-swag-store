@@ -188,9 +188,9 @@ test('a failed add retracts its confirmation and says why', async ({
       input.value = 'no_such_product_e2e'
     })
   await page.getByRole('button', { name: 'Add to Cart', exact: true }).click()
-  const status = page.getByRole('status').filter({ hasText: /Added\.|could not be added/ })
+  const status = page.getByRole('status').filter({ hasText: /Added\.|not available/ })
   await expect(status).toHaveText(/^Added\./, { timeout: 1_000 })
-  await expect(status).toHaveText('This item could not be added. Try again.', SAVED)
+  await expect(status).toHaveText('This product is not available right now.', SAVED)
   await expect(page.getByRole('link', { name: 'View cart' })).toHaveCount(0)
   const badge = page.getByRole('banner').getByRole('img', { name: /^Cart/ })
   await expect(badge).not.toHaveAccessibleName(/[1-9]/)

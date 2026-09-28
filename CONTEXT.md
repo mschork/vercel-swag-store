@@ -29,8 +29,12 @@ The visit's stock draws, keyed by product id.
 _Avoid_: Stock map, warehouse
 
 **Remaining**:
-A product's draw minus the quantity of it in the visitor's cart. This is the number every surface shows and enforces, so emptying the cart puts the stock back.
+A product's draw minus the quantity of it in the visitor's cart. This is the number every surface shows and enforces, so emptying the cart puts the stock back. A product the visit has no draw for is not available: it cannot be added, and a cart holding it cannot be ordered until it has one.
 _Avoid_: Available, free stock, left
+
+**Cross-sell**:
+The favourites offered on the cart page: products the cart does not hold and whose draw is not zero. A product leaves the row once added, even when more of it remain.
+_Avoid_: Buyable row, recommendations, upsell
 
 **Shell**:
 The part of a route that is prerendered at build and identical for every visitor: header, footer, page frame and cached catalogue content.
