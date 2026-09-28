@@ -44,14 +44,14 @@ export function prepareOnIntent(): void {
  */
 export function useCartAdd() {
   const { confirm, setAdding } = useCartCountActions()
-  const { confirmLine, setAdding: setAddingFor } = useVisitActions()
+  const { confirmCart, setAdding: setAddingFor } = useVisitActions()
 
   const confirmAnswer = useCallback(
     (result: CartActionResult) => {
       if (result.totalItems !== undefined) confirm(result.totalItems)
-      if (result.line) confirmLine(result.line.productId, result.line.quantity)
+      if (result.lines) confirmCart(result.lines)
     },
-    [confirm, confirmLine],
+    [confirm, confirmCart],
   )
 
   const apply = useCallback(

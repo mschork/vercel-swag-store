@@ -9,6 +9,8 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { useChangesInFlight } from '@/lib/cart/changes-in-flight'
+import { quantitiesOf, type LineChange } from '@/lib/cart/lines'
 import { useHydrated } from '@/lib/use-hydrated'
 import { resetVisit } from '@/lib/visit/open'
 
@@ -21,7 +23,7 @@ export interface SeededVisit {
 interface VisitState {
   /** A product's stock draw: `undefined` before the visit arrives, `null` when it has no count. */
   draw: (productId: string) => number | null | undefined
-  /** How many of a product the cart holds, counting an add in flight. */
+  /** How many of a product the cart holds, counting a change or an add in flight. */
   inCart: (productId: string) => number
 }
 
@@ -31,8 +33,8 @@ interface VisitActions {
    * read, and leaves what the client holds.
    */
   seed: (value: SeededVisit | null) => void
-  /** Records a cart line an action just wrote. */
-  confirmLine: (productId: string, quantity: number) => void
+  /** Records the whole cart as an action's answer reported it. */
+  confirmCart: (lines: readonly LineChange[]) => void
   /** Items of the adds in flight for a product; 0 when none is. */
   setAdding: (productId: string, quantity: number) => void
   /** Drops the visit and holds the one drawn in its place. */
@@ -56,6 +58,7 @@ export function VisitProvider({ children }: { children: ReactNode }) {
   const [stock, setStock] = useState<Record<string, number> | undefined>(undefined)
   const [lines, setLines] = useState<Record<string, number>>({})
   const [adding, setAddingState] = useState<Record<string, number>>({})
+  const changing = useChangesInFlight()
 
   const seed = useCallback((value: SeededVisit | null) => {
     if (!value) return
@@ -72,10 +75,8 @@ export function VisitProvider({ children }: { children: ReactNode }) {
   // Both keep their identity across renders and ignore a write that changes
   // nothing, because an Add to Cart form applies an answer from an effect: a
   // new object every time would re-run it and never settle.
-  const confirmLine = useCallback((productId: string, quantity: number) => {
-    setLines((current) =>
-      current[productId] === quantity ? current : { ...current, [productId]: quantity },
-    )
+  const confirmCart = useCallback((answered: readonly LineChange[]) => {
+    setLines((current) => quantitiesOf(current, answered))
   }, [])
 
   const setAdding = useCallback((productId: string, quantity: number) => {
@@ -87,13 +88,14 @@ export function VisitProvider({ children }: { children: ReactNode }) {
   const state = useMemo<VisitState>(
     () => ({
       draw: (productId) => (stock ? (stock[productId] ?? null) : undefined),
-      inCart: (productId) => (lines[productId] ?? 0) + (adding[productId] ?? 0),
+      inCart: (productId) =>
+        (changing[productId] ?? lines[productId] ?? 0) + (adding[productId] ?? 0),
     }),
-    [stock, lines, adding],
+    [stock, lines, adding, changing],
   )
   const actions = useMemo<VisitActions>(
-    () => ({ seed, confirmLine, setAdding, reset }),
-    [seed, confirmLine, setAdding, reset],
+    () => ({ seed, confirmCart, setAdding, reset }),
+    [seed, confirmCart, setAdding, reset],
   )
   return (
     <VisitActionsContext value={actions}>
@@ -125,6 +127,10 @@ export function useProductStock(
   serverDraw?: number | null,
 ): { draw: number | null | undefined; inCart: number } {
   const { draw, inCart } = useVisit()
+  // Subscribed here as well as in the provider, so a page shown again after
+  // being hidden renders a change saved meanwhile at once
+  // (`lib/cart/changes-in-flight.ts`).
+  useChangesInFlight()
   const hydrated = useHydrated()
   const held = hydrated ? draw(productId) : undefined
   return { draw: held === undefined ? serverDraw : held, inCart: inCart(productId) }

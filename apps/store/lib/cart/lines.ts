@@ -75,6 +75,22 @@ export function setDraft(
 }
 
 /**
+ * A whole cart's quantities by product id, as the answer to a cart write
+ * reports them. Answers `current` when nothing changed, so a component that
+ * applies an answer from an effect settles.
+ */
+export function quantitiesOf(
+  current: Readonly<Record<string, number>>,
+  lines: readonly LineChange[],
+): Readonly<Record<string, number>> {
+  const next = Object.fromEntries(lines.map(({ productId, quantity }) => [productId, quantity]))
+  const keys = Object.keys(next)
+  const same =
+    keys.length === Object.keys(current).length && keys.every((id) => current[id] === next[id])
+  return same ? current : next
+}
+
+/**
  * Item count and subtotal from price × quantity, the same arithmetic as the
  * API's `lineTotal` and `subtotal`, so optimistic lines total correctly before
  * the server answers.

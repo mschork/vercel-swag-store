@@ -321,6 +321,34 @@ test('the cart cross-sells only what can be bought', async ({ page, context }) =
   await expect(page.locator('section[aria-labelledby="favourites-heading"]')).toBeHidden(SAVED)
 })
 
+test('a change saved on the cart page shows on the product page the visitor returns to', async ({
+  page,
+  context,
+}) => {
+  await openInStockProduct(page, context, 5)
+  await page.waitForLoadState('networkidle')
+  await page.getByLabel('Quantity', { exact: true }).fill('3')
+  await page.getByLabel('Quantity', { exact: true }).blur()
+  await addToCart(page)
+  // The page's stock line, not the badges on the cards below it.
+  const stock = page.getByRole('main').locator('p').filter({ hasText: STOCK_LINE })
+  await expect(stock).toHaveText('Only 2 left')
+
+  await page.getByRole('banner').locator('a[href="/cart"]').click()
+  const row = page.getByRole('main').getByRole('listitem').first()
+  await expect(row).toBeVisible(SAVED)
+  await page.waitForLoadState('networkidle')
+  const actions = watchActions(page)
+  await row.getByRole('button', { name: /^Remove/ }).click()
+
+  // Next keeps the product page mounted but hidden; shown again, it counts
+  // the removal while it is still saving, not only once the API answers.
+  await page.goBack()
+  await expect(stock).toHaveText('Only 5 left', AT_ONCE)
+  await expect.poll(actions.answered, SAVED).toBe(1)
+  await expect(stock).toHaveText('Only 5 left')
+})
+
 declare global {
   interface Window {
     __sawEmptyCart: boolean
