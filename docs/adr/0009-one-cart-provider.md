@@ -7,7 +7,7 @@ date: 2026-09-29
 
 The badge, every stock count, the favourites row and the cart page show the same cart. The browser held it in four places: a count provider, the visit provider, a module store of adds in flight and one of cart-page changes. Each cart answer was copied into all four by hand, and the cart page kept its own copy of the lines, with rules for an answer that arrives while the page loads.
 
-`CartProvider` in the root layout now holds the cart: the saved lines, seeded from the session on a full load and replaced by each answer, the writes in flight and a row's unsaved quantity. `shownLines()` in `lib/cart/lines.ts` combines them, and every surface reads the result. Writes still run one at a time (`lib/cart/in-order.ts`), and a row still saves after a pause (`lib/cart/coalesce.ts`).
+`CartProvider` in the root layout now holds the cart: the saved lines, seeded from the session on a full load and replaced by each answer, the writes in flight and a row's unsaved quantity. `linesWithWrites()` in `lib/cart/lines.ts` combines them, and every surface reads the result. Writes still run one at a time (`lib/cart/in-order.ts`), and a row still saves after a pause (`lib/cart/coalesce.ts`).
 
 ## Considered options
 

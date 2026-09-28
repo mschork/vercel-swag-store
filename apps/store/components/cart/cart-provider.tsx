@@ -18,19 +18,19 @@ import { inOrder } from '@/lib/cart/in-order'
 import {
   cartTotals,
   setDraft,
-  shownLines,
+  linesWithWrites,
   type Drafts,
   type Line,
   type LineDisplay,
-  type ShownLine,
+  type LineWithWrites,
   type Write,
 } from '@/lib/cart/lines'
 
 interface CartState {
   /** The cart's lines, writes in flight and drafts applied; `null` until the session is read. */
-  lines: ShownLine[] | null
+  lines: LineWithWrites[] | null
   /** Lines of adds in flight when the session has not been read. */
-  unseeded: ShownLine[]
+  unseeded: LineWithWrites[]
   /** How many of a product the cart holds, counting writes in flight. */
   quantity: (productId: string) => number
   /** The last add that failed, until the next write. */
@@ -125,7 +125,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   )
 
   const state = useMemo<CartState>(() => {
-    const shown = shownLines(saved ?? [], writes, drafts)
+    const shown = linesWithWrites(saved ?? [], writes, drafts)
     return {
       lines: saved ? shown : null,
       unseeded: saved ? [] : shown,

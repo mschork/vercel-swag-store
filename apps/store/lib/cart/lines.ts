@@ -82,8 +82,8 @@ export function cartTotals(lines: readonly Line[]): {
   return { totalItems, subtotal }
 }
 
-/** A line as every surface shows it, with the write it is waiting for. */
-export type ShownLine = Line & {
+/** A line with the writes still saving applied, and which kind it waits for. */
+export type LineWithWrites = Line & {
   /** An add of it is saving; the cart page shows the row as saving. */
   pending: boolean
   /** A quantity change or a removal of it is saving. */
@@ -100,16 +100,16 @@ export type Write =
  * in the order it was sent, then the drafts. An add of a product the saved
  * lines lack is a pending line at the end.
  */
-export function shownLines(
+export function linesWithWrites(
   saved: readonly Line[],
   writes: readonly Write[],
   drafts: Drafts,
-): ShownLine[] {
-  const base = saved.map((line): ShownLine => ({ ...line, pending: false, changing: false }))
+): LineWithWrites[] {
+  const base = saved.map((line): LineWithWrites => ({ ...line, pending: false, changing: false }))
   return applyDrafts(writes.reduce(applyWrite, base), drafts)
 }
 
-function applyWrite(lines: ShownLine[], write: Write): ShownLine[] {
+function applyWrite(lines: LineWithWrites[], write: Write): LineWithWrites[] {
   const { productId, quantity } = write
   const line = lines.find((entry) => entry.productId === productId)
   if (write.kind === 'set') {

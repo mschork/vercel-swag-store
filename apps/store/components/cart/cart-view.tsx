@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useVisit } from '@/components/visit/visit-provider'
-import { cartTotals, type Line, type ShownLine } from '@/lib/cart/lines'
+import { cartTotals, type Line, type LineWithWrites } from '@/lib/cart/lines'
 import { useHydrated } from '@/lib/use-hydrated'
 import { allows } from '@/lib/visit/remaining'
 import { cn } from '@/lib/utils'
@@ -58,25 +58,25 @@ export function CartView({
     })
   }
 
-  const shownLines: ShownLine[] =
+  const withWrites: LineWithWrites[] =
     (hydrated ? cart.lines : null) ??
     [...lines.map((line) => ({ ...line, pending: false, changing: false })), ...cart.unseeded]
-  const { totalItems, subtotal } = cartTotals(shownLines)
-  const saving = shownLines.some((line) => line.pending)
+  const { totalItems, subtotal } = cartTotals(withWrites)
+  const saving = withWrites.some((line) => line.pending)
   const drawOf = (productId: string) =>
     (hydrated ? heldDraw(productId) : undefined) ?? serverDraws[productId] ?? null
-  const blocked = shownLines.some((line) => !allows(drawOf(line.productId), line.quantity))
+  const blocked = withWrites.some((line) => !allows(drawOf(line.productId), line.quantity))
 
   const remove = (productId: string) => {
-    const index = shownLines.findIndex((line) => line.productId === productId)
+    const index = withWrites.findIndex((line) => line.productId === productId)
     leaving.current = { productId, index }
-    setRemoved(`${shownLines[index]?.name ?? 'Product'} removed from your cart`)
+    setRemoved(`${withWrites[index]?.name ?? 'Product'} removed from your cart`)
   }
   // Every render, because the row leaves in whichever render the optimistic
   // removal lands in.
   useEffect(() => {
     const from = leaving.current
-    if (!from || shownLines.some((line) => line.productId === from.productId)) return
+    if (!from || withWrites.some((line) => line.productId === from.productId)) return
     leaving.current = null
     const rows = list.current?.children
     const row = rows?.[Math.min(from.index, rows.length - 1)]
@@ -91,7 +91,7 @@ export function CartView({
       <FailedAdd
         // A product that still has a row shows its quantity there, not a failure.
         failure={
-          cart.failure && !shownLines.some((line) => line.productId === cart.failure?.productId)
+          cart.failure && !withWrites.some((line) => line.productId === cart.failure?.productId)
             ? cart.failure.message
             : null
         }
@@ -99,12 +99,12 @@ export function CartView({
       <p role="status" className="sr-only">
         {removed}
       </p>
-      {shownLines.length === 0 ? (
+      {withWrites.length === 0 ? (
         <EmptyCart />
       ) : (
         <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-start lg:grid-cols-[minmax(0,1fr)_20rem]">
           <ul ref={list} className="flex flex-col divide-y divide-border border-y border-border">
-            {shownLines.map((line, index) => (
+            {withWrites.map((line, index) => (
               <CartLine
                 key={line.productId}
                 line={line}

@@ -5,7 +5,7 @@ import {
   applyDrafts,
   cartTotals,
   setDraft,
-  shownLines,
+  linesWithWrites,
   toLines,
   type Line,
 } from './lines'
@@ -109,31 +109,31 @@ describe('drafts', () => {
   })
 })
 
-describe('shownLines', () => {
+describe('linesWithWrites', () => {
   const tee: Line = { productId: 'tee', slug: 'tee', name: 'Tee', image: null, price: 3000, quantity: 1 }
   const toteDisplay = { slug: 'tote', name: 'Tote', image: null, price: 2000 }
 
   it('adds a pending line, and the answer replaces it in one step', () => {
     const add = { kind: 'add', productId: 'tote', quantity: 2, display: toteDisplay } as const
-    const saving = shownLines([tee], [add], {})
+    const saving = linesWithWrites([tee], [add], {})
     expect(saving.map(({ productId, quantity, pending }) => [productId, quantity, pending])).toEqual([
       ['tee', 1, false],
       ['tote', 2, true],
     ])
     expect(cartTotals(saving).totalItems).toBe(3)
 
-    const answered = shownLines([tee, { ...tee, ...toteDisplay, productId: 'tote', quantity: 2 }], [], {})
+    const answered = linesWithWrites([tee, { ...tee, ...toteDisplay, productId: 'tote', quantity: 2 }], [], {})
     expect(cartTotals(answered).totalItems).toBe(3)
     expect(answered.some((line) => line.pending)).toBe(false)
   })
 
   it('raises a saved line by an add of the same product', () => {
     const add = { kind: 'add', productId: 'tee', quantity: 2, display: tee } as const
-    expect(shownLines([tee], [add], {})).toMatchObject([{ productId: 'tee', quantity: 3, pending: true }])
+    expect(linesWithWrites([tee], [add], {})).toMatchObject([{ productId: 'tee', quantity: 3, pending: true }])
   })
 
   it('applies writes in the order they were sent, then drafts', () => {
-    const lines = shownLines(
+    const lines = linesWithWrites(
       [tee],
       [
         { kind: 'set', productId: 'tee', quantity: 4 },
@@ -148,6 +148,6 @@ describe('shownLines', () => {
   })
 
   it('drops a line a removal is saving', () => {
-    expect(shownLines([tee], [{ kind: 'set', productId: 'tee', quantity: 0 }], {})).toEqual([])
+    expect(linesWithWrites([tee], [{ kind: 'set', productId: 'tee', quantity: 0 }], {})).toEqual([])
   })
 })

@@ -20,7 +20,7 @@ import {
 import { allows, refusal } from '@/lib/visit/remaining'
 import { cn } from '@/lib/utils'
 import { useCartActions } from './cart-provider'
-import type { ShownLine } from '@/lib/cart/lines'
+import type { LineWithWrites } from '@/lib/cart/lines'
 
 /**
  * One line of the cart. Quantity changes wait for a short pause and then save
@@ -48,7 +48,7 @@ export function CartLine({
   onResult,
   onRemove,
 }: {
-  line: ShownLine
+  line: LineWithWrites
   currency: string
   draw: number | null
   error: string | null
