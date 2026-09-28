@@ -6,6 +6,10 @@ import {
   emptyAnswer,
   nameMessage,
   needsAnalysis,
+  needsTextCheck,
+  refusedTexts,
+  withhold,
+  WITHHELD,
   toolCallMessage,
   TYPED_INSTEAD,
   conversationOver,
@@ -119,6 +123,14 @@ describe('runServerTool', () => {
     expect((await runServerTool('checkText', start(), fake, context)).output).toMatchObject({ error: expect.any(String) })
   })
 
+  it('screens a name on its own and clears it when refused', async () => {
+    const fake = steps({ screen: vi.fn(async () => ({ nameOk: false, quoteOk: true, altTextOk: true })) })
+    const run = await runServerTool('checkText', start({ name: 'porn' }), fake, context)
+    expect(run.output).toEqual({ nameOk: false })
+    expect(run.conversation.draft.name).toBeNull()
+    expect(needsTextCheck(run.conversation.draft)).toBe(false)
+  })
+
   it('sends a code, or says how long to wait', async () => {
     const withEmail = start({ email: { address: 'ada@example.com', status: 'provided' } })
     const sent = await runServerTool('sendCode', withEmail, steps(), context)
@@ -192,6 +204,34 @@ describe('receiveTurn', () => {
     const uploaded = receiveAnswer(start(), { toolCallId: 'c1', toolName: 'askPhoto', output: { pathname: photo(1) } }, {}, context)
     expect(needsAnalysis(start().draft)).toBe(false)
     expect(needsAnalysis(uploaded.conversation.draft)).toBe(true)
+  })
+
+  it('asks for a text check whenever the name, the quote or the alt text changed', () => {
+    expect(needsTextCheck(start().draft)).toBe(false)
+    const named = receiveTurn(start(), [], { kind: 'name', name: 'Ada' }, context)
+    expect(needsTextCheck(named!.conversation.draft)).toBe(true)
+    expect(needsTextCheck(start({ name: 'Ada', textCheck: { nameOk: true, quoteOk: true, altTextOk: true } }).draft)).toBe(false)
+  })
+
+  it('names the texts a check cleared', () => {
+    const before = start({ name: 'porn', quote: 'Nice' }).draft
+    expect(refusedTexts(before, { ...before, name: null })).toEqual({ name: 'porn' })
+    expect(refusedTexts(before, { ...before, quote: null })).toEqual({ quote: 'Nice' })
+    expect(refusedTexts(before, before)).toEqual({})
+  })
+
+  it('withholds a refused text wherever it is a whole value, and nothing else', () => {
+    const messages = withhold(
+      [
+        { role: 'user', content: nameMessage('Al') },
+        toolMessage([{ call: { toolCallId: 'c1', toolName: 'askName' }, output: { name: 'Al' } }]),
+        { role: 'user', content: 'Also, Al says hi' },
+      ],
+      ['Al'],
+    )
+    expect(messages[0]).toEqual({ role: 'user', content: nameMessage(WITHHELD) })
+    expect(JSON.stringify(messages[1])).toContain(`"name":"${WITHHELD}"`)
+    expect(messages[2]).toEqual({ role: 'user', content: 'Also, Al says hi' })
   })
 
   it("writes the model's side of a call the run makes", () => {

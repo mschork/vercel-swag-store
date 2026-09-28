@@ -24,10 +24,13 @@ import {
   isClientTool,
   isServerTool,
   needsAnalysis,
+  needsTextCheck,
   receiveTurn,
+  refusedTexts,
   runServerTool,
   toolCallMessage,
   toolMessage,
+  withhold,
   type Conversation,
   type ServerSteps,
   type ToolCallRef,
@@ -66,6 +69,12 @@ const GOODBYE =
   'That is as far as this conversation goes. Thank you for your time; you can start a new one from the testimonials page.'
 
 const UNANSWERED = 'Sorry, I could not answer just now. Please send that again in a minute.'
+
+/** Said by the run, not the model, when the text check refuses a text. */
+const REFUSED = {
+  askName: "Sorry, we can't publish that name. Please choose another one.",
+  reviewQuote: "Sorry, we can't publish that quote as it is. Please rephrase it.",
+} as const
 
 const noInput = z.object({})
 
@@ -242,18 +251,44 @@ export async function testimonial(first: TurnInput | null): Promise<TestimonialR
       break
     }
 
-    if (needsAnalysis(conversation.draft)) {
-      const call = { toolCallId: `analyse-${turns}`, toolName: 'analysePhoto' }
+    // The run's own calls, in order: a new photo's analysis, whose alt text
+    // the text check then screens with the name and the quote.
+    let ask: 'askName' | 'reviewQuote' | null = null
+    for (const [needed, toolName] of [
+      [needsAnalysis, 'analysePhoto'],
+      [needsTextCheck, 'checkText'],
+    ] as const) {
+      if (!needed(conversation.draft)) continue
+      const before = conversation.draft
+      const call = { toolCallId: `${toolName}-${turns}`, toolName }
       const results = [{ call, output: await serve(call) }]
       messages.push(toolCallMessage([call]), toolMessage(results))
+      // A refused text leaves the model's view, and the next call must ask
+      // for it again: the model does not reliably do either on its own.
+      const refused = refusedTexts(before, conversation.draft)
+      messages = withhold(messages, Object.values(refused))
+      if (refused.quote !== undefined) ask = 'reviewQuote'
+      if (refused.name !== undefined) ask = 'askName'
       // Only the draft: the browser has no call this result could belong to.
       await write([draftPart(conversation.draft)])
     }
+    // The forced call below often comes without a sentence, so the run says why.
+    if (ask) await write([...textParts(`refused-${turns}`, REFUSED[ask]), { type: 'step-break' }])
 
+    let widgetDue = false
     for (let call = 0; call < MAX_MODEL_CALLS_PER_TURN; call++) {
+      const forced = widgetDue
+      widgetDue = false
       let result: Awaited<ReturnType<typeof agent.stream>> | null = null
       try {
-        result = await agent.stream({ messages, writable, preventClose: true, sendFinish: false })
+        result = await agent.stream({
+          messages,
+          writable,
+          preventClose: true,
+          sendFinish: false,
+          ...(ask && call === 0 && { toolChoice: { type: 'tool', toolName: ask } }),
+          ...(forced && { toolChoice: 'required' }),
+        })
       } catch {
         // The agent's model step does not retry, and a failure here would
         // fail the run. The conversation keeps what it had before the call.
@@ -274,7 +309,16 @@ export async function testimonial(first: TurnInput | null): Promise<TestimonialR
         .filter((toolCall) => isClientTool(toolCall.toolName))
         .map(({ toolCallId, toolName }) => ({ toolCallId, toolName }))
       const others = open.filter((toolCall) => !isClientTool(toolCall.toolName))
-      if (others.length === 0) break
+      if (others.length === 0) {
+        // Text alone leaves the visitor nothing to answer while the
+        // conversation goes on, so one more call must call a tool.
+        if (pending.length === 0 && !forced && !conversationOver(conversation.draft) && call < MAX_MODEL_CALLS_PER_TURN - 1) {
+          widgetDue = true
+          await write([{ type: 'step-break' }])
+          continue
+        }
+        break
+      }
 
       const results: { call: ToolCallRef; output: unknown }[] = []
       for (const toolCall of others) {
