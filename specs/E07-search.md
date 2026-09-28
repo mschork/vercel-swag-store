@@ -12,7 +12,7 @@ Branch: `epic/E07-search`. Depends on: E02, E03, E04 (ProductCard). Blocks: E13.
 - Empty `q` and no `category`: default state.
 - Any other params are ignored. `page` is not supported (results capped at 5 per the requirements).
 - `category` is validated against the cached category slugs; an unknown slug is treated as none.
-- The API's `search` is a case-insensitive substring match over `name`, `description` and `tags`, with no normalisation: `t-shirt` hits, `tshirt` and `t shirt` do not, and `cold-cup` finds a product that says so only in its tags. `matchesQuery` reproduces it exactly, and `lib/search-parity.test.ts` holds it to the API's own answers; the store no longer calls the API's `search`.
+- The API's `search` is a case-insensitive substring match over `name`, `description` and `tags`, with no normalisation: `t-shirt` hits, `tshirt` and `t shirt` do not, and `cold-cup` finds a product that says so only in its tags. `matchesQuery` reproduces it for a one-word query, and `lib/search-parity.test.ts` holds one-word queries to the API's own answers; the store no longer calls the API's `search`. A query of several words matches a product that contains every word, each in any of the three fields and in any order, so `canvas bag` and `bag canvas` find the canvas tote, where the API's `search` finds nothing.
 
 ## Scope
 
@@ -78,15 +78,15 @@ A results-scoped client error boundary (`components/error-boundary.tsx`, a small
 One file: the functions are one concept and the repo groups `lib/*.ts` by topic.
 
 - `normaliseQuery(raw)`: trim, slice to 64 characters.
-- `matchesQuery(product, q)`: the API's `search`, a case-insensitive substring of the name, the description or a tag.
+- `matchesQuery(product, q)`: every whitespace-separated word of `q` is a case-insensitive substring of the name, the description or a tag; for one word, the API's `search`.
 - `searchCatalogue({ query, category, catalogue, categories, featuredIds })`: the whole results decision above, returning the ids, the heading, the hint and whether the cap cut anything. The browser and the server run the same function.
 - `expandQuery(q, categories)`: `norm = q.toLowerCase().replace(/s$/, '')`; returns the first category whose `slug` or lowercased `name` equals `norm` or `norm + 's'` once every non-alphanumeric character is removed from both sides, or contains either as a whole word in its raw form. Separators are dropped for the equality test so `tshirt` and `t shirt` reach `t-shirts`, which the API's literal substring match never does; they are kept for the whole-word test, because the hyphen is the boundary that finds `shirt` inside `t-shirts`. The expansion carries the whole plural case: the API does not search category names, so `search=hats` returns 0 hits on its own.
 - `mergeResults(searchHits, categoryItems, categorySlug, cap)`: three groups in order, the search hits that are in the matched category, then the category's other products (not already present by `id`), then the remaining search hits; capped. Returns the merged list plus an `added` flag (the category contributed at least one product that survived the cap) and a `truncated` flag (the cap cut something). The category, not the API's own order, decides the ranking: the API matches substrings in prose, so `bag` hits an enamel pin whose description ends "an accent for bags and jackets" and a keychain "easy to spot in a bag", and in API order both outrank the tote. Once the query is taken to name a category, that category is the better signal than a substring. The cost is that five search hits can lose one to a category product.
 
 ## Tests
 
-- Vitest `lib/search-parity.test.ts`, opt-in with `API_INTEGRATION=1`: `matchesQuery` over the live catalogue finds what the API's `search` finds, in its order, for 19 queries.
-- Vitest `lib/search.test.ts`: `expandQuery` covering "hat" → hats, "Hats" → hats, "bag" → bags, "tee" → none, "cups" → cups, "shirt" → t-shirts, "tshirt" and "t shirt" → t-shirts; `mergeResults` covering the three-group ordering, de-duplication by `id`, the cap, and the `added` / `truncated` flags; `normaliseQuery` covering trimming, the 64-character slice and whitespace-only → empty.
+- Vitest `lib/search-parity.test.ts`, opt-in with `API_INTEGRATION=1`: `matchesQuery` over the live catalogue finds what the API's `search` finds, in its order, for one-word queries.
+- Vitest `lib/search.test.ts`: `matchesQuery` covering several words in either order and across fields, and a word that matches nothing; `expandQuery` covering "hat" → hats, "Hats" → hats, "bag" → bags, "tee" → none, "cups" → cups, "shirt" → t-shirts, "tshirt" and "t shirt" → t-shirts; `mergeResults` covering the three-group ordering, de-duplication by `id`, the cap, and the `added` / `truncated` flags; `normaliseQuery` covering trimming, the 64-character slice and whitespace-only → empty.
 - Playwright `apps/store/e2e/search.spec.ts`: visit `/search?q=hat` directly, see three hats and the hint line, reload and see the same; type "bea" and see the Beanie without pressing Enter; select a category and see the URL and the grid update; combine text and category and see the narrowed result; search "umbrella" and see the empty state with chips; search "bag" and see the three bags ahead of the pin and the keychain; `/search` shows the featured section with five cards and no results; clearing the query keeps the category. The category select and the grid are located by role and accessible name, never by class.
 
 ## Acceptance criteria
