@@ -14,9 +14,9 @@
 | `/search?q=black` | 100 | 100 |
 | `/cart` | 100 | 100 |
 | `/checkout` | 100 | 100 |
-| `/testimonials` | 96 | 100 |
+| `/testimonials` | 100 | 100 |
 
-`/testimonials` fails `target-size`: a testimonial that names several products lists them as links 18 px tall with 22 px of clear space around each, under the 24 px the audit asks for (`components/testimonials/wall.tsx`).
+`/testimonials` first scored 96: `target-size` failed on the product links under a testimonial that names several products, 18 px tall with 22 px of clear space. They are 24 px tall since PR 61, and the page scores 100.
 
 Home page performance, three runs after live editing (E17) shipped: 99, 99 and 98, largest paint 2.3 s, blocking time 0 to 10 ms, layout shift 0. The run before E17, below, scored 96 to 98.
 
