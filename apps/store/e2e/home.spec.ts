@@ -9,6 +9,8 @@ test('home renders the hero, the featured grid and at least six product cards', 
   // The hero photo is the LCP element and is not a link.
   await expect(page.getByRole('img', { name: /hoodie/ })).toBeVisible()
   expect(await page.getByRole('img', { name: /hoodie/ }).locator('xpath=ancestor::a').count()).toBe(0)
+  // The hero's call to action leads to the product listing.
+  await expect(page.getByRole('link', { name: 'Explore our products' })).toHaveAttribute('href', '/products')
   await expect(page.getByRole('heading', { name: 'Featured' })).toBeVisible()
 
   const cards = page

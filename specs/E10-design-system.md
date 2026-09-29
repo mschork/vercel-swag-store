@@ -43,8 +43,8 @@ Installed: `button`, `input`, `native-select`, `skeleton` (E03 to E07), plus `ba
 
 - Full-bleed band, edge to edge, directly under the banner. The editor's hero image from Sanity, `next/image` with `priority`, `fill`, `object-cover`, `sizes="100vw"`; the only image with `priority` on the page and the LCP element. The store ships no photo of its own, so without one the section is the copy alone.
 - Height: `min(60svh, 640px)` at md and up, positioned so the figure on the left stays in frame. Below md the band is `aspect-[4/3]` with `object-position: left center`.
-- Copy: headline at 67 (32 on phones) and the paragraph, nothing else: no button, no link, no product. At md and up the copy sits over the sky on the right half of the column, in `--color-on-photo`, with no scrim; below md the copy sits under the band in the column in normal `fg`.
-- Content: `HeroContent` becomes `{ headline, description }`; `HERO_FALLBACK` drops `ctaLabel`, `ctaHref` and `productSlug`, and `getProduct` leaves the component. The Sanity `homePage.hero` (E08) carries the same two fields plus an image.
+- Copy: headline at 67 (32 on phones), the paragraph, and one call to action, "Explore our products", a 44px button linking to `/products`. No product link. At lg and up the copy sits over the sky on the right half of the column, in `--color-on-photo`, with no scrim, and the button is `--color-on-photo` with `--color-photo` text in both themes, because the photo does not change with the theme; below lg the copy sits under the band in the column in normal `fg`, and the button is the default one.
+- Content: `HeroContent` is `{ headline, description, ctaLabel }`. The Sanity `homePage.hero` (E08) carries the headline and description plus an image; the label is the shipped one.
 
 ### Product card `components/product-card.tsx`
 
