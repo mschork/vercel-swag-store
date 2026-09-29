@@ -20,7 +20,7 @@ One line per requirement, with the route or file that satisfies it. Paths are re
 
 | Requirement | Where |
 |---|---|
-| Hero | `components/home/hero.tsx`; headline, description and CTA authored in Sanity |
+| Hero | `components/home/hero.tsx`; headline and description authored in Sanity, "Explore our products" links to `/products` |
 | Promotion | `components/promo-banner.tsx`, in the root layout's static shell |
 | Featured grid | `components/home/featured-products.tsx`, topped up by `getFeaturedProducts` in `lib/api/products.ts` |
 

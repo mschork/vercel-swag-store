@@ -5,12 +5,14 @@
 export interface HeroContent {
   headline: string
   description: string
+  ctaLabel: string
 }
 
 export const HERO_FALLBACK: HeroContent = {
   headline: 'Ship in black.',
   description:
     'Official Vercel merchandise. Apparel, desk gear and accessories from the team behind Next.js, all in one colour.',
+  ctaLabel: 'Explore our products',
 }
 
 /**

@@ -1,13 +1,15 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import { Container } from '@/components/container'
+import { buttonVariants } from '@/components/ui/button-variants'
 import { HERO_FALLBACK } from '@/lib/content/fallbacks'
 import { getHomePage } from '@/lib/sanity/content'
 import { cn } from '@/lib/utils'
 import { hasImage, sanityImageProps } from '@/lib/sanity/image'
 
 /**
- * Full-bleed hero: the photo edge to edge, with the copy over it from lg and
- * below it at narrower widths. The photo is the LCP element and the only
+ * Full-bleed hero: the photo edge to edge, with the copy and a link to the
+ * product listing over it from lg and below it at narrower widths. The photo is the LCP element and the only
  * preloaded image on the page; `fetchPriority` is set because `preload` alone
  * leaves the browser's default. Copy and photo come from the `homePage`
  * document; the store ships copy but no photo, so without one the section is
@@ -61,6 +63,17 @@ export async function Hero() {
           >
             {description}
           </p>
+          <Link
+            href="/products"
+            className={cn(
+              buttonVariants({ size: 'lg' }),
+              'mt-2 h-11 self-start px-5 text-base',
+              // Over the photo, which does not change with the theme, neither does the button.
+              photo && 'lg:bg-on-photo lg:text-photo lg:hover:bg-on-photo/80',
+            )}
+          >
+            {HERO_FALLBACK.ctaLabel}
+          </Link>
         </div>
       </Container>
     </section>
