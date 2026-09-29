@@ -35,13 +35,29 @@ No Redis is needed: without `KV_REST_API_URL` the session store runs in memory, 
 enough for a clone, for CI and for the tests.
 
 ```
-apps/store       Next.js 16 storefront, Cache Components on
-apps/studio      Sanity Studio
-apps/functions   Sanity Functions, one folder each
-packages/sanity  schemas, client factory, GROQ queries, generated types
-packages/demand  the search-gap loop's shared logic
-packages/config  shared tsconfig and ESLint config
+apps/store             Next.js 16 storefront, Cache Components on
+apps/studio            Sanity Studio
+apps/functions         Sanity Functions, one folder each
+packages/sanity        schemas, client factory, GROQ queries, generated types
+packages/demand        the search-gap loop's shared logic
+packages/testimonials  the testimonial agent's shared logic
+packages/config        shared tsconfig and ESLint config
 ```
+
+## Start here
+
+Five files show how the store uses Cache Components:
+
+| | |
+|---|---|
+| `apps/store/next.config.ts` | `cacheComponents` on, and the two cache profiles, `catalog` and `content` |
+| `apps/store/lib/api/products.ts` | `"use cache"`, `cacheLife` and `cacheTag` behind typed readers; no component fetches |
+| `apps/store/app/layout.tsx` | The shell every page shares: the cached promotion, and the visit seed and cart badge in `<Suspense>` |
+| `apps/store/app/products/[slug]/page.tsx` | A prerendered product page; only the visitor's stock streams in (`components/product/stock-and-cart.tsx`) |
+| `apps/store/app/cart/actions.ts` | Server Actions for the cart; the cart token never leaves the server |
+
+The rest builds on these and can be read separately: the Markdown versions and `llms.txt`
+for agents, the search-gap loop, the testimonial agent, draft mode and JSON-LD.
 
 ## Where things are explained
 
