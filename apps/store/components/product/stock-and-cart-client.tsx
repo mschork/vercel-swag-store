@@ -2,7 +2,7 @@
 
 import { createContext, use, useEffect, useState, type ReactNode } from 'react'
 import { useProductStock } from '@/components/visit/visit-provider'
-import type { LineDisplay } from '@/lib/cart/adds-in-flight'
+import type { LineDisplay } from '@/lib/cart/lines'
 import { CART_MAX_QUANTITY } from '@/lib/quantity'
 import { pageStock } from '@/lib/visit/remaining'
 import { AddToCartForm } from './add-to-cart-form'

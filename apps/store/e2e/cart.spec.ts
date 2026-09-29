@@ -213,6 +213,9 @@ test('rapid plus clicks save once, with the final quantity', async ({
 
   // One save after the pause; the reload shows what the API holds.
   await expect(line).toHaveAttribute('aria-busy', 'true', SAVED)
+  // While it saves, Remove says so, as it does for an add.
+  await expect(statusOf(line)).toHaveText('Saving…')
+  await expect(line.getByRole('button', { name: /^Remove/ })).toBeDisabled()
   await expect(line).not.toHaveAttribute('aria-busy', SAVED)
   expect(actions.sent()).toBe(1)
   await page.reload()
@@ -342,9 +345,8 @@ test('a change saved on the cart page shows on the product page the visitor retu
   await row.getByRole('button', { name: /^Remove/ }).click()
 
   // Next keeps the product page mounted but hidden; shown again, it counts
-  // the removal while it is still saving, not only once the API answers.
+  // the removal by the time the API answers.
   await page.goBack()
-  await expect(stock).toHaveText('Only 5 left', AT_ONCE)
   await expect.poll(actions.answered, SAVED).toBe(1)
   await expect(stock).toHaveText('Only 5 left')
 })

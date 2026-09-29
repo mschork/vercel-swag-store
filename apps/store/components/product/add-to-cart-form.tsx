@@ -3,11 +3,11 @@
 import Link from 'next/link'
 import { useActionState, useEffect, useRef, useState, type FormEvent } from 'react'
 import { addToCart, type AddToCartState } from '@/app/cart/actions'
-import { prepareOnIntent, useCartAdd } from '@/components/cart/use-cart-add'
+import { prepareOnIntent, useCart, useCartActions } from '@/components/cart/cart-provider'
 import { QuantityStepper } from '@/components/quantity-stepper'
 import { Spinner } from '@/components/spinner'
 import { Button } from '@/components/ui/button'
-import { useAddsInFlight, type LineDisplay } from '@/lib/cart/adds-in-flight'
+import type { LineDisplay } from '@/lib/cart/lines'
 
 /** How long the button spins after a click: an acknowledgement, not the save. */
 const ADDING_LABEL_MS = 1000
@@ -41,8 +41,9 @@ export function AddToCartForm({
   const [answered, setAnswered] = useState<AddToCartState>(null)
   const [justClicked, setJustClicked] = useState(false)
   const spinning = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const saving = useAddsInFlight().pending.some((line) => line.productId === productId)
-  const { add, apply } = useCartAdd()
+  const { lines, unseeded } = useCart()
+  const saving = (lines ?? unseeded).some((line) => line.productId === productId && line.pending)
+  const { add, apply } = useCartActions()
 
   // The native path: a form posted before hydration answers through here.
   useEffect(() => {
@@ -59,7 +60,7 @@ export function AddToCartForm({
     // A second click restarts the second, so the first timer cannot cut it short.
     clearTimeout(spinning.current)
     spinning.current = setTimeout(() => setJustClicked(false), ADDING_LABEL_MS)
-    void add(productId, display, count, data, (result) =>
+    void add(productId, display, count, data).then((result) =>
       // A failure stays on screen when a later add in the queue succeeds.
       setAnswered((previous) => (result.ok && previous && !previous.ok ? previous : result)),
     )

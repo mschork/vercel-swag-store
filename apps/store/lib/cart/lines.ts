@@ -14,6 +14,9 @@ export type Line = {
   quantity: number
 }
 
+/** What a cart row shows for a product, recorded at the click of an add. */
+export type LineDisplay = Pick<Line, 'slug' | 'name' | 'image' | 'price'>
+
 export function toLines(cart: Cart): Line[] {
   return cart.items.map(({ productId, quantity, product }) => ({
     productId,
@@ -25,26 +28,13 @@ export function toLines(cart: Cart): Line[] {
   }))
 }
 
-/** One optimistic change, mirroring `updateCartItem` in `lib/api/cart.ts`. */
-export type LineChange = { productId: string; quantity: number }
-
-export function applyLineChange(
-  lines: Line[],
-  { productId, quantity }: LineChange,
-): Line[] {
-  if (quantity === 0) return lines.filter((line) => line.productId !== productId)
-  return lines.map((line) =>
-    line.productId === productId ? { ...line, quantity } : line,
-  )
-}
-
 /**
  * Quantities a row shows before it saves them, by product id. They sit above
  * the optimistic lines, so a change still waiting for its pause shows at once.
  */
 export type Drafts = Readonly<Record<string, number>>
 
-export function applyDrafts(lines: Line[], drafts: Drafts): Line[] {
+export function applyDrafts<T extends Line>(lines: T[], drafts: Drafts): T[] {
   return lines.map((line) => {
     const quantity = drafts[line.productId]
     return quantity === undefined || quantity === line.quantity
@@ -75,27 +65,11 @@ export function setDraft(
 }
 
 /**
- * A whole cart's quantities by product id, as the answer to a cart write
- * reports them. Answers `current` when nothing changed, so a component that
- * applies an answer from an effect settles.
- */
-export function quantitiesOf(
-  current: Readonly<Record<string, number>>,
-  lines: readonly LineChange[],
-): Readonly<Record<string, number>> {
-  const next = Object.fromEntries(lines.map(({ productId, quantity }) => [productId, quantity]))
-  const keys = Object.keys(next)
-  const same =
-    keys.length === Object.keys(current).length && keys.every((id) => current[id] === next[id])
-  return same ? current : next
-}
-
-/**
  * Item count and subtotal from price × quantity, the same arithmetic as the
  * API's `lineTotal` and `subtotal`, so optimistic lines total correctly before
  * the server answers.
  */
-export function cartTotals(lines: Line[]): {
+export function cartTotals(lines: readonly Line[]): {
   totalItems: number
   subtotal: number
 } {
@@ -106,4 +80,49 @@ export function cartTotals(lines: Line[]): {
     subtotal += line.price * line.quantity
   }
   return { totalItems, subtotal }
+}
+
+/** A line with the writes still saving applied, and which kind it waits for. */
+export type LineWithWrites = Line & {
+  /** An add of it is saving; the cart page shows the row as saving. */
+  pending: boolean
+  /** A quantity change or a removal of it is saving. */
+  changing: boolean
+}
+
+/** A cart write sent and not yet answered: an add, or a line's new quantity (0 removes it). */
+export type Write =
+  | { kind: 'add'; productId: string; quantity: number; display: LineDisplay }
+  | { kind: 'set'; productId: string; quantity: number }
+
+/**
+ * The cart every surface shows: the saved lines, each write in flight applied
+ * in the order it was sent, then the drafts. An add of a product the saved
+ * lines lack is a pending line at the end.
+ */
+export function linesWithWrites(
+  saved: readonly Line[],
+  writes: readonly Write[],
+  drafts: Drafts,
+): LineWithWrites[] {
+  const base = saved.map((line): LineWithWrites => ({ ...line, pending: false, changing: false }))
+  return applyDrafts(writes.reduce(applyWrite, base), drafts)
+}
+
+function applyWrite(lines: LineWithWrites[], write: Write): LineWithWrites[] {
+  const { productId, quantity } = write
+  const line = lines.find((entry) => entry.productId === productId)
+  if (write.kind === 'set') {
+    if (quantity === 0) return lines.filter((entry) => entry !== line)
+    return lines.map((entry) => (entry === line ? { ...entry, quantity, changing: true } : entry))
+  }
+  if (quantity <= 0) return lines
+  if (!line) {
+    return [...lines, { ...write.display, productId, quantity, pending: true, changing: false }]
+  }
+  return lines.map((entry) =>
+    entry === line
+      ? { ...entry, ...write.display, quantity: entry.quantity + quantity, pending: true }
+      : entry,
+  )
 }

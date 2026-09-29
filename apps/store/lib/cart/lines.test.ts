@@ -3,10 +3,9 @@ import type { Cart } from '@/lib/api/types'
 import { product } from '@/test/helpers'
 import {
   applyDrafts,
-  applyLineChange,
   cartTotals,
-  quantitiesOf,
   setDraft,
+  linesWithWrites,
   toLines,
   type Line,
 } from './lines'
@@ -66,25 +65,6 @@ describe('toLines', () => {
   })
 })
 
-describe('applyLineChange', () => {
-  it('sets the quantity of one line', () => {
-    const next = applyLineChange(lines, { productId: 'mug_001', quantity: 4 })
-    expect(next.map((line) => line.quantity)).toEqual([2, 4])
-    expect(lines[1]?.quantity).toBe(1)
-  })
-
-  it('removes the line at quantity 0', () => {
-    const next = applyLineChange(lines, { productId: 'tshirt_001', quantity: 0 })
-    expect(next.map((line) => line.productId)).toEqual(['mug_001'])
-  })
-
-  it('leaves the lines alone for a product not in the cart', () => {
-    expect(
-      applyLineChange(lines, { productId: 'nope', quantity: 3 }),
-    ).toEqual(lines)
-  })
-})
-
 describe('cartTotals', () => {
   it('matches the totals the API computes', () => {
     expect(cartTotals(lines)).toEqual({
@@ -129,27 +109,45 @@ describe('drafts', () => {
   })
 })
 
-describe('quantitiesOf', () => {
-  const current = { tshirt_001: 2, mug_001: 1 }
+describe('linesWithWrites', () => {
+  const tee: Line = { productId: 'tee', slug: 'tee', name: 'Tee', image: null, price: 3000, quantity: 1 }
+  const toteDisplay = { slug: 'tote', name: 'Tote', image: null, price: 2000 }
 
-  it('keys the quantities of a whole cart by product id', () => {
-    expect(
-      quantitiesOf(current, [
-        { productId: 'tshirt_001', quantity: 3 },
-        { productId: 'pen_001', quantity: 1 },
-      ]),
-    ).toEqual({ tshirt_001: 3, pen_001: 1 })
+  it('adds a pending line, and the answer replaces it in one step', () => {
+    const add = { kind: 'add', productId: 'tote', quantity: 2, display: toteDisplay } as const
+    const saving = linesWithWrites([tee], [add], {})
+    expect(saving.map(({ productId, quantity, pending }) => [productId, quantity, pending])).toEqual([
+      ['tee', 1, false],
+      ['tote', 2, true],
+    ])
+    expect(cartTotals(saving).totalItems).toBe(3)
+
+    const answered = linesWithWrites([tee, { ...tee, ...toteDisplay, productId: 'tote', quantity: 2 }], [], {})
+    expect(cartTotals(answered).totalItems).toBe(3)
+    expect(answered.some((line) => line.pending)).toBe(false)
   })
 
-  it('forgets every product when the cart is empty', () => {
-    expect(quantitiesOf(current, [])).toEqual({})
+  it('raises a saved line by an add of the same product', () => {
+    const add = { kind: 'add', productId: 'tee', quantity: 2, display: tee } as const
+    expect(linesWithWrites([tee], [add], {})).toMatchObject([{ productId: 'tee', quantity: 3, pending: true }])
   })
 
-  it('keeps the same object when nothing changed, so an effect can settle', () => {
-    const same = [
-      { productId: 'mug_001', quantity: 1 },
-      { productId: 'tshirt_001', quantity: 2 },
-    ]
-    expect(quantitiesOf(current, same)).toBe(current)
+  it('applies writes in the order they were sent, then drafts', () => {
+    const lines = linesWithWrites(
+      [tee],
+      [
+        { kind: 'set', productId: 'tee', quantity: 4 },
+        { kind: 'add', productId: 'tote', quantity: 1, display: toteDisplay },
+      ],
+      { tote: 5 },
+    )
+    expect(lines).toMatchObject([
+      { productId: 'tee', quantity: 4, changing: true },
+      { productId: 'tote', quantity: 5, pending: true },
+    ])
+  })
+
+  it('drops a line a removal is saving', () => {
+    expect(linesWithWrites([tee], [{ kind: 'set', productId: 'tee', quantity: 0 }], {})).toEqual([])
   })
 })

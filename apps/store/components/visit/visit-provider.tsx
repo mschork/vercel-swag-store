@@ -9,22 +9,20 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { useChangesInFlight } from '@/lib/cart/changes-in-flight'
-import { quantitiesOf, type LineChange } from '@/lib/cart/lines'
+import { useCart, useCartActions } from '@/components/cart/cart-provider'
+import type { Line } from '@/lib/cart/lines'
 import { useHydrated } from '@/lib/use-hydrated'
 import { resetVisit } from '@/lib/visit/open'
 
-/** What the server read from the session: the visit and the cart's quantities by product id. */
+/** What the server read from the session: the visit and the cart's lines. */
 export interface SeededVisit {
   stock: Record<string, number>
-  lines: Record<string, number>
+  lines: Line[]
 }
 
 interface VisitState {
   /** A product's stock draw: `undefined` before the visit arrives, `null` when it has no count. */
   draw: (productId: string) => number | null | undefined
-  /** How many of a product the cart holds, counting a change or an add in flight. */
-  inCart: (productId: string) => number
 }
 
 interface VisitActions {
@@ -33,10 +31,6 @@ interface VisitActions {
    * read, and leaves what the client holds.
    */
   seed: (value: SeededVisit | null) => void
-  /** Records the whole cart as an action's answer reported it. */
-  confirmCart: (lines: readonly LineChange[]) => void
-  /** Items of the adds in flight for a product; 0 when none is. */
-  setAdding: (productId: string, quantity: number) => void
   /** Drops the visit and holds the one drawn in its place. */
   reset: () => Promise<void>
 }
@@ -56,15 +50,15 @@ const VisitActionsContext = createContext<VisitActions | null>(null)
  */
 export function VisitProvider({ children }: { children: ReactNode }) {
   const [stock, setStock] = useState<Record<string, number> | undefined>(undefined)
-  const [lines, setLines] = useState<Record<string, number>>({})
-  const [adding, setAddingState] = useState<Record<string, number>>({})
-  const changing = useChangesInFlight()
+  const cart = useCartActions()
 
-  const seed = useCallback((value: SeededVisit | null) => {
-    if (!value) return
-    setStock(value.stock)
-    setLines(value.lines)
-  }, [])
+  const seed = useCallback(
+    (value: SeededVisit | null) => {
+      cart.seed(value?.lines ?? null)
+      if (value) setStock(value.stock)
+    },
+    [cart],
+  )
 
   const reset = useCallback(async () => {
     const drawn = await resetVisit()
@@ -72,31 +66,13 @@ export function VisitProvider({ children }: { children: ReactNode }) {
     setStock(drawn.stock)
   }, [])
 
-  // Both keep their identity across renders and ignore a write that changes
-  // nothing, because an Add to Cart form applies an answer from an effect: a
-  // new object every time would re-run it and never settle.
-  const confirmCart = useCallback((answered: readonly LineChange[]) => {
-    setLines((current) => quantitiesOf(current, answered))
-  }, [])
-
-  const setAdding = useCallback((productId: string, quantity: number) => {
-    setAddingState((current) =>
-      (current[productId] ?? 0) === quantity ? current : { ...current, [productId]: quantity },
-    )
-  }, [])
-
   const state = useMemo<VisitState>(
     () => ({
       draw: (productId) => (stock ? (stock[productId] ?? null) : undefined),
-      inCart: (productId) =>
-        (changing[productId] ?? lines[productId] ?? 0) + (adding[productId] ?? 0),
     }),
-    [stock, lines, adding, changing],
+    [stock],
   )
-  const actions = useMemo<VisitActions>(
-    () => ({ seed, confirmCart, setAdding, reset }),
-    [seed, confirmCart, setAdding, reset],
-  )
+  const actions = useMemo<VisitActions>(() => ({ seed, reset }), [seed, reset])
   return (
     <VisitActionsContext value={actions}>
       <VisitContext value={state}>{children}</VisitContext>
@@ -126,14 +102,11 @@ export function useProductStock(
   productId: string,
   serverDraw?: number | null,
 ): { draw: number | null | undefined; inCart: number } {
-  const { draw, inCart } = useVisit()
-  // Subscribed here as well as in the provider, so a page shown again after
-  // being hidden renders a change saved meanwhile at once
-  // (`lib/cart/changes-in-flight.ts`).
-  useChangesInFlight()
+  const { draw } = useVisit()
+  const { quantity } = useCart()
   const hydrated = useHydrated()
   const held = hydrated ? draw(productId) : undefined
-  return { draw: held === undefined ? serverDraw : held, inCart: inCart(productId) }
+  return { draw: held === undefined ? serverDraw : held, inCart: quantity(productId) }
 }
 
 /**

@@ -2,15 +2,12 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useRef, useTransition } from 'react'
-import { flushSync } from 'react-dom'
+import { useEffect, useRef } from 'react'
 import {
   removeItem,
   updateQuantity,
   type CartActionResult,
 } from '@/app/cart/actions'
-import { useCartCountActions } from '@/components/cart/cart-count'
-import { useVisitActions } from '@/components/visit/visit-provider'
 import { Price } from '@/components/price'
 import { Spinner } from '@/components/spinner'
 import { QuantityStepper } from '@/components/quantity-stepper'
@@ -20,11 +17,10 @@ import {
   QUANTITY_PAUSE_MS,
   type Coalescer,
 } from '@/lib/cart/coalesce'
-import { settleChange, startChange } from '@/lib/cart/changes-in-flight'
-import { inOrder } from '@/lib/cart/in-order'
-import type { Line, LineChange } from '@/lib/cart/lines'
 import { allows, refusal } from '@/lib/visit/remaining'
 import { cn } from '@/lib/utils'
+import { useCartActions } from './cart-provider'
+import type { LineWithWrites } from '@/lib/cart/lines'
 
 /**
  * One line of the cart. Quantity changes wait for a short pause and then save
@@ -39,26 +35,22 @@ import { cn } from '@/lib/utils'
  * draw the product is not available: the stepper takes no input and only
  * Remove works.
  *
- * A `pending` line holds an add that is still saving. It says so, and its
- * stepper and Remove take no input until the add answers.
+ * A line with a write saving says so, and Remove takes no input until it
+ * answers. A `pending` line holds an add, and its stepper waits too; a line
+ * saving a change keeps its stepper, so the visitor can go on adjusting.
  */
 export function CartLine({
   line,
   currency,
   draw,
-  pending = false,
   error,
   priority = false,
-  onChange,
-  onDraft,
-  onSaved,
   onResult,
   onRemove,
 }: {
-  line: Line
+  line: LineWithWrites
   currency: string
   draw: number | null
-  pending?: boolean
   error: string | null
   /**
    * The first row's photo is the cart page's largest paint. It streams inside
@@ -66,44 +58,18 @@ export function CartLine({
    * eagerly at least starts the request the moment the hole arrives.
    */
   priority?: boolean
-  onChange: (change: LineChange) => void
-  onDraft: (productId: string, quantity: number | null, onlyIf?: number) => void
-  /**
-   * The cart as the action saved it, from a success or a failure that read
-   * it, which replaces the lines under the optimistic ones.
-   */
-  onSaved: (lines: Line[]) => void
   onResult: (productId: string, error: string | null) => void
   /** Told at the click, before the row leaves, so the view can move focus. */
   onRemove: (productId: string) => void
 }) {
-  const { productId } = line
+  const { productId, pending, changing } = line
+  const saving = pending || changing
   const message = error ?? (allows(draw, line.quantity) ? null : refusal(draw, 0))
-  const [changing, startTransition] = useTransition()
-  const { confirm } = useCartCountActions()
-  const { confirmCart } = useVisitActions()
+  const cart = useCartActions()
 
   const save = (quantity: number, action: () => Promise<CartActionResult>) => {
-    // Outside the transition, so every stock count shows the change while it
-    // saves, including a product page the visitor returns to meanwhile.
-    startChange(productId, quantity)
-    startTransition(async () => {
-      onChange({ productId, quantity })
-      // Held with the transition, so the draft gives way to the server's
-      // lines only once they arrive, and never if a newer draft replaced it.
-      onDraft(productId, null, quantity)
-      const result = await inOrder(action)
-      // One commit, so no stock count shows the old quantity between the
-      // answer and the change it replaces.
-      flushSync(() => {
-        if (result.lines) confirmCart(result.lines)
-        settleChange(productId, quantity)
-      })
-      startTransition(() => {
-        if (result.totalItems !== undefined) confirm(result.totalItems)
-        if (result.lines) onSaved(result.lines)
-        onResult(productId, result.ok ? null : result.error)
-      })
+    void cart.change(productId, quantity, action).then((result) => {
+      onResult(productId, result.ok ? null : result.error)
     })
   }
 
@@ -126,7 +92,7 @@ export function CartLine({
   }, [])
 
   const change = (quantity: number) => {
-    onDraft(productId, quantity)
+    cart.draft(productId, quantity)
     onResult(productId, null)
     if (waiting.current) waiting.current.push(quantity)
     else saveQuantity.current(quantity)
@@ -135,14 +101,14 @@ export function CartLine({
   const remove = () => {
     onRemove(productId)
     waiting.current?.cancel()
-    onDraft(productId, null)
+    cart.draft(productId, null)
     save(0, () => removeItem(productId))
   }
 
   return (
     <li
-      className={cn('py-4 transition-opacity', changing && 'opacity-60')}
-      aria-busy={changing || pending || undefined}
+      className="py-4"
+      aria-busy={saving || undefined}
     >
       <div className="flex gap-4">
         <div className="relative size-24 shrink-0 overflow-hidden rounded-lg border border-border bg-bg-secondary">
@@ -192,13 +158,13 @@ export function CartLine({
               variant="ghost"
               size="lg"
               aria-label={`Remove ${line.name}`}
-              disabled={pending}
-              className={cn(pending && 'disabled:opacity-100')}
+              disabled={saving}
+              className={cn(saving && 'disabled:opacity-100')}
               onClick={remove}
             >
               {/* While saving, the button's place says so, so the row keeps
                   its height; the status line below announces it. */}
-              {pending ? (
+              {saving ? (
                 <>
                   <Spinner />
                   <span aria-hidden="true">Saving…</span>
@@ -214,11 +180,11 @@ export function CartLine({
         role="status"
         className={cn(
           'text-sm leading-6',
-          pending ? 'text-fg-secondary' : 'text-danger',
-          message && !pending ? 'mt-2' : 'sr-only',
+          saving ? 'text-fg-secondary' : 'text-danger',
+          message && !saving ? 'mt-2' : 'sr-only',
         )}
       >
-        {pending ? 'Saving…' : message}
+        {saving ? 'Saving…' : message}
       </p>
     </li>
   )
