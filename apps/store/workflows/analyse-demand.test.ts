@@ -45,7 +45,7 @@ describe('analyseDemand', () => {
       ],
     })
     expect(await analyseDemand()).toEqual({ claimed: 2, ideas: 1, matched: 0, ignored: 0, released: 1 })
-    expect(mocks.sleep).toHaveBeenCalledWith('10m')
+    expect(mocks.sleep).toHaveBeenCalledWith('1m')
     // The unclaimed id the model invented is gone before anything is written.
     expect(mocks.steps.write).toHaveBeenCalledWith({
       runId: 'run1',

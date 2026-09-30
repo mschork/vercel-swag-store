@@ -9,7 +9,7 @@ export const ANALYSE_THRESHOLD = 2
 /** A gap counts at most once per this many minutes, whoever searches. */
 export const DEDUPE_MINUTES = 10
 /** How long a run waits for sibling queries before claiming gaps. */
-export const SETTLE = '10m'
+export const SETTLE = '1m'
 /** No new gap is created while this many are open. */
 export const MAX_OPEN_GAPS = 500
 /** A gap under the threshold is deleted this long after it was last seen. */

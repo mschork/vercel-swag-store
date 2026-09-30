@@ -12,7 +12,7 @@ A search that finds nothing is a demand signal. The store counts it after the re
                                             Sanity Function gap-threshold
                                                                   | POST /api/demand/analyse (bearer secret)
                                             Vercel Workflow analyseDemand
-                     lock > settle 10 min > claim gaps > read catalogue > one model call > validate > write
+                     lock > settle 1 min > claim gaps > read catalogue > one model call > validate > write
                                                                   |
                           productIdea.<hash> (proposed)      gaps: reviewed | matched | ignored
                                                                   |
@@ -59,6 +59,6 @@ The lock that collapses a burst of calls into one run has its own test against t
 pnpm --filter store test:integration
 ```
 
-`{"settle":false}` skips the ten-minute wait. Local run data is under `apps/store/.next/workflow-data`.
+`{"settle":false}` skips the one-minute wait. Local run data is under `apps/store/.next/workflow-data`.
 
 Where to look: Vercel's Observability, Workflows view for the runs; `pnpm exec sanity functions logs gap-threshold` for the trigger; the Studio's "Demand signals" for the gaps and the ideas.

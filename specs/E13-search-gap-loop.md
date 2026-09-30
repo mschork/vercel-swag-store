@@ -32,7 +32,7 @@ The API stays the catalogue; Sanity holds editorial data; the model proposes and
                                         Sanity Function gap-threshold
                                                               │ POST /api/demand/analyse (bearer secret)
                                         Vercel Workflow analyseDemand
-                     settle 10 min ▶ claim gaps ▶ read catalogue ▶ generateText + Output.object ▶ validate ▶ write
+                     settle 1 min ▶ claim gaps ▶ read catalogue ▶ generateText + Output.object ▶ validate ▶ write
                                                               │
                                    productIdea.<hash> (proposed)        gaps: reviewed | matched | ignored
                                                               │ editor: Accept / Reject (with reason) in the Studio
@@ -65,7 +65,7 @@ Three questions decide details below. Answer them on a throwaway branch first an
 
 **`packages/demand` (`@repo/demand`)**: everything the store, the Functions and E14's agent share. Source exports like `@repo/sanity`, no build step. No Next imports, no `server-only`.
 
-- `constants.ts`: `ANALYSE_THRESHOLD = 2`, `DEDUPE_MINUTES = 10`, `SETTLE = '10m'`, `MAX_OPEN_GAPS = 500`, `RETENTION_DAYS = 30`, `MAX_GAPS_PER_RUN = 100`, `MODEL = 'openai/gpt-5-nano'`. The task is easy, so the smallest model AI Gateway's free tier serves does it; the free tier refuses Anthropic models. The schema and the prompt hold for every provider, so changing model is this one line.
+- `constants.ts`: `ANALYSE_THRESHOLD = 2`, `DEDUPE_MINUTES = 10`, `SETTLE = '1m'`, `MAX_OPEN_GAPS = 500`, `RETENTION_DAYS = 30`, `MAX_GAPS_PER_RUN = 100`, `MODEL = 'openai/gpt-5-nano'`. The task is easy, so the smallest model AI Gateway's free tier serves does it; the free tier refuses Anthropic models. The schema and the prompt hold for every provider, so changing model is this one line.
 - `normalise.ts`: `normaliseGap(raw): string | null`. Lowercase, NFKC, strip everything but letters, digits, spaces and hyphens, collapse whitespace, trim, cut to 64 characters, then the filters under "Privacy and abuse". `null` means do not record.
 - `ids.ts`: `gapId(normalised)` is `searchGap.` plus the first 16 hex characters of its SHA-256 (`node:crypto`); `ideaId(gapIds)` is `productIdea.` plus the same over the sorted, joined gap ids, so a re-run over the same gaps cannot create a second idea.
 - `fragments.ts`: `typingFragments(gaps)`. The search form navigates on a 300 ms debounce, so someone typing "umbrella" slowly also searches "umb" and "umbre". A gap is a typing fragment when another gap in the set starts with its text followed by more letters and has at least its count. Returns the fragment ids.
@@ -102,7 +102,7 @@ Three questions decide details below. Answer them on a throwaway branch first an
 - `app/api/demand/analyse/route.ts`: POST, `Authorization: Bearer <DEMAND_ANALYSE_SECRET>` compared in constant time exactly like `app/api/revalidate/catalog/route.ts` (extract `authorised()` to `lib/bearer.ts` and use it in both). Body `{ settle?: boolean }`, zod-parsed, default true. Calls `start(analyseDemand, [{ settle }])` and answers `202 { runId }`. Unset secret: 401 for everyone.
 - `workflows/analyse-demand.ts`:
   1. `createHook({ token: 'demand-analysis' })` as a lock; when `getConflict()` reports another run, return `{ skipped: 'running' }`. Bursts of Function calls collapse into one run.
-  2. `sleep(SETTLE)` unless `settle` is false. Ten minutes lets sibling queries and the rest of someone's typing arrive, and outlasts the dedupe window's first increment.
+  2. `sleep(SETTLE)` unless `settle` is false. One minute collapses a burst of Function calls into one run and lets gaps that reach the threshold together be claimed together. It is kept short because each search is independent: a sibling that reaches the threshold later is analysed in a later run.
   3. Step `claim`: `purgeStale`, then `claimGaps`: up to 100 gaps with `status == 'new' && count >= 2`, plus every `new` gap that one of them makes a typing fragment of; fragments go to `ignored` with the note "typing fragment of …", the rest to `analysing` with the run id, each patch guarded by `ifRevisionId`. Nothing claimed: return.
   4. Step `catalogue`: every product through `getProducts` following `hasNextPage` (rule 6), and `getCategories()`.
   5. Step `propose`: `generateText({ model: MODEL, output: Output.object({ schema }), system, prompt, temperature: 0 })`. `generateObject` is deprecated in AI SDK 7. `maxRetries` stays at the step's default of 3; a schema failure throws and retries.
