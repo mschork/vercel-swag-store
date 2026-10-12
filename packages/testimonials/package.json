@@ -17,14 +17,14 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@sanity/client": "^8.6.1",
-    "ai": "7.0.116",
+    "@sanity/client": "^8.9.0",
+    "ai": "7.0.136",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@repo/config": "workspace:*",
-    "@types/node": "^26.6.2",
+    "@types/node": "^26.6.4",
     "typescript": "^5",
-    "vitest": "^5.0.1"
+    "vitest": "^5.0.3"
   }
 }
